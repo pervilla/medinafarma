@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            margin: 0% !important;
+        }
+
+        .bgfactura {
+            background-size: cover;
+            height: 100%;
+            width: 100%;
+        }
+        
+        *,
+        ::after,
+        ::before {
+            font-family: "Source Sans Pro", "Segoe UI", "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            font-weight: 350;
+        }
+
+        h5 {
+            margin-top: 0;
+            margin-bottom: .5rem;
+            margin-bottom: .5rem;
+            font-family: inherit;
+            font-weight: 500;
+            line-height: 1.2;
+            color: inherit;
+            font-size: 1.25rem;
+        }
+
+        .row {
+            display: -ms-flexbox;
+            display: flex;
+            -ms-flex-wrap: wrap;
+            flex-wrap: wrap;
+            margin-right: 17.5px;
+            margin-left: 17.5px;
+        }
+
+        .card {
+            position: relative;
+            border: 2px solid rgb(240, 200, 0); /* #00aeef en RGBA */
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+
+        .card-body {
+            -ms-flex: 1 1 auto;
+            flex: 1 1 auto;
+            min-height: 1px;
+            padding: 1.25rem;
+        }
+
+        .card-header {
+            padding: .75rem 1.25rem;
+            margin-bottom: 0;
+            background-color:  rgb(255, 0, 0); /* #214195 en RGBA (opaco) */
+            border-bottom: 1px solid rgb(240, 200, 0); /* #00aeef en RGBA (opaco) */
+            border-radius: calc(.25rem - 0) calc(.25rem - 0) 0 0;
+            position: relative;
+            border-top-left-radius: .25rem;
+            border-top-right-radius: .25rem;
+            color: white; /* Texto blanco para mejor contraste */
+        }
+
+        .card-footer {
+            padding: .75rem 1.25rem;
+            background-color: rgb(255, 0, 0); /* Fondo azul oscuro (sin transparencia) */
+            border-top: 1px solid rgb(240, 200, 0); /* Borde superior azul claro */
+            border-radius: 0 0 calc(.25rem - 0) calc(.25rem - 0);
+            color: white; /* Texto en blanco para contraste (opcional) */
+        }
+
+        .bg-secondary {
+            background-color: #6c757d !important;
+        }
+
+        .mr-4 {
+            margin-right: 1.5rem !important;
+        }
+
+        .p-2 {
+            padding: .5rem !important;
+        }
+
+        .text-center {
+            text-align: center !important;
+        }
+
+        .text-bold {
+            font-weight: bold;
+        }
+
+        .mb-1 {
+            margin-bottom: .25rem !important;
+        }
+
+        table {
+            font-size: 0.75rem;
+        }
+
+        .color-gris {
+            color: #fff;
+            background-color: #6c757d;
+        }
+
+        .color-blanco {
+            color: #495057;
+            background-color: #fff;
+        }
+
+        .tr-inicio {
+            padding: 0.375rem 0.75rem;
+            border-top-left-radius: 6px;
+            border-bottom-left-radius: 6px;
+            border-color: #6c757d;
+            -webkit-print-color-adjust: exact;
+            box-shadow: inset 0 0 0 transparent;
+        }
+
+        .tr-fin {
+            padding: 0.375rem 0.75rem;
+            border-top-right-radius: 6px;
+            border-bottom-right-radius: 6px;
+            border-right: 1px solid #ced4da;
+            border-bottom: 1px solid #ced4da;
+            border-top: 1px solid #ced4da;
+            -webkit-print-color-adjust: exact;
+            box-shadow: inset 0 0 0 transparent;
+        }
+
+        .tr-medio {
+            padding: 0.375rem 0.75rem;
+            line-height: 1.5;
+            border-bottom: 1px solid #ced4da;
+            border-top: 1px solid #ced4da;
+            box-shadow: inset 0 0 0 transparent;
+        }
+
+        .col1 {
+            width: 10%;
+        }
+
+        .col2 {
+            width: 20%;
+        }
+
+        .col3 {
+            width: 30%;
+        }
+
+        .col4 {
+            width: 40%;
+        }
+
+        .col5 {
+            width: 50%;
+        }
+
+        .col6 {
+            width: 60%;
+        }
+
+        .col7 {
+            width: 70%;
+        }
+
+        .col8 {
+            width: 80%;
+        }
+
+        .col9 {
+            width: 90%;
+        }
+
+        .tablefact {
+            display: table;
+            border-collapse: separate;
+            box-sizing: border-box;
+            text-indent: initial;
+            line-height: normal;
+            font-weight: normal;
+            font-size: 12px; /* Tamaño de fuente reducido (antes era 'medium') */
+            font-style: normal;
+            color: -internal-quirk-inherit;
+            text-align: start;
+            border-spacing: 2px;
+            border-color: gray;
+            white-space: normal;
+            font-variant: normal;
+            border-collapse: collapse !important;
+            width: 100%;
+            margin-bottom: 1rem;
+            color: #212529;
+            background-color: transparent;
+            font-family: "Source Sans Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        }
+
+        .theadfact {}
+
+        .thead-dark {
+            color: #fff;
+            background-color: #212529;
+            border-color: #383f45;
+        }
+
+        .table td {
+            padding: .75rem;
+            vertical-align: top;
+            border-top: 1px solid #dee2e6;
+        }
+
+        .table-striped tbody tr:nth-of-type(odd) {
+            background-color: rgba(0, 0, 0, .05);
+        }
+
+        .table-responsive {
+            display: block;
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        p {
+            margin-top: 0;
+            margin-bottom: 1rem;
+            orphans: 3;
+            widows: 3;
+        }
+
+        .text-right {
+            text-align: right !important;
+        }
+
+        .text-success {
+            color: #28a745 !important;
+        }
+    </style>
+</head>
+<?php
+
+$svgLogo = '<svg id="a" data-name="Capa 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 337.48 83.79"><defs><style>.e{stroke-width:0;fill-rule:evenodd;fill:#6c757d;opacity:.8}</style></defs><g id="b" data-name="MEDINAFARMA"><path d="M85.84 64.59h-6.71L77.6 47.86c-.12-1.18-.2-2.52-.29-3.96-.1-1.43-.18-3.01-.25-4.73-.15 1.63-.5 3.68-.98 6.13-.12.51-.2.89-.25 1.14l-3.58 18.15h-4.76l-3.57-18.15c-.07-.26-.14-.64-.24-1.14-.49-2.45-.82-4.49-.96-6.09-.08 1.46-.17 2.88-.28 4.33-.08 1.45-.19 2.86-.32 4.32l-1.55 16.73h-6.65l4.04-38.73h7.1l3.96 19.98c.05.13.08.37.13.67.39 1.78.63 3.32.71 4.57.04-.67.13-1.45.26-2.26.14-.85.31-1.85.54-3.04l4.01-19.91h7.12l4.03 38.73Zm3.87 0V25.86h16.09v8.48h-9.1v6.73h8.62v8.29H96.7v6.55h9.1v8.68zm20.87 0V25.86h5.49c4.07 0 6.95.27 8.61.85 1.74.54 3.2 1.51 4.49 2.83 1.67 1.7 2.92 3.9 3.83 6.58.83 2.65 1.25 5.71 1.25 9.12s-.41 6.47-1.25 9.14c-.91 2.68-2.16 4.86-3.83 6.58-1.25 1.28-2.71 2.23-4.38 2.79-1.6.52-4.13.83-7.54.83h-6.68Zm7.09-8.69h1.18c2.82 0 4.9-.84 6.18-2.58 1.29-1.67 1.91-4.37 1.91-8.08s-.62-6.44-1.91-8.14c-1.28-1.72-3.36-2.59-6.18-2.59h-1.18v21.4Zm21.26 8.69V25.86h7.23v38.73zm13.03 0V25.86h6.92l9.94 19.91c.17.41.49 1.21.93 2.46.42 1.2.9 2.67 1.43 4.37-.11-1.61-.21-3.04-.28-4.3-.07-1.23-.1-2.36-.1-3.32V25.85h6.84v38.73h-6.84l-9.95-20c-.2-.42-.55-1.22-1-2.47-.39-1.22-.87-2.65-1.39-4.32.14 1.61.24 3.08.31 4.32.07 1.25.11 2.36.11 3.32v19.15h-6.92Zm38.29-14.49h7.12l-2.68-12.77c-.07-.4-.21-1.02-.31-1.89-.14-.87-.34-1.96-.59-3.34-.14.96-.32 1.87-.45 2.75-.14.85-.32 1.67-.45 2.47l-2.64 12.77ZM180.2 64.59l9.11-38.73h8.99l9.04 38.73h-7.13l-1.32-6.96h-10.21l-1.35 6.96zm29.67 0V25.86h16.09v8.48h-9.1v6.73h8.62v8.29h-8.62v15.23h-6.98Zm26.3-14.49h7.16l-2.67-12.77c-.1-.4-.21-1.02-.38-1.89-.14-.87-.31-1.96-.52-3.34-.14.96-.32 1.87-.45 2.75-.17.85-.31 1.67-.48 2.47l-2.64 12.77Zm-10.04 14.49 9.11-38.73h8.96l9.06 38.73h-7.08l-1.36-6.96h-10.18l-1.35 6.96zm29.68 0V25.86h7.46c2.99 0 5.01.2 6.16.6 1.18.4 2.15 1.07 3.01 2.01.94 1.03 1.67 2.39 2.16 4.01.49 1.67.77 3.46.77 5.46 0 2.97-.49 5.4-1.5 7.31-.98 1.87-2.43 3.12-4.38 3.74l7.16 15.61h-8.07l-6.07-15.18V64.6h-6.7Zm6.7-20.44h1.35c1.56 0 2.67-.38 3.37-1.16s1.05-2.01 1.05-3.64c0-1.94-.32-3.33-.97-4.14-.66-.83-1.74-1.23-3.38-1.23h-1.42zm47.04 20.44h-6.67l-1.6-16.73c-.07-1.18-.18-2.52-.28-3.96-.08-1.43-.14-3.01-.21-4.73a81 81 0 0 1-1.05 6.13c-.03.51-.17.89-.2 1.14l-3.58 18.15h-4.76l-3.61-18.15c0-.26-.07-.64-.17-1.14-.49-2.45-.83-4.49-1.01-6.09-.07 1.46-.15 2.88-.24 4.33-.07 1.45-.25 2.86-.34 4.32l-1.54 16.73h-6.67l4.06-38.73h7.1l3.96 19.98c.03.13.07.37.14.67.37 1.78.62 3.32.73 4.57.04-.67.13-1.45.24-2.26.15-.85.31-1.85.56-3.04l4.03-19.91h7.13l3.99 38.73Zm10.84-14.49h7.12l-2.68-12.77c-.11-.4-.21-1.02-.35-1.89-.13-.87-.34-1.96-.59-3.34-.14.96-.28 1.87-.45 2.75-.15.85-.28 1.67-.42 2.47l-2.64 12.77Zm-10.07 14.49 9.1-38.73h8.96l9.1 38.73h-7.16l-1.31-6.96H318.8l-1.32 6.96h-7.15Z" style="fill:#e20613;stroke-width:0"/><path d="M69.94 80.61V78.4h2.12v2.21zm4.94 0V78.4H77v2.21zm4.93 0V78.4h2.12v2.21zm10.21 0v-1.25c-.29.45-.67.8-1.15 1.05q-.72.39-1.5.39c-.78 0-1.02-.12-1.45-.37s-.74-.59-.93-1.04-.29-1.06-.29-1.85v-5.29h2.12v3.84q0 1.77.12 2.16c.08.27.22.48.43.63.21.16.47.23.78.23.36 0 .69-.1.97-.31.29-.21.48-.46.59-.77s.16-1.06.16-2.26v-3.53h2.12v8.36h-1.97Zm13.75 0h-2.12v-4.27c0-.9-.04-1.49-.14-1.75a1.24 1.24 0 0 0-.44-.62c-.2-.15-.45-.22-.73-.22-.37 0-.7.11-.99.32s-.49.49-.6.83c-.11.35-.16.99-.16 1.92v3.79h-2.12v-8.36h1.97v1.23c.7-.95 1.58-1.42 2.64-1.42.47 0 .9.09 1.28.26s.68.4.88.67.34.58.41.93c.08.35.12.84.12 1.49zm16.67 0h-2.12v-4.27c0-.9-.04-1.49-.14-1.75a1.24 1.24 0 0 0-.44-.62c-.2-.15-.45-.22-.73-.22-.37 0-.7.11-.99.32s-.49.49-.6.83c-.11.35-.16.99-.16 1.92v3.79h-2.12v-8.36h1.97v1.23c.7-.95 1.58-1.42 2.64-1.42.47 0 .9.09 1.28.26s.68.4.88.67.34.58.41.93c.08.35.12.84.12 1.49zm9.72 0v-1.25c-.29.45-.67.8-1.15 1.05q-.72.39-1.5.39c-.78 0-1.02-.12-1.45-.37s-.74-.59-.93-1.04-.29-1.06-.29-1.85v-5.29h2.12v3.84q0 1.77.12 2.16c.08.27.22.48.43.63.21.16.47.23.78.23.36 0 .69-.1.97-.31.29-.21.48-.46.59-.77s.16-1.06.16-2.26v-3.53h2.12v8.36h-1.97Zm11.11-2.66 2.11.37c-.27.81-.7 1.42-1.29 1.85-.59.42-1.32.63-2.2.63-1.39 0-2.42-.48-3.09-1.43-.53-.76-.79-1.72-.79-2.88 0-1.39.35-2.47 1.04-3.26s1.57-1.18 2.63-1.18q1.785 0 2.82 1.23t.99 3.78h-5.31c.01.66.19 1.17.51 1.53.33.37.73.55 1.22.55.33 0 .61-.09.84-.28s.4-.49.51-.91Zm.12-2.24c-.01-.64-.17-1.13-.47-1.46s-.67-.5-1.1-.5c-.46 0-.84.18-1.15.53-.3.35-.45.83-.45 1.43zm7.93 4.9-3.23-8.36h2.22l1.51 4.27.44 1.43c.12-.36.19-.6.22-.72.07-.24.15-.47.23-.71l1.52-4.27h2.18l-3.18 8.36zm7.79-4.3c0-.74.17-1.45.52-2.13.35-.69.84-1.21 1.47-1.58a4.27 4.27 0 0 1 2.13-.54c1.21 0 2.2.41 2.98 1.23.77.82 1.16 1.86 1.16 3.11s-.39 2.31-1.17 3.15-1.77 1.25-2.95 1.25c-.73 0-1.43-.17-2.1-.52s-1.17-.85-1.52-1.52-.52-1.48-.52-2.44Zm2.18.12c0 .83.19 1.46.57 1.91.38.44.84.66 1.39.66s1.02-.22 1.39-.66.56-1.08.56-1.92-.19-1.45-.56-1.89-.84-.66-1.39-.66-1.02.22-1.39.66c-.38.44-.57 1.08-.57 1.91Zm21.97-1.71-2.09.39c-.07-.44-.23-.76-.48-.98s-.57-.33-.97-.33q-.795 0-1.26.57c-.31.38-.47 1.02-.47 1.91q0 1.485.48 2.1c.48.615.75.61 1.29.61q.6 0 .99-.36t.54-1.23l2.08.37c-.22 1-.63 1.75-1.24 2.26s-1.44.76-2.47.76c-1.17 0-2.1-.39-2.8-1.16s-1.04-1.84-1.04-3.2.35-2.46 1.05-3.22c.7-.77 1.64-1.15 2.83-1.15.97 0 1.75.22 2.33.66s.99 1.11 1.24 2Zm3.01 1.59c0-.74.17-1.45.52-2.13.35-.69.84-1.21 1.47-1.58a4.27 4.27 0 0 1 2.13-.54c1.21 0 2.2.41 2.98 1.23.77.82 1.16 1.86 1.16 3.11s-.39 2.31-1.17 3.15-1.77 1.25-2.95 1.25c-.73 0-1.43-.17-2.1-.52s-1.17-.85-1.52-1.52-.52-1.48-.52-2.44Zm2.18.12c0 .83.19 1.46.57 1.91.38.44.84.66 1.39.66s1.02-.22 1.39-.66.56-1.08.56-1.92-.19-1.45-.56-1.89-.84-.66-1.39-.66-1.02.22-1.39.66c-.38.44-.57 1.08-.57 1.91Zm17.33 4.18h-2.12v-4.27c0-.9-.04-1.49-.14-1.75a1.24 1.24 0 0 0-.44-.62c-.2-.15-.45-.22-.73-.22-.37 0-.7.11-.99.32s-.49.49-.6.83c-.11.35-.16.99-.16 1.92v3.79h-2.12v-8.36h1.97v1.23c.7-.95 1.58-1.42 2.64-1.42.47 0 .9.09 1.28.26s.68.4.88.67.34.58.41.93c.08.35.12.84.12 1.49zm11.44-5.89-2.09.39c-.07-.44-.23-.76-.48-.98s-.57-.33-.97-.33q-.795 0-1.26.57c-.31.38-.47 1.02-.47 1.91q0 1.485.48 2.1c.48.615.75.61 1.29.61q.6 0 .99-.36t.54-1.23l2.08.37c-.22 1-.63 1.75-1.24 2.26s-1.44.76-2.47.76c-1.17 0-2.1-.39-2.8-1.16s-1.04-1.84-1.04-3.2.35-2.46 1.05-3.22c.7-.77 1.64-1.15 2.83-1.15.97 0 1.75.22 2.33.66s.99 1.11 1.24 2Zm8.14 3.23 2.11.37c-.27.81-.7 1.42-1.29 1.85-.59.42-1.32.63-2.2.63-1.39 0-2.42-.48-3.09-1.43-.53-.76-.79-1.72-.79-2.88 0-1.39.35-2.47 1.04-3.26s1.57-1.18 2.63-1.18q1.785 0 2.82 1.23t.99 3.78h-5.31c.01.66.19 1.17.51 1.53.33.37.73.55 1.22.55.33 0 .61-.09.84-.28s.4-.49.51-.91Zm.12-2.24c-.01-.64-.17-1.13-.47-1.46s-.67-.5-1.1-.5c-.46 0-.84.18-1.15.53-.3.35-.45.83-.45 1.43zm5.67-3.46h1.98v1.23c.26-.42.6-.76 1.04-1.02s.92-.39 1.46-.39q1.395 0 2.37 1.14c.65.76.97 1.82.97 3.18s-.33 2.48-.98 3.26-1.45 1.16-2.38 1.16c-.44 0-.84-.09-1.2-.28s-.74-.5-1.13-.94v4.21h-2.12V72.26Zm2.1 4.04c0 .94.18 1.63.54 2.08s.79.67 1.3.67.9-.21 1.23-.62.49-1.09.49-2.03c0-.88-.17-1.53-.5-1.95-.34-.43-.75-.64-1.25-.64s-.95.21-1.29.63-.51 1.04-.51 1.85Zm13.36-4.04v1.76h-1.45v3.37c0 .68.01 1.08.04 1.19s.09.21.19.28.22.11.36.11c.2 0 .48-.07.85-.21l.18 1.72c-.49.22-1.05.33-1.67.33-.38 0-.73-.07-1.03-.2s-.53-.31-.67-.52-.24-.5-.3-.86c-.04-.26-.07-.78-.07-1.56v-3.65h-.97v-1.76h.97v-1.66l2.13-1.29v2.95h1.45Zm2 4.06c0-.74.17-1.45.52-2.13.35-.69.84-1.21 1.47-1.58a4.27 4.27 0 0 1 2.13-.54c1.21 0 2.2.41 2.98 1.23.77.82 1.16 1.86 1.16 3.11s-.39 2.31-1.17 3.15-1.77 1.25-2.95 1.25c-.73 0-1.43-.17-2.1-.52s-1.17-.85-1.52-1.52-.52-1.48-.52-2.44Zm2.18.12c0 .83.19 1.46.57 1.91.38.44.84.66 1.39.66s1.02-.22 1.39-.66.56-1.08.56-1.92-.19-1.45-.56-1.89-.84-.66-1.39-.66-1.02.22-1.39.66c-.38.44-.57 1.08-.57 1.91Zm19.63 1.52 2.11.37c-.27.81-.7 1.42-1.29 1.85-.59.42-1.32.63-2.2.63-1.39 0-2.42-.48-3.09-1.43-.53-.76-.79-1.72-.79-2.88 0-1.39.35-2.47 1.04-3.26s1.57-1.18 2.63-1.18q1.785 0 2.82 1.23t.99 3.78h-5.31c.01.66.19 1.17.51 1.53.33.37.73.55 1.22.55.33 0 .61-.09.84-.28s.4-.49.51-.91Zm.12-2.24c-.01-.64-.17-1.13-.47-1.46s-.67-.5-1.1-.5c-.46 0-.84.18-1.15.53-.3.35-.45.83-.45 1.43zm13.01 4.9h-2.12v-4.27c0-.9-.04-1.49-.14-1.75a1.24 1.24 0 0 0-.44-.62c-.2-.15-.45-.22-.73-.22-.37 0-.7.11-.99.32s-.49.49-.6.83c-.11.35-.16.99-.16 1.92v3.79h-2.12v-8.36h1.97v1.23c.7-.95 1.58-1.42 2.64-1.42.47 0 .9.09 1.28.26s.68.4.88.67.34.58.41.93c.08.35.12.84.12 1.49zm8.64-2.39 2.13-.34c.09.43.27.76.55.98s.66.33 1.16.33c.55 0 .96-.11 1.24-.32.19-.15.28-.34.28-.59a.6.6 0 0 0-.15-.42c-.11-.1-.34-.2-.71-.29-1.71-.39-2.79-.75-3.25-1.08-.63-.45-.95-1.08-.95-1.88 0-.72.27-1.33.82-1.83.55-.49 1.4-.74 2.55-.74s1.91.19 2.44.56.9.92 1.1 1.65l-2 .39c-.08-.33-.25-.57-.49-.75-.24-.17-.58-.26-1.02-.26q-.84 0-1.2.24-.24.18-.24.45c0 .16.07.29.21.4.19.15.85.35 1.98.62s1.92.6 2.36.98q.66.585.66 1.65c0 .77-.31 1.42-.92 1.98-.61.55-1.52.83-2.72.83-1.09 0-1.95-.23-2.59-.69s-1.05-1.09-1.25-1.88Zm12.82-3.42-1.92-.36c.22-.81.59-1.41 1.12-1.8s1.31-.58 2.35-.58c.95 0 1.65.12 2.11.35s.79.53.98.89.28 1.02.28 1.98l-.02 2.58c0 .74.03 1.28.1 1.63s.19.72.38 1.12h-2.1c-.05-.15-.12-.37-.2-.65-.04-.13-.06-.22-.08-.26-.36.37-.75.64-1.16.83-.41.18-.85.28-1.32.28-.82 0-1.47-.23-1.95-.7-.47-.47-.71-1.06-.71-1.77 0-.47.11-.89.32-1.26.22-.37.52-.65.91-.85s.95-.37 1.69-.52c.99-.19 1.68-.38 2.06-.54v-.22c0-.43-.1-.73-.3-.91q-.3-.27-1.14-.27c-.38 0-.67.08-.88.23-.21.16-.38.43-.51.82Zm2.84 1.79c-.27.09-.7.21-1.29.34s-.97.26-1.15.39q-.42.3-.42.78c0 .48.11.58.33.8.22.23.5.34.84.34.38 0 .75-.13 1.09-.39.26-.2.42-.44.51-.73.05-.19.08-.55.08-1.08v-.44Zm6.06 4.02V69.07h2.12v11.54zm10.21 0v-1.25c-.29.45-.67.8-1.15 1.05q-.72.39-1.5.39c-.78 0-1.02-.12-1.45-.37s-.74-.59-.93-1.04-.29-1.06-.29-1.85v-5.29h2.12v3.84q0 1.77.12 2.16c.08.27.22.48.43.63.21.16.47.23.78.23.36 0 .69-.1.97-.31.29-.21.48-.46.59-.77s.16-1.06.16-2.26v-3.53h2.12v8.36h-1.97Zm13.81 0h-1.97v-1.23c-.33.48-.71.83-1.16 1.07-.44.23-.89.35-1.35.35-.92 0-1.71-.39-2.36-1.16s-.98-1.85-.98-3.24.32-2.49.96-3.23 1.45-1.11 2.42-1.11c.89 0 1.67.39 2.32 1.17v-4.16h2.12zm-5.65-4.36c0 .89.12 1.54.35 1.94.34.58.82.87 1.43.87.49 0 .9-.22 1.24-.65s.51-1.08.51-1.94c0-.96-.17-1.65-.5-2.08-.33-.42-.76-.63-1.27-.63s-.92.21-1.26.63-.51 1.04-.51 1.87Z" style="stroke-width:0;fill:#f7c300"/><path id="c" data-name="CULEBRA" class="e" d="M34.45 25.93c3.8 4.66 1.04 11.39-5.3 14.34-1.37.67-.49.13-1.59.83v3.23c.73 0 2.12-.42 2.92-.67 13.49-4.42 15.25-18.35 5.89-22.45-2.23-.95-8.04-2.12-10.89-2.58-3.22-.48-10.2-3.18-11.17-6.69C11.35 1.49 24.51-.05 26.17 6.8c.46 1.8-4 .04-.47 6.09.51.85 2.23 2.81 2.63 2.88.44.09.68-.07.9-.25.23-.23 1.18-2.12 1.26-2.47l.84-3.94c.06-.81-1.11-1.59-1.59-1.84-.54-.23-.6-.3-.69-.58-.86-2.3-1.13-4.1-3.93-5.48C14.75-3.93 4.19 8.53 14.11 17.45c5.73 5.12 18.55 5.95 20.34 8.48"/><path class="e" d="M14.95 47.88c0 10.97 17.7 10.3 21.78 4.45 3.98-5.65-1.12-8.05-9.05-5.95v2.31c.73-.05 4.44-1.34 4.44 1.78 0 2.58-11.11 5.6-12.58-1.41-.27-1.24 1.08-3.43 3.46-4.15l.11-3.61c-5.45 0-8.15 5.11-8.15 6.59Zm2.52 10.03c0 2.21 2.06 4.82 4.26 5.6.79.3 1.26.49 2.07.69 1.45.35 4.17.79 5.74.85 2.82.11 2.37-.12 4.26.72.51.23 1.15.39 1.68.39-.03-1.15-2.54-2.12-3.49-2.37-2.85-.72-7.32-.69-9.35-2.59-1.36-1.31-1.76-2.81-1.65-4.1-1.47-.76-1.59-.79-3.07-1.66-.24.48-.46 1.73-.46 2.47Z"/><path class="e" d="M20.25 49.95c.48.99 1.17 1.73 2.09 2.16l.67-.74v-3.76c-1.39.69-2.02 1.01-2.76 2.33Z"/><path d="M23.7 60.87c0 .3.38.37.67.51.24.11 1.61.48 1.85.51l.64.09.03-4.71c-1.4-.11-1.77-.09-3.18-.09v3.69Zm25.99-34.55c-1.08 2.56-2.83 4.92-5.08 6.91-.29.23-.53.49-.8.69-.55.46-1.1.85-1.7 1.29.79-2.19 1.32-3.37 1.32-6.04 0-.58-.11-1.09-.2-1.5-.09-.51-.31-.95-.33-1.36h6.78Zm-7.54 47.7H7.82c.29-.21.87-.35 1.22-.46.42-.11.73-.18 1.24-.32 2.4-.55 4.02-.32 5.54-.76.55-.11.59-.25 1.06-.46 3.61-1.54 4.29-.37 6.09-1.8.69-.51.73-1.15.73-2.28v-2.98l2.97.62s-.03 1.57-.03 2.35c0 1.13.07 1.77.71 2.28 1.79 1.43 2.45.26 5.96 1.8.44.21.51.35 1.06.46 1.48.44 3.05.21 5.38.76.48.14.79.21 1.22.32.33.12.91.25 1.18.46Zm-15.36-33.8v-.23c6.19-1.36 10.98-8.89 6.52-13.67H0c1.06 2.44 2.67 4.68 4.77 6.64-.03.04-.03.07-.03.11 4.62 3.85 12.61 7.38 18.95 7.38V52c1.82.44 1.35.35 3.09.32v-12.1Z" style="stroke-width:0;fill-rule:evenodd;fill:#f0c800"/></g></svg>';
+$svgContent = '<svg data-name="Capa 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 595.28 841.89"><path d="M90.39 781.71c0-70.13-36.91-131.82-92.31-166.69v3.41c53.73 34.51 89.4 94.8 89.4 163.28 0 20.89-3.33 41.02-9.47 59.89h3.05c6.05-18.9 9.33-39.02 9.33-59.89M593.58 82.98C542.72 74.36 499.54 42.8 475.11-.65h2.83c24.11 42.08 66.15 72.61 115.64 81.12z" style="fill-rule:evenodd;stroke-width:0;fill:#f0c800"/><path d="M.99 841.6c43.85-25.52 94.39-40.78 148.36-42.52h20.71c53.97 1.74 104.46 17 148.23 42.52zM581.45-.65c-42.05 22.94-89.89 36.59-140.77 38.23h-20.73c-50.87-1.64-98.66-15.29-140.64-38.23z" style="fill-rule:evenodd;stroke-width:0;fill:red"/></svg>';
+$base64Svg = 'data:image/svg+xml;base64,' . base64_encode($svgContent);
+$base64Logo = 'data:image/svg+xml;base64,' . base64_encode($svgLogo);
+
+if($facart[0]->FAR_FBG=='B'){
+    $documento= "B0";
+    $tipoCom= "BOLETA ELECTRONICA";
+    $tipoDoc="D.N.I.";
+    $direccion="";
+    $NroDoc=empty(trim($facart[0]->CLI_RUC_ESPOSA))?'':$facart[0]->CLI_RUC_ESPOSA."\n";
+}elseif ($facart[0]->FAR_FBG=='F') {
+    $documento= "FA";
+    $tipoCom= "FACTURA ELECTRONICA";
+    $NroDoc=TRIM($facart[0]->CLI_RUC_ESPOSO)."\n";
+    $tipoDoc="R.U.C.";
+    $direccion =TRIM($facart[0]->CLI_CASA_DIREC).' '.TRIM($facart[0]->CLI_CASA_NUM)."\n";
+}elseif ($facart[0]->FAR_FBG=='G') {
+    $documento= "G0";
+    $tipoCom= "GUIA ELECTRONICA";
+    $NroDoc='';
+    $tipoDoc="";
+    $direccion="";
+}
+$cliente = $facart[0]->FAR_CODCLIE==1?$facart[0]->FAR_CLIENTE:$facart[0]->CLI_NOMBRE;
+
+$nro_Boleta = $documento.TRIM($facart[0]->FAR_NUMSER)."-".$facart[0]->FAR_NUMFAC;
+
+?>
+<body>
+<img src="<?=$base64Svg ?>" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;">
+    <div class="">
+        <table cellpadding="0" cellspacing="0" width='100%'>
+            <tr>
+                <td width="20" style="padding-left: 15px">
+                    <!-- Logo de la empresa aquí -->
+                    <img style="width:350px!important;" alt="" src="<?=$base64Logo?>" />
+                </td>
+                <td width="10"></td>
+                <td width="30" class="text-right" style="padding-top: 15px; padding-right: 15px;">
+                    <div class="card">
+                        <div class="card-header text-center p-2">
+                            <h5 class="m-0">R.U.C. <?= isset($empresa_ruc) ? $empresa_ruc : '20450337839' ?></h5>
+                        </div>
+                        <div class="card-body text-center p-2"
+                            style="border-right: 1px solid #ced4da; border-left: 1px solid #ced4da;">
+                            <strong><?=$tipoCom?></strong>
+                        </div>
+                        <div class="card-footer text-center p-2 ">
+                            <strong><?=$nro_Boleta ?></strong>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    
+    <div class="row mb-1 m-0">
+        <table cellpadding="0" cellspacing="0" width='100%'>
+            <tr>
+                <td colspan="2" class="text-bold">INVERSIONES SAN MARTIN S.C.R.L.</td>
+                <td class="text-right">Página 1/1</td>
+            </tr>
+            <tr>
+                <td>Domicilio Fiscal</td>
+                <td>: JR. HUALLAGA NRO 601 - JUANJUI - MARISCAL CACERES - SAN MARTIN</td>
+                <td class="text-right"><?= isset($facart[0]) ? date('d/m/Y', strtotime($facart[0]->FAR_FECHA)) : date('d/m/Y') ?></td>
+            </tr>
+            
+            <tr>
+                <td>Teléfono Tienda</td>
+                <td>: 930 487 039</td>
+                <td></td>
+            </tr><tr>
+                <td></td>
+                <td>&nbsp;</td>
+                <td></td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="row mb-1 m-0 ">
+        <table cellpadding="0" cellspacing="0" width='100%'>
+            <tr>
+                <td class="tr-inicio col1 color-gris">CLIENTE</td>
+                <td class="tr-medio col6 color-blanco"><?= $cliente ?></td>
+                <td class="tr-medio col1 color-gris"><?=$tipoDoc?></td>
+                <td class="tr-fin col1 color-blanco"><?= $NroDoc ?></td>
+            </tr>
+        </table>
+    </div>
+    
+    <div class="row mb-1 m-0 ">
+        <table cellpadding="0" cellspacing="0" width='100%'>
+            <tr>
+                <td class="tr-inicio col1 color-gris">DIRECCION</td>
+                <td class="tr-fin col9 color-blanco"><?= $direccion ?></td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="row mb-1 m-0">
+        <table cellpadding="0" cellspacing="0" width='100%'>
+            <tr>
+                <td class="tr-inicio col2 color-gris">CONDICION PAGO</td>
+                <td class="tr-medio col2 color-blanco">CONTADO</td>
+                <td class="tr-medio col1 color-gris">MONEDA</td>
+                <td class="tr-medio col2 color-blanco"><?= isset($facart[0]) ? ($facart[0]->FAR_MONEDA == 'S' ? 'SOLES' : 'DOLARES') : 'SOLES' ?></td>
+                <td class="tr-medio col1 color-gris">VENDEDOR</td>
+                <td class="tr-fin col2 color-blanco"><?= isset($facart[0]) ? trim($facart[0]->VEM_NOMBRE) : 'VENDEDOR' ?></td>
+            </tr>
+        </table>
+    </div>
+    
+    <div class="row mb-1 m-0">
+        <div class="table-responsive">
+            <table class="tablefact custom-table m-0 table-striped">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Descripción</th>
+                        <th>Cantidad</th>
+                        <th>Und.</th>
+                        <th>Precio</th>
+                        <th>Sub Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (isset($facart) && is_array($facart)): ?>
+                        <?php foreach ($facart as $item): ?>
+                        <tr>
+                            <td>#<?= $item->ART_KEY ?></td>
+                            <td><?= trim($item->ART_NOMBRE) ?></td>
+                            <td class="text-center"><?= number_format($item->FAR_CANTIDAD_P, 0) ?></td>
+                            <td class="m-0 text-center"><?= trim($item->FAR_DESCRI) ?></td>
+                            <td class="text-right">S/. <?= number_format($item->FAR_PRECIO, 2) ?></td>
+                            <td class="text-right">S/. <?= number_format($item->FAR_PRECIO * $item->FAR_CANTIDAD_P, 2) ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                    
+                    <tr>
+                        <td colspan="3">
+                            <!-- QR Code aquí -->
+                            <?php 
+                            // Generar cadena para QR
+                            if (isset($facart[0])) {
+                                $fecha = date('Y-m-d', strtotime($facart[0]->FAR_FECHA));
+                                $serie = trim($facart[0]->FAR_NUMSER);
+                                $numero = str_pad($facart[0]->FAR_NUMFAC, 8, '0', STR_PAD_LEFT);
+                                
+                                // Calcular totales
+                                $subtotal = 0;
+                                if (isset($facart) && is_array($facart)) {
+                                    foreach ($facart as $item) {
+                                        $subtotal += $item->FAR_PRECIO * $item->FAR_CANTIDAD_P;
+                                    }
+                                }
+                                $igv = $subtotal * 0.18;
+                                $total = $subtotal + $igv;
+                                
+                                $cadena_qr = "12345678901|01|{$serie}|{$numero}|" . number_format($igv, 2) . "|" . number_format($total, 2) . "|{$fecha}|6|20522224783|";
+                            
+                            }
+                            ?>
+                           <img src="<?= $facart[0]->FAR_FBG=='F'?'data:image/png;base64,' . base64_encode($qr):'' ?>">
+                        </td>
+                        <td colspan="2">
+                            <p>
+                                Total Gravado<br>
+                                Total Exonerado<br>
+                                Total Inafecto<br>
+                                IGV<br>
+                            </p>
+                            <h5 class="text-success"><strong>Total</strong></h5>
+                        </td>
+                        <td>
+                            <?php 
+                            // Calcular totales
+                            $subtotal = 0;
+                            if (isset($facart) && is_array($facart)) {
+                                foreach ($facart as $item) {
+                                    $subtotal += $item->FAR_PRECIO * $item->FAR_CANTIDAD_P;
+                                }
+                            }
+                            $igv = $subtotal * 0;
+                            $total = $subtotal + $igv;
+                            ?>
+                            <p class="text-right">
+                                S/. <?= number_format($subtotal, 2) ?><br>
+                                S/. 0.00<br>
+                                S/. 0.00<br>
+                                S/. <?= number_format($igv, 2) ?><br>
+                            </p>
+                            <h5 class="text-success text-right">
+                                <strong>S/. <?= number_format($total, 2) ?></strong>
+                            </h5>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="row">
+        <?= isset($total_texto) ? $total_texto : (isset($total) ? $total : 'CIEN SOLES') ?>
+    </div>
+</body>
+</html>

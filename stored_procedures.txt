@@ -1,0 +1,682 @@
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[sp_crea_guias_entrada] 
+	@LOCAL INT, 
+	@mensaje varchar(255)output 
+AS
+BEGIN
+
+DECLARE @FAR_TIPMOV INT
+DECLARE @FAR_CODCIA CHAR(2)
+DECLARE @FAR_NUMSER CHAR(3)
+DECLARE @FAR_FBG CHAR(1)
+DECLARE @FAR_CODCLIE NUMERIC(8,0)
+DECLARE @FAR_NUMFAC NUMERIC(9,0)
+DECLARE @FAR_NUMSEC INT
+DECLARE @FAR_FECHA DATETIME = CONVERT (date, GETDATE())
+DECLARE @FAR_NUMOPER INT
+DECLARE @FAR_CODART NUMERIC(8,1)
+DECLARE @FAR_ESTADO CHAR(1)
+DECLARE @FAR_SIGNO_ARM INT
+DECLARE @FAR_PRECIO NUMERIC(13,1)
+DECLARE @FAR_COSPRO NUMERIC(13,1)
+DECLARE @FAR_EQUIV NUMERIC(11,1)
+DECLARE @FAR_NUMSER_C CHAR(3)
+DECLARE @FAR_NUMFAC_C NUMERIC(9,1)
+DECLARE @FAR_CANTIDAD NUMERIC(13,1) 
+DECLARE @FAR_DESCRI CHAR(15)
+DECLARE @FAR_FECHA_PRO DATETIME = CONVERT (date, GETDATE())
+DECLARE @FAR_FECHA_COMPRA DATETIME = CONVERT (date, GETDATE())
+DECLARE @FAR_FLAG_SO CHAR(1)
+DECLARE @FAR_TRANSITO  CHAR(1)
+DECLARE @FAR_NUMOPER2 INT
+DECLARE @FAR_CONCEPTO CHAR(60)
+DECLARE @FAR_CODUSU CHAR(10)
+DECLARE @FAR_SERGUIA SMALLINT
+DECLARE @FAR_NUMGUIA NUMERIC(9,0)
+DECLARE @FAR_BRUTO  NUMERIC(11,4)
+DECLARE @FAR_DIAS INT
+DECLARE @FAR_STOCK INT
+DECLARE @FAR_IMPTO NUMERIC(11,4)
+DECLARE @FAR_TOT_DESCTO NUMERIC(11,4)
+DECLARE @FAR_DESCTO NUMERIC(11,4)
+DECLARE @FAR_GASTOS NUMERIC(11,4)
+DECLARE @FAR_MONEDA CHAR(1)
+DECLARE @ALL_NETO NUMERIC(11,4)
+DECLARE @DataGUIA TABLE(
+					ARM_CODART NUMERIC(8,1),
+					ART_NOMBRE CHAR(15),
+					PRE_PRE1 NUMERIC(11,4),
+					PRE_UNIDAD CHAR(20),
+					LOT_NROLOTE	VARCHAR(20),
+					LOT_FECHA_VCTO DATETIME,
+					STOCK NUMERIC(13,4),
+					TOTAL NUMERIC(13,4)
+					)
+SET @FAR_TIPMOV = 6
+SET @FAR_CODCIA = '25'
+SET @FAR_NUMSER	= '1'
+SET @FAR_FBG = ''
+SET @FAR_NUMOPER = 6
+SET @FAR_CODCLIE = 0
+SET @FAR_ESTADO = 'N'
+SET @FAR_NUMGUIA = '0'
+SET @FAR_DIAS = 0
+SET @FAR_SIGNO_ARM = '1'
+SET @FAR_STOCK = 0
+SET @FAR_IMPTO = 0
+SET @FAR_TOT_DESCTO = 0
+SET @FAR_DESCTO = 0
+SET @FAR_GASTOS = 0
+SET @FAR_CONCEPTO = CASE WHEN @LOCAL = 2 THEN 'TRASLADO PMEZA CIERRE TEMP - GUIA INGRESO' WHEN @LOCAL = 3 THEN 'TRASLADO PMEZA CIERRE TEMP - GUIA INGRESO' ELSE 'TRASLADO PMEZA CIERRE TEMP - GUIA INGRESO' END
+SET @FAR_MONEDA = 'S'     
+SET @FAR_NUMFAC = (SELECT MAX(ALL_NUMFAC)+1 FROM DBO.allog WHERE ALL_TIPMOV = @FAR_TIPMOV AND ALL_CODCIA = @FAR_CODCIA AND ALL_NUMSER = @FAR_NUMSER)
+SET @FAR_NUMOPER = (SELECT MAX(ALL_NUMOPER)+1 FROM DBO.ALLOG WHERE ALL_FECHA_DIA=CONVERT (date, GETDATE()))
+
+--------------------------------------------------
+------- CREAR G/S EN ALLOG -----------------------
+--------------------------------------------------
+INSERT INTO dbo.ALLOG(ALL_CODCIA,ALL_FECHA_DIA, ALL_NUMOPER, ALL_CODTRA, ALL_FLAG_EXT, ALL_CODCLIE, ALL_CODART, 
+ALL_IMPORTE_AMORT,ALL_IMPORTE, ALL_CHESER, ALL_SECUENCIA, ALL_IMPORTE_DOLL, ALL_CODUSU, ALL_PRECIO, ALL_CODVEN, ALL_FBG, 
+ALL_CP, ALL_TIPDOC, ALL_CANTIDAD, ALL_NUMGUIA, ALL_CODBAN, ALL_AUTOCON, ALL_CHENUM, ALL_CHESEC, 
+ALL_NUMSER, ALL_NUMFAC, ALL_FECHA_VCTO, ALL_NETO, ALL_BRUTO, 
+ALL_GASTOS, ALL_IMPTO, ALL_DESCTO, ALL_MONEDA_CAJA, ALL_MONEDA_CCM, ALL_MONEDA_CLI, ALL_NUMDOC, ALL_LIMCRE_ANT, ALL_LIMCRE_ACT, ALL_TIPO_BLOQ_ANT, ALL_TIPO_BLOQ_ACT, 
+ALL_CANT_CHEQ, ALL_NUM_INI, ALL_NUM_OPER2, ALL_SIGNO_ARM, ALL_CODTRA_EXT, ALL_SIGNO_CCM, ALL_SIGNO_CAR, 
+ALL_SIGNO_CAJA,ALL_TIPMOV, ALL_NUMSER_C, ALL_NUMFAC_C, ALL_SERDOC, ALL_TIPO_CAMBIO, ALL_FLETE, ALL_SUBTRA, ALL_HORA, 
+ALL_FACART, ALL_CONCEPTO, ALL_NUMOPER2, ALL_FECHA_ANT, ALL_SITUACION, ALL_FECHA_SUNAT, ALL_FLAG_SO, ALL_IMPG1, ALL_IMPG2, 
+ALL_CTAG1, ALL_CTAG2, ALL_CODSUNAT, ALL_FECHA_PRO, ALL_FECHA_CAN, ALL_SERIE_REC, ALL_NUM_RECIBO, ALL_RUC, 
+ALL_CC, ALL_ZONACC, ALL_CODCAJ)
+SELECT  @FAR_CODCIA,@FAR_FECHA,@FAR_NUMOPER,2406,'',@FAR_CODCLIE,0,sum(PRE_PRE1*REQ_CANT),
+0,'i_c',0,1,'ADMIN',0,0,''
+,'','',sum(REQ_CANT),0,0,'Ingreso a Botica:REQUERI.WEB',0,0,
+@FAR_NUMSER,@FAR_NUMFAC,@FAR_FECHA,sum(PRE_PRE1*REQ_CANT),sum(PRE_PRE1*REQ_CANT),
+0,0,0,'S','','S',0,0,0,NULL,NULL,
+0,NULL,0,-1,2403,0,0, 0,@FAR_TIPMOV,0,0,0,3.55,0,'Ingreso a Botica',
+GETDATE(),'','REQUERIMIENTO',@FAR_NUMOPER,@FAR_FECHA,'',@FAR_FECHA,'',0,0,'','',3,@FAR_FECHA,@FAR_FECHA,
+0,0,'',0,0,0
+FROM 
+dbo.REQUERIMIENTO AS T4
+INNER JOIN dbo.PRECIOS AS T5 ON(T4.REQ_CODART=T5.PRE_CODART AND T4.REQ_EQUIV=T5.PRE_EQUIV)
+WHERE REQ_LOCAL = @LOCAL and REQ_CANT > 0
+group by REQ_LOCAL
+order BY REQ_LOCAL
+
+SET @ALL_NETO = (SELECT ALL_NETO FROM dbo.ALLOG WHERE ALL_CODCIA=@FAR_CODCIA AND ALL_FECHA_DIA = @FAR_FECHA AND ALL_NUMOPER = @FAR_NUMOPER)
+
+--------------------------------------------------
+------- CREAR G/S EN FACART ----------------------
+--------------------------------------------------
+INSERT INTO dbo.FACART(FAR_TIPMOV, FAR_CODCIA, FAR_NUMSER, FAR_FBG, FAR_NUMFAC, FAR_NUMSEC, FAR_FECHA, FAR_NUMOPER, FAR_CODCLIE, 
+FAR_CODART, FAR_TRANSITO, FAR_ESTADO, FAR_NUMGUIA, FAR_DIAS, FAR_SIGNO_ARM, FAR_PRECIO, FAR_STOCK, FAR_COSPRO, FAR_IMPTO, FAR_TOT_DESCTO, FAR_DESCTO, 
+FAR_GASTOS, FAR_BRUTO, FAR_EQUIV, FAR_PRECIO_NETO, FAR_FECHA_COMPRA, FAR_NUM_LOTE, FAR_CANTIDAD, FAR_SIGNO_LOT, FAR_CONCEPTO, FAR_COD_SUNAT, 
+FAR_DESCRI, FAR_SUBTRA, FAR_CODUSU, FAR_MONEDA, FAR_COSPRO_ANT, FAR_HORA, /**/
+FAR_CANTIDAD_P, FAR_NUMOPER2, FAR_FECHA_PRO, FAR_FECHA_CAN, FAR_SUBTOTAL, 
+FAR_CODLOT, FAR_EX_IGV, FAR_SERGUIA, FAR_ESTADO2, FAR_FLAG_SO)
+SELECT @FAR_TIPMOV,@FAR_CODCIA,@FAR_NUMSER,@FAR_FBG,@FAR_NUMFAC,ROW_NUMBER() OVER( ORDER BY @FAR_TIPMOV),@FAR_FECHA,@FAR_NUMOPER,@FAR_CODCLIE,
+REQ_CODART,'',@FAR_ESTADO,@FAR_NUMGUIA,@FAR_DIAS,@FAR_SIGNO_ARM,PRE_PRE1,ARM_STOCK,ARM_COSPRO,@FAR_IMPTO,@FAR_TOT_DESCTO,@FAR_DESCTO,
+@FAR_GASTOS,@ALL_NETO,REQ_EQUIV,PRE_PRE1,@FAR_FECHA,1,REQ_CANT,0,@FAR_CONCEPTO,3,
+PRE_UNIDAD,Cast(@FAR_CONCEPTO as varchar(20)),'ADMIN',@FAR_MONEDA,ARM_COSPRO,CONVERT(CHAR(8),GETDATE(),108),/**/
+REQ_CANT,@FAR_NUMOPER,@FAR_FECHA,@FAR_FECHA,(PRE_PRE1*REQ_CANT),
+'(*)','A',0,'N','X'
+FROM dbo.REQUERIMIENTO AS T1
+  INNER JOIN dbo.ARTICULO AS T2 ON(T1.REQ_CODART=T2.ARM_CODART)
+  INNER JOIN dbo.PRECIOS AS T3 ON(T1.REQ_CODART=T3.PRE_CODART AND T1.REQ_EQUIV=T3.PRE_EQUIV)
+WHERE REQ_LOCAL = @LOCAL and REQ_CANT > 0
+
+
+--------------------------------------------------
+------- ACTUALIZA STOCK EN ARTICULO --------------
+--------------------------------------------------
+UPDATE A
+SET
+    A.ARM_STOCK =  A.ARM_STOCK + (R.REQ_CANT),
+    A.ARM_INGRESOS = A.ARM_INGRESOS + (R.REQ_CANT),
+    A.ARM_SALDO_S = A.ARM_SALDO_S + (R.REQ_CANT)
+FROM dbo.ARTICULO AS A
+INNER JOIN dbo.REQUERIMIENTO AS R ON (R.REQ_CODART=A.ARM_CODART)
+WHERE REQ_LOCAL = @LOCAL and REQ_CANT > 0 
+
+
+--------------------------------------------------
+------- ACTUALIZA STOCK EN LOTE ------------------
+--------------------------------------------------
+UPDATE L
+SET L.LOT_SALDOS = L.LOT_SALDOS + (R.REQ_CANT)
+FROM dbo.LOTE AS L
+INNER JOIN dbo.REQUERIMIENTO AS R ON (R.REQ_CODART=L.LOT_CODART)
+WHERE REQ_LOCAL = @LOCAL and REQ_CANT > 0
+
+
+
+--------------------------------------------------
+------- ELIMINA REQUERIMIENT ATENDIDO ------------
+--------------------------------------------------
+DELETE FROM dbo.REQUERIMIENTO 
+WHERE  REQ_LOCAL = @LOCAL and REQ_CANT > 0 
+
+
+SET @mensaje =RTRIM(LTRIM(@FAR_CONCEPTO))+'|'+RTRIM(LTRIM(@FAR_NUMSER))+'|'+RTRIM(LTRIM(CONVERT(VARCHAR(30),@FAR_NUMFAC)))+'|'+RTRIM(LTRIM(CONVERT(VARCHAR(30),@FAR_NUMOPER)))
+
+END
+
+
+
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[sp_crea_guias_salida] 
+	@LOCAL INT, 
+	@mensaje varchar(255)output 
+AS
+BEGIN
+
+DECLARE @FAR_TIPMOV INT
+DECLARE @FAR_CODCIA CHAR(2)
+DECLARE @FAR_NUMSER CHAR(3)
+DECLARE @FAR_FBG CHAR(1)
+DECLARE @FAR_CODCLIE NUMERIC(8,0)
+DECLARE @FAR_NUMFAC NUMERIC(9,0)
+DECLARE @FAR_NUMSEC INT
+DECLARE @FAR_FECHA DATETIME = CONVERT (date, GETDATE())
+DECLARE @FAR_NUMOPER INT
+DECLARE @FAR_CODART NUMERIC(8,1)
+DECLARE @FAR_ESTADO CHAR(1)
+DECLARE @FAR_SIGNO_ARM INT
+DECLARE @FAR_PRECIO NUMERIC(13,1)
+DECLARE @FAR_COSPRO NUMERIC(13,1)
+DECLARE @FAR_EQUIV NUMERIC(11,1)
+DECLARE @FAR_NUMSER_C CHAR(3)
+DECLARE @FAR_NUMFAC_C NUMERIC(9,1)
+DECLARE @FAR_CANTIDAD NUMERIC(13,1) 
+DECLARE @FAR_DESCRI CHAR(15)
+DECLARE @FAR_FECHA_PRO DATETIME = CONVERT (date, GETDATE())
+DECLARE @FAR_FECHA_COMPRA DATETIME = CONVERT (date, GETDATE())
+DECLARE @FAR_FLAG_SO CHAR(1)
+DECLARE @FAR_TRANSITO  CHAR(1)
+DECLARE @FAR_NUMOPER2 INT
+DECLARE @FAR_CONCEPTO CHAR(60)
+DECLARE @FAR_CODUSU CHAR(10)
+DECLARE @FAR_SERGUIA SMALLINT
+DECLARE @FAR_NUMGUIA NUMERIC(9,0)
+DECLARE @FAR_BRUTO  NUMERIC(11,4)
+DECLARE @FAR_DIAS INT
+DECLARE @FAR_STOCK INT
+DECLARE @FAR_IMPTO NUMERIC(11,4)
+DECLARE @FAR_TOT_DESCTO NUMERIC(11,4)
+DECLARE @FAR_DESCTO NUMERIC(11,4)
+DECLARE @FAR_GASTOS NUMERIC(11,4)
+DECLARE @FAR_MONEDA CHAR(1)
+DECLARE @ALL_NETO NUMERIC(11,4)
+DECLARE @DataGUIA TABLE(
+					ARM_CODART NUMERIC(8,1),
+					ART_NOMBRE CHAR(15),
+					PRE_PRE1 NUMERIC(11,4),
+					PRE_UNIDAD CHAR(20),
+					LOT_NROLOTE	VARCHAR(20),
+					LOT_FECHA_VCTO DATETIME,
+					STOCK NUMERIC(13,4),
+					TOTAL NUMERIC(13,4)
+					)
+SET @FAR_TIPMOV = 5
+SET @FAR_CODCIA = '25'
+SET @FAR_NUMSER	= '4'
+SET @FAR_FBG = ''
+SET @FAR_NUMOPER = 6
+SET @FAR_CODCLIE = 0
+SET @FAR_ESTADO = 'N'
+SET @FAR_NUMGUIA = '0'
+SET @FAR_DIAS = 0
+SET @FAR_SIGNO_ARM = '-1'
+SET @FAR_STOCK = 0
+SET @FAR_IMPTO = 0
+SET @FAR_TOT_DESCTO = 0
+SET @FAR_DESCTO = 0
+SET @FAR_GASTOS = 0
+SET @FAR_CONCEPTO = CASE WHEN @LOCAL = 2 THEN 'REQ.GUIA SALIDA JUANJUICILLO' WHEN @LOCAL = 3 THEN 'REQ.GUIA SALIDA P.MEZA' ELSE 'GUIA SALIDA' END
+SET @FAR_MONEDA = 'S'     
+SET @FAR_NUMFAC = (SELECT MAX(ALL_NUMFAC)+1 FROM DBO.allog WHERE ALL_TIPMOV = @FAR_TIPMOV AND ALL_CODCIA = @FAR_CODCIA AND ALL_NUMSER = @FAR_NUMSER)
+SET @FAR_NUMOPER = (SELECT MAX(ALL_NUMOPER)+1 FROM DBO.ALLOG WHERE ALL_FECHA_DIA=CONVERT (date, GETDATE()))
+
+--------------------------------------------------
+------- CREAR G/S EN ALLOG -----------------------
+--------------------------------------------------
+INSERT INTO dbo.ALLOG(ALL_CODCIA,ALL_FECHA_DIA, ALL_NUMOPER, ALL_CODTRA, ALL_FLAG_EXT, ALL_CODCLIE, ALL_CODART, 
+ALL_IMPORTE_AMORT,ALL_IMPORTE, ALL_CHESER, ALL_SECUENCIA, ALL_IMPORTE_DOLL, ALL_CODUSU, ALL_PRECIO, ALL_CODVEN, ALL_FBG, 
+ALL_CP, ALL_TIPDOC, ALL_CANTIDAD, ALL_NUMGUIA, ALL_CODBAN, ALL_AUTOCON, ALL_CHENUM, ALL_CHESEC, 
+ALL_NUMSER, ALL_NUMFAC, ALL_FECHA_VCTO, ALL_NETO, ALL_BRUTO, 
+ALL_GASTOS, ALL_IMPTO, ALL_DESCTO, ALL_MONEDA_CAJA, ALL_MONEDA_CCM, ALL_MONEDA_CLI, ALL_NUMDOC, ALL_LIMCRE_ANT, ALL_LIMCRE_ACT, ALL_TIPO_BLOQ_ANT, ALL_TIPO_BLOQ_ACT, 
+ALL_CANT_CHEQ, ALL_NUM_INI, ALL_NUM_OPER2, ALL_SIGNO_ARM, ALL_CODTRA_EXT, ALL_SIGNO_CCM, ALL_SIGNO_CAR, 
+ALL_SIGNO_CAJA,ALL_TIPMOV, ALL_NUMSER_C, ALL_NUMFAC_C, ALL_SERDOC, ALL_TIPO_CAMBIO, ALL_FLETE, ALL_SUBTRA, ALL_HORA, 
+ALL_FACART, ALL_CONCEPTO, ALL_NUMOPER2, ALL_FECHA_ANT, ALL_SITUACION, ALL_FECHA_SUNAT, ALL_FLAG_SO, ALL_IMPG1, ALL_IMPG2, 
+ALL_CTAG1, ALL_CTAG2, ALL_CODSUNAT, ALL_FECHA_PRO, ALL_FECHA_CAN, ALL_SERIE_REC, ALL_NUM_RECIBO, ALL_RUC, 
+ALL_CC, ALL_ZONACC, ALL_CODCAJ)
+SELECT  @FAR_CODCIA,@FAR_FECHA,@FAR_NUMOPER,2406,'',@FAR_CODCLIE,0,sum(PRE_PRE1*REQ_CANT/REQ_EQUIV),
+0,'i_c',0,1,'ADMIN',0,0,''
+,'','',sum(REQ_CANT),0,0,'Salida a Botica:REQUERI.WEB',0,0,
+@FAR_NUMSER,@FAR_NUMFAC,@FAR_FECHA,sum(PRE_PRE1*REQ_CANT/REQ_EQUIV),sum(PRE_PRE1*REQ_CANT/REQ_EQUIV),
+0,0,0,'S','','S',0,0,0,NULL,NULL,
+0,NULL,0,-1,2406,0,0, 0,@FAR_TIPMOV,0,0,0,3.55,0,'Salida a Botica',
+GETDATE(),'','REQUERIMIENTO',@FAR_NUMOPER,@FAR_FECHA,'',@FAR_FECHA,'',0,0,'','',3,@FAR_FECHA,@FAR_FECHA,
+0,0,'',0,0,0
+FROM 
+dbo.REQUERIMIENTO AS T4
+INNER JOIN dbo.PRECIOS AS T5 ON(T4.REQ_CODART=T5.PRE_CODART AND T4.REQ_EQUIV=T5.PRE_EQUIV)
+WHERE REQ_LOCAL = @LOCAL and REQ_CANT > 0
+group by REQ_LOCAL
+order BY REQ_LOCAL
+
+SET @ALL_NETO = (SELECT ALL_NETO FROM dbo.ALLOG WHERE ALL_CODCIA=@FAR_CODCIA AND ALL_FECHA_DIA = @FAR_FECHA AND ALL_NUMOPER = @FAR_NUMOPER)
+
+--------------------------------------------------
+------- CREAR G/S EN FACART ----------------------
+--------------------------------------------------
+INSERT INTO dbo.FACART(FAR_TIPMOV, FAR_CODCIA, FAR_NUMSER, FAR_FBG, FAR_NUMFAC, FAR_NUMSEC, FAR_FECHA, FAR_NUMOPER, FAR_CODCLIE, 
+FAR_CODART, FAR_TRANSITO, FAR_ESTADO, FAR_NUMGUIA, FAR_DIAS, FAR_SIGNO_ARM, FAR_PRECIO, FAR_STOCK, FAR_COSPRO, FAR_IMPTO, FAR_TOT_DESCTO, FAR_DESCTO, 
+FAR_GASTOS, FAR_BRUTO, FAR_EQUIV, FAR_PRECIO_NETO, FAR_FECHA_COMPRA, FAR_NUM_LOTE, FAR_CANTIDAD, FAR_SIGNO_LOT, FAR_CONCEPTO, FAR_COD_SUNAT, 
+FAR_DESCRI, FAR_SUBTRA, FAR_CODUSU, FAR_MONEDA, FAR_COSPRO_ANT, FAR_HORA, /**/
+FAR_CANTIDAD_P, FAR_NUMOPER2, FAR_FECHA_PRO, FAR_FECHA_CAN, FAR_SUBTOTAL, 
+FAR_CODLOT, FAR_EX_IGV, FAR_SERGUIA, FAR_ESTADO2, FAR_FLAG_SO)
+SELECT @FAR_TIPMOV,@FAR_CODCIA,@FAR_NUMSER,@FAR_FBG,@FAR_NUMFAC,ROW_NUMBER() OVER( ORDER BY @FAR_TIPMOV),@FAR_FECHA,@FAR_NUMOPER,@FAR_CODCLIE,
+REQ_CODART,'',@FAR_ESTADO,@FAR_NUMGUIA,@FAR_DIAS,@FAR_SIGNO_ARM,PRE_PRE1,ARM_STOCK,ARM_COSPRO,@FAR_IMPTO,@FAR_TOT_DESCTO,@FAR_DESCTO,
+@FAR_GASTOS,@ALL_NETO,REQ_EQUIV,PRE_PRE1,@FAR_FECHA,1,REQ_CANT,0,@FAR_CONCEPTO,3,
+PRE_UNIDAD,Cast(@FAR_CONCEPTO as varchar(20)),'ADMIN',@FAR_MONEDA,ARM_COSPRO,CONVERT(CHAR(8),GETDATE(),108),/**/
+REQ_CANT,@FAR_NUMOPER,@FAR_FECHA,@FAR_FECHA,(PRE_PRE1*REQ_CANT/REQ_EQUIV),
+'(*)','A',0,'N','X'
+FROM dbo.REQUERIMIENTO AS T1
+  INNER JOIN dbo.ARTICULO AS T2 ON(T1.REQ_CODART=T2.ARM_CODART AND T2.ARM_STOCK>0)
+  INNER JOIN dbo.PRECIOS AS T3 ON(T1.REQ_CODART=T3.PRE_CODART AND T1.REQ_EQUIV=T3.PRE_EQUIV)
+WHERE REQ_LOCAL = @LOCAL and REQ_CANT > 0
+
+
+--------------------------------------------------
+------- ACTUALIZA STOCK EN ARTICULO --------------
+--------------------------------------------------
+UPDATE A
+SET
+    A.ARM_STOCK =  A.ARM_STOCK - (R.REQ_CANT),
+    A.ARM_INGRESOS = A.ARM_INGRESOS - (R.REQ_CANT),
+    A.ARM_SALDO_S = A.ARM_SALDO_S - (R.REQ_CANT)
+FROM dbo.ARTICULO AS A
+INNER JOIN dbo.REQUERIMIENTO AS R ON (R.REQ_CODART=A.ARM_CODART AND A.ARM_STOCK>0)
+WHERE REQ_LOCAL = @LOCAL and REQ_CANT > 0 
+
+
+--------------------------------------------------
+------- ACTUALIZA STOCK EN LOTE ------------------
+--------------------------------------------------
+UPDATE L
+SET L.LOT_SALDOS = L.LOT_SALDOS - (R.REQ_CANT)
+FROM dbo.LOTE AS L
+INNER JOIN dbo.REQUERIMIENTO AS R ON (R.REQ_CODART=L.LOT_CODART AND L.LOT_SALDOS>0)
+WHERE REQ_LOCAL = @LOCAL and REQ_CANT > 0
+
+
+
+--------------------------------------------------
+------- ELIMINA REQUERIMIENT ATENDIDO ------------
+--------------------------------------------------
+DELETE FROM dbo.REQUERIMIENTO 
+WHERE  REQ_LOCAL = @LOCAL and REQ_CANT > 0 
+
+
+SET @mensaje =RTRIM(LTRIM(@FAR_CONCEPTO))+'|'+RTRIM(LTRIM(@FAR_NUMSER))+'|'+RTRIM(LTRIM(CONVERT(VARCHAR(30),@FAR_NUMFAC)))+'|'+RTRIM(LTRIM(CONVERT(VARCHAR(30),@FAR_NUMOPER)))
+
+END
+
+
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[sp_migrar_guia_optimizado]
+    @servidor_origen INT,          -- 1=principal, 2=server02, 3=server03
+    @servidor_destino INT,         -- 1=principal, 2=server02, 3=server03
+    @fecha_origen VARCHAR(10),     -- Fecha DD/MM/YYYY
+    @serie_origen VARCHAR(3),      -- Serie de la guía
+    @factura_origen INT,           -- Número de factura
+    @mensaje_salida VARCHAR(500) OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    -- NO usar SET XACT_ABORT ON; para evitar transacciones distribuidas
+    
+    DECLARE @new_numfac INT;
+    DECLARE @new_numoper INT;
+    DECLARE @TxtLo VARCHAR(50);
+    DECLARE @fec_hoy VARCHAR(10);
+    DECLARE @sql NVARCHAR(MAX);
+    DECLARE @origen_table NVARCHAR(200);
+    DECLARE @destino_table_allog NVARCHAR(200);
+    DECLARE @destino_table_facart NVARCHAR(200);
+    DECLARE @destino_table_stock NVARCHAR(200);
+    DECLARE @existe_guia_origen INT;
+    DECLARE @ya_migrada INT;
+    DECLARE @total_registros INT;
+    DECLARE @rows_affected INT;
+    
+    -- Inicializar variables
+    SET @existe_guia_origen = 0;
+    SET @ya_migrada = 0;
+    SET @total_registros = 0;
+    SET @fec_hoy = CONVERT(VARCHAR(10), GETDATE(), 103);
+    
+    -- Asignar texto del servidor destino
+    SET @TxtLo = CASE @servidor_destino 
+                    WHEN 1 THEN 'PRINCIPAL' 
+                    WHEN 2 THEN 'PEÑAMEZA' 
+                    WHEN 3 THEN 'JUANJUICILLO' 
+                    ELSE 'DESCONOCIDO'
+                 END;
+    
+    BEGIN TRY
+        -- Validaciones existentes...
+        IF @servidor_origen = @servidor_destino
+        BEGIN
+            SET @mensaje_salida = '0_Error: Origen y destino no pueden ser iguales';
+            RETURN;
+        END
+        
+        IF @servidor_origen NOT IN (1, 2, 3) OR @servidor_destino NOT IN (1, 2, 3)
+        BEGIN
+            SET @mensaje_salida = '0_Error: Servidores deben estar entre 1 y 3';
+            RETURN;
+        END
+        
+        -- Determinar tablas de origen y destino
+        SET @origen_table = CASE @servidor_origen
+                               WHEN 1 THEN '[BDATOS].[dbo]'
+                               WHEN 2 THEN '[SERVER02].[BDATOS].[dbo]'
+                               WHEN 3 THEN '[SERVER03].[BDATOS].[dbo]'
+                               ELSE '[BDATOS].[dbo]'
+                            END;
+        
+        SET @destino_table_allog = CASE @servidor_destino
+                                      WHEN 1 THEN '[BDATOS].[dbo].ALLOG'
+                                      WHEN 2 THEN '[SERVER02].[BDATOS].[dbo].ALLOG'
+                                      WHEN 3 THEN '[SERVER03].[BDATOS].[dbo].ALLOG'
+                                      ELSE '[BDATOS].[dbo].ALLOG'
+                                   END;
+        
+        SET @destino_table_facart = CASE @servidor_destino
+                                       WHEN 1 THEN '[BDATOS].[dbo].FACART'
+                                       WHEN 2 THEN '[SERVER02].[BDATOS].[dbo].FACART'
+                                       WHEN 3 THEN '[SERVER03].[BDATOS].[dbo].FACART'
+                                       ELSE '[BDATOS].[dbo].FACART'
+                                    END;
+        
+        SET @destino_table_stock = CASE @servidor_destino
+                                      WHEN 1 THEN '[BDATOS].[dbo].sp_actualiza_stock'
+                                      WHEN 2 THEN '[SERVER02].[BDATOS].[dbo].sp_actualiza_stock'
+                                      WHEN 3 THEN '[SERVER03].[BDATOS].[dbo].sp_actualiza_stock'
+                                      ELSE '[BDATOS].[dbo].sp_actualiza_stock'
+                                   END;
+        
+        -- VALIDACIÓN 1: Verificar si existe la guía en el origen
+        SET @sql = N'
+        SELECT @existe_guia_origen_out = COUNT(*) 
+        FROM ' + @origen_table + '.ALLOG 
+        WHERE ALL_FECHA_PRO = ''' + @fecha_origen + ''' 
+          AND ALL_NUMSER = ''' + @serie_origen + ''' 
+          AND ALL_NUMFAC = ' + CAST(@factura_origen AS NVARCHAR(10)) + '
+          AND ALL_TIPMOV = 5';
+        
+        EXEC sp_executesql @sql, 
+             N'@existe_guia_origen_out INT OUTPUT', 
+             @existe_guia_origen_out = @existe_guia_origen OUTPUT;
+        
+        IF @existe_guia_origen = 0
+        BEGIN
+            SET @mensaje_salida = '0_Error: No existe la guía de salida en el servidor origen';
+            RETURN;
+        END
+        
+        -- VALIDACIÓN 2: Verificar si ya fue migrada
+        SET @sql = N'
+        SELECT @ya_migrada_out = COUNT(*) 
+        FROM ' + @origen_table + '.ALLOG 
+        WHERE ALL_FECHA_PRO = ''' + @fecha_origen + ''' 
+          AND ALL_NUMSER = ''' + @serie_origen + ''' 
+          AND ALL_NUMFAC = ' + CAST(@factura_origen AS NVARCHAR(10)) + '
+          AND ALL_TIPMOV = 5
+          AND ALL_CTAG1 IS NOT NULL 
+          AND ALL_CTAG1 <> 0';
+        
+        EXEC sp_executesql @sql, 
+             N'@ya_migrada_out INT OUTPUT', 
+             @ya_migrada_out = @ya_migrada OUTPUT;
+        
+        IF @ya_migrada > 0
+        BEGIN
+            SET @mensaje_salida = '0_Error: La guía ya fue migrada anteriormente';
+            RETURN;
+        END
+        
+        -- VALIDACIÓN 3: Verificar productos en FACART
+        SET @sql = N'
+        SELECT @total_registros_out = COUNT(*) 
+        FROM ' + @origen_table + '.FACART 
+        WHERE FAR_FECHA = ''' + @fecha_origen + '''
+          AND FAR_NUMSER = ''' + @serie_origen + '''
+          AND FAR_NUMFAC = ' + CAST(@factura_origen AS NVARCHAR(10)) + '
+          AND FAR_TIPMOV = 5';
+        
+        EXEC sp_executesql @sql, 
+             N'@total_registros_out INT OUTPUT', 
+             @total_registros_out = @total_registros OUTPUT;
+        
+        IF @total_registros = 0
+        BEGIN
+            SET @mensaje_salida = '0_Error: No hay productos en la guía de salida para migrar';
+            RETURN;
+        END
+        
+        -- OPERACIONES SIN TRANSACCIONES DISTRIBUIDAS
+        
+        -- 1. Obtener números del destino (operación atómica)
+        SET @sql = N'
+        SELECT 
+            @new_numfac_out = ISNULL((SELECT MAX(ALL_NUMFAC) FROM ' + @destino_table_allog + ' 
+                              WHERE ALL_TIPMOV = 6 AND ALL_CODCIA = ''25'' AND ALL_NUMSER = ''1''), 0) + 1,
+            @new_numoper_out = ISNULL((SELECT MAX(ALL_NUMOPER) FROM ' + @destino_table_allog + ' 
+                              WHERE CONVERT(DATE, ALL_FECHA_DIA, 103) = CONVERT(DATE, GETDATE())), 0) + 1';
+        
+        EXEC sp_executesql @sql, 
+             N'@new_numfac_out INT OUTPUT, @new_numoper_out INT OUTPUT', 
+             @new_numfac_out = @new_numfac OUTPUT, 
+             @new_numoper_out = @new_numoper OUTPUT;
+        
+        IF @new_numfac IS NULL OR @new_numoper IS NULL
+        BEGIN
+            SET @mensaje_salida = '0_Error: No se pudieron obtener números de guía y operación';
+            RETURN;
+        END
+        
+        -- 2. Insertar en ALLOG del destino (con transacción local en servidor destino)
+        SET @sql = N'
+        INSERT INTO ' + @destino_table_allog + ' (
+            ALL_TIPMOV, ALL_CODCIA, ALL_NUMSER, ALL_NUMFAC, ALL_FECHA_DIA, 
+            ALL_NUMOPER, ALL_SIGNO_ARM, ALL_IMPORTE_AMORT, ALL_NETO, ALL_BRUTO,
+            ALL_CONCEPTO, ALL_SUBTRA, ALL_CODUSU, ALL_NUMOPER2, ALL_FECHA_PRO,
+            ALL_FECHA_SUNAT, ALL_FECHA_CAN, ALL_CODTRA, ALL_CODTRA_EXT, ALL_CHESER,
+            ALL_CODSUNAT, ALL_CANTIDAD, ALL_AUTOCON,
+            ALL_FECHA_VCTO, ALL_NUMSER_C, ALL_NUMFAC_C
+        )
+        SELECT 
+            6, ''25'', ''1'', ' + CAST(@new_numfac AS NVARCHAR(10)) + ', ''' + @fec_hoy + ''',
+            ' + CAST(@new_numoper AS NVARCHAR(10)) + ', 1, SUM(F.FAR_BRUTO), SUM(F.FAR_BRUTO), SUM(F.FAR_BRUTO),
+            ''INGRESO A MEDINAFARMA - ' + @TxtLo + ' G/R ' + @serie_origen + '-' + CAST(@factura_origen AS VARCHAR(10)) + ''',
+            ''MIGRACION SP'', ''ADMIN'', ' + CAST(@new_numoper AS NVARCHAR(10)) + ', ''' + @fec_hoy + ''', ''' + @fec_hoy + ''', ''' + @fec_hoy + ''',
+            2403, 2403, ''i_c'', 3, SUM(F.FAR_CANTIDAD),
+            ''MIGRACION SP : INGRESO A MEDINAFARMA - ' + @TxtLo + ' G/R ' + @serie_origen + '-' + CAST(@factura_origen AS VARCHAR(10)) + ''',
+            ''' + @fec_hoy + ''', 0, 0
+        FROM ' + @origen_table + '.FACART F
+        WHERE F.FAR_FECHA = ''' + @fecha_origen + '''
+          AND F.FAR_NUMSER = ''' + @serie_origen + '''
+          AND F.FAR_NUMFAC = ' + CAST(@factura_origen AS NVARCHAR(10)) + '
+          AND F.FAR_TIPMOV = 5';
+
+        EXEC sp_executesql @sql;
+        SET @rows_affected = @@ROWCOUNT;
+        
+        IF @rows_affected = 0
+        BEGIN
+            SET @mensaje_salida = '0_Error: No se pudo insertar en ALLOG destino';
+            RETURN;
+        END
+        
+        -- 3. Insertar en FACART del destino (operación atómica)
+        SET @sql = N'
+        INSERT INTO ' + @destino_table_facart + ' (
+            FAR_TIPMOV, FAR_CODCIA, FAR_NUMSER, FAR_FBG, FAR_NUMFAC, FAR_NUMSEC, FAR_FECHA, 
+            FAR_NUMOPER, FAR_CODCLIE, FAR_CODART, FAR_ESTADO, FAR_DIAS, FAR_SIGNO_ARM, 
+            FAR_PRECIO, FAR_STOCK, FAR_COSPRO, FAR_IMPTO, FAR_TOT_DESCTO, FAR_DESCTO, FAR_GASTOS, 
+            FAR_BRUTO, FAR_EQUIV, FAR_PORDESCTO1, FAR_TIPO_CAMBIO, FAR_NUMSER_C, FAR_NUMFAC_C, 
+            FAR_NUMDOC, FAR_LIMCRE_ANT, FAR_LIMCRE_ACT, FAR_KEY_DIRCLI, FAR_PRECIO_NETO, 
+            FAR_CODVEN, FAR_UNIDADES, FAR_LITRO, FAR_FECHA_COMPRA, FAR_NUM_LOTE, FAR_CANTIDAD, 
+            FAR_SIGNO_LOT, FAR_CONCEPTO, FAR_COD_SUNAT, FAR_DESCRI, FAR_PESO, FAR_EX_IGV, 
+            FAR_NUM_PRECIO, FAR_SUBTRA, FAR_CODUSU, FAR_COSPRO_ANT, FAR_HORA, FAR_CANTIDAD_P, 
+            FAR_TURNO, FAR_ESTADO2, FAR_FLAG_SO, FAR_NUMOPER2, FAR_FECHA_PRO, FAR_FECHA_CAN, 
+            FAR_SUBTOTAL, FAR_CODLOT, FAR_TRANSITO
+        )
+        SELECT 
+            6, ''25'', ''1'', '' '', ' + CAST(@new_numfac AS NVARCHAR(10)) + ', F.FAR_NUMSEC, ''' + @fec_hoy + ''',
+            ' + CAST(@new_numoper AS NVARCHAR(10)) + ', 0, F.FAR_CODART, ''N'', 0, 1,
+            F.FAR_PRECIO, 0, F.FAR_COSPRO, 0, 0, 0, 0,
+            F.FAR_BRUTO, F.FAR_EQUIV, 0, 0, 0, 0,
+            0, 0, 0, 0, 0,
+            0, 0, 0, ''' + @fec_hoy + ''', F.FAR_NUM_LOTE, F.FAR_CANTIDAD,
+            0, ''INGRESO A MEDINAFARMA - ' + @TxtLo + ' G/R ' + @serie_origen + '-' + CAST(@factura_origen AS VARCHAR(10)) + ''', 
+            3, F.FAR_DESCRI, F.FAR_PESO, ''A'',
+            0, ''MIGRACION SP'', ''ADMIN'', F.FAR_COSPRO_ANT, F.FAR_HORA, F.FAR_CANTIDAD_P,
+            F.FAR_TURNO, ''N'', ''X'', ' + CAST(@new_numoper AS NVARCHAR(10)) + ', ''' + @fec_hoy + ''', ''' + @fec_hoy + ''',
+            F.FAR_SUBTOTAL, ''(*)'', '' ''
+        FROM ' + @origen_table + '.FACART F
+        WHERE F.FAR_FECHA = ''' + @fecha_origen + '''
+          AND F.FAR_NUMSER = ''' + @serie_origen + '''
+          AND F.FAR_NUMFAC = ' + CAST(@factura_origen AS NVARCHAR(10)) + '
+          AND F.FAR_TIPMOV = 5';
+        
+        EXEC sp_executesql @sql;
+        SET @rows_affected = @@ROWCOUNT;
+        
+        IF @rows_affected = 0
+        BEGIN
+            SET @mensaje_salida = '0_Error: No se pudieron insertar productos en FACART destino';
+            RETURN;
+        END
+        
+        -- 4. Actualizar stock en el destino
+        SET @sql = N'EXEC ' + @destino_table_stock + ' 6, ''25'', ''1'', ' + 
+                  CAST(@new_numfac AS NVARCHAR(10)) + ', ''' + @fec_hoy + ''', ' + CAST(@new_numoper AS NVARCHAR(10));
+        
+        EXEC sp_executesql @sql;
+        
+        -- 5. Marcar como migrada en el origen (operación final)
+        SET @sql = N'
+        UPDATE ' + @origen_table + '.ALLOG 
+        SET ALL_CTAG1 = ' + CAST(@new_numfac AS NVARCHAR(10)) + '
+        WHERE ALL_FECHA_PRO = ''' + @fecha_origen + ''' 
+          AND ALL_NUMSER = ''' + @serie_origen + ''' 
+          AND ALL_NUMFAC = ' + CAST(@factura_origen AS NVARCHAR(10)) + '
+          AND ALL_TIPMOV = 5';
+        
+        EXEC sp_executesql @sql;
+        SET @rows_affected = @@ROWCOUNT;
+        
+        IF @rows_affected = 0
+        BEGIN
+            SET @mensaje_salida = '0_Error: No se pudo marcar como migrada en el origen';
+            RETURN;
+        END
+        
+        -- Éxito
+        SET @mensaje_salida = '1_' + CAST(@new_numfac AS VARCHAR(10)) + '_Migrada exitosamente desde ' + 
+                             CASE @servidor_origen WHEN 1 THEN 'PRINCIPAL' WHEN 2 THEN 'PEÑAMEZA' WHEN 3 THEN 'JUANJUICILLO' ELSE 'DESCONOCIDO' END +
+                             ' hacia ' + @TxtLo + ' (' + CAST(@rows_affected AS VARCHAR(10)) + ' reg procesados)';
+                             
+    END TRY
+    BEGIN CATCH
+        SET @mensaje_salida = '0_Error: ' + ERROR_MESSAGE() + ' (Línea: ' + CAST(ERROR_LINE() AS VARCHAR(10)) + ')';
+    END CATCH
+END
+
+
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE dbo.sp_actualiza_stock
+@TIPMOV int,
+@CODCIA char(2),
+@NUMSER char(3),
+@NUMFAC numeric(9, 0),
+@FECHA varchar(10),
+@NUMOPER int
+AS
+BEGIN
+
+DECLARE @DataGUIA TABLE(
+  FAR_CODCIA char(2),
+  FAR_CODART numeric(8,0),
+  FAR_PRECIO numeric(13,4),
+  FAR_EQUIV numeric(11,2),
+  FAR_CANTIDAD numeric(13,4)  
+)
+
+INSERT INTO @DataGUIA (FAR_CODCIA,FAR_CODART,FAR_PRECIO,FAR_EQUIV,FAR_CANTIDAD)
+(SELECT FAR_CODCIA,FAR_CODART,FAR_PRECIO,FAR_EQUIV,FAR_CANTIDAD
+FROM dbo.FACART
+WHERE FAR_TIPMOV = @TIPMOV AND FAR_CODCIA = @CODCIA AND FAR_NUMSER = @NUMSER AND 
+FAR_NUMFAC = @NUMFAC AND FAR_FECHA = @FECHA)
+
+--------------------------------------------------
+------- ACTUALIZA STOCK EN GUIA FACART -----------
+--------------------------------------------------
+
+UPDATE F
+SET F.FAR_STOCK = T.ARM_STOCK
+FROM dbo.FACART AS F
+INNER JOIN dbo.ARTICULO AS T ON(T.ARM_CODCIA = @CODCIA AND T.ARM_CODART = F.FAR_CODART)
+WHERE F.FAR_TIPMOV = @TIPMOV AND F.FAR_CODCIA = @CODCIA AND F.FAR_NUMSER = @NUMSER AND 
+F.FAR_NUMFAC = @NUMFAC AND F.FAR_FECHA = @FECHA;
+
+--------------------------------------------------
+------- ACTUALIZA STOCK EN ARTICULO --------------
+--------------------------------------------------
+UPDATE A
+SET
+    A.ARM_STOCK = A.ARM_STOCK + (D.FAR_CANTIDAD),
+    A.ARM_INGRESOS = A.ARM_INGRESOS+(D.FAR_CANTIDAD),
+    A.ARM_SALDO_S = A.ARM_SALDO_S+(D.FAR_CANTIDAD)
+FROM dbo.ARTICULO AS A
+INNER JOIN @DataGUIA AS D ON (A.ARM_CODCIA = @CODCIA AND A.ARM_CODART = D.FAR_CODART);
+
+--------------------------------------------------
+------- ACTUALIZA STOCK EN LOTE ------------------
+--------------------------------------------------
+
+INSERT INTO dbo.LOTE (LOT_CODCIA, LOT_CODART, LOT_NROLOTE,LOT_CODCLIE,LOT_FECHA_VCTO,LOT_SALDOS)
+SELECT @CODCIA, FAR_CODART, '(*)',0,GETDATE(),0
+  FROM @DataGUIA 
+    WHERE FAR_CODART NOT IN(SELECT LOT_CODART FROM dbo.LOTE);
+
+UPDATE L
+SET L.LOT_SALDOS = L.LOT_SALDOS + (G.FAR_CANTIDAD)
+FROM dbo.LOTE AS L
+INNER JOIN @DataGUIA AS G ON (L.LOT_CODCIA = @CODCIA AND L.LOT_CODART = G.FAR_CODART);
+
+--------------------------------------------------
+------- ACTUALIZA SITUACION EN ARTI --------------
+--------------------------------------------------
+UPDATE AA
+SET
+    AA.ART_SITUACION = 0
+FROM dbo.ARTI AS AA
+INNER JOIN @DataGUIA AS H ON (AA.ART_CODCIA = @CODCIA AND AA.ART_KEY = H.FAR_CODART);
+
+
+--SET @mensaje='FINAL DE STORED PROCEDURE :'+ CONVERT(varchar(12), @NUMFAC) 
+END

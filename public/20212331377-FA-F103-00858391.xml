@@ -1,0 +1,401 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2" xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2" xmlns:ccts="urn:un:unece:uncefact:documentation:2" xmlns:cts="urn:carvajal:names:specification:ubl:peru:schema:xsd:CarvajalAggregateComponents-1" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:ext="urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<ext:UBLExtensions>
+		<ext:UBLExtension>
+			<ext:ExtensionContent>
+				<cts:AdditionalDocumentInformation>
+					<cts:Header>
+						<cts:TaxAuthorityResolutionNumber>4062460000115</cts:TaxAuthorityResolutionNumber>
+						<cts:IDRecept>20557409921</cts:IDRecept>
+						<cts:isCancel>0</cts:isCancel>
+						<cts:PDFTemplate>F0050</cts:PDFTemplate>
+						<cts:AdditionalProperty>
+							<cts:ID>0010</cts:ID>
+							<cts:Value>SOMOS AGENTES DE RETENCION DEL IGV R.S. 174-2005</cts:Value>
+						</cts:AdditionalProperty>
+						<cts:AdditionalProperty>
+							<cts:ID>0002</cts:ID>
+							<cts:Value>CONTADO</cts:Value>
+						</cts:AdditionalProperty>
+						<cts:AdditionalProperty>
+							<cts:ID>0003</cts:ID>
+							<cts:Value>0273</cts:Value>
+						</cts:AdditionalProperty>
+						<cts:AdditionalProperty>
+							<cts:ID>0004</cts:ID>
+							<cts:Value>0029406</cts:Value>
+						</cts:AdditionalProperty>
+						<cts:AdditionalProperty>
+							<cts:ID>9901</cts:ID>
+							<cts:Value>4481548</cts:Value>
+						</cts:AdditionalProperty>
+						<cts:AdditionalProperty>
+							<cts:ID>0006</cts:ID>
+							<cts:Value>4062460000115</cts:Value>
+						</cts:AdditionalProperty>
+						<cts:AdditionalProperty>
+							<cts:ID>0500</cts:ID>
+							<cts:Value>Por la compra de 08 botellas Epson T504X20-AL gratis una botella negra T504120</cts:Value>
+						</cts:AdditionalProperty>
+						<cts:AdditionalProperty>
+							<cts:ID>0501</cts:ID>
+							<cts:Value>Forma de Entrega : LLEVAR A PROVINCIA POR AG. TRANSPORTE Agencia : AREQUIPA EXPRESO MARVISUR E.</cts:Value>
+						</cts:AdditionalProperty>
+						<cts:AdditionalProperty>
+							<cts:ID>0502</cts:ID>
+							<cts:Value>. Hora Estimada : 00:00:00</cts:Value>
+						</cts:AdditionalProperty>
+						<cts:AdditionalProperty>
+							<cts:ID>0503</cts:ID>
+							<cts:Value>LLEVAR MERCADERIA - PROVINCIA</cts:Value>
+						</cts:AdditionalProperty>
+					</cts:Header>
+				</cts:AdditionalDocumentInformation>
+			</ext:ExtensionContent>
+		</ext:UBLExtension>
+		<ext:UBLExtension>
+			<ext:ExtensionContent>
+				<Signature xmlns="http://www.w3.org/2000/09/xmldsig#" Id="SignatureSP">
+					<SignedInfo>
+						<CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/>
+						<SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/>
+						<Reference URI="">
+							<Transforms>
+								<Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/>
+							</Transforms>
+							<DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
+							<DigestValue>4AeWJuWJz0zpHu7r4Z71zcm9qe4=</DigestValue>
+						</Reference>
+					</SignedInfo>
+					<SignatureValue>L/z54rugsjyiLnZLD4GsOQuk9bS2v9Z+9j47yfieZFNT/5/d7efAS7ihoOWYGKWP5KGQYau8F0w4&#xD;
+9JUKZpKk8MXsXLBndNTssnv1sYVmfntRZgNxVFyGLa6VVuFZeRACqWixhRkOLe8moMF2XDKIoTv3&#xD;
+0pvyuxT/Q+Chp2iQwEEDm0W/2tXcmoPpgy3q/8FZBfT+57alb1cqn+htPw2EOEzReVQiLpmDfblV&#xD;
+2ZglUzZVZ3D2g+JQlH84+kTgxph5EP79g2rV18QqrwRzMkCZvsmPtz3mwSwZpe+hzr7tkcCrynjS&#xD;
+zBCUl8hEgmcvrPuYccZYHC3JSXymUflk9Zi81Q==</SignatureValue>
+					<KeyInfo>
+						<X509Data>
+							<X509SubjectName>1.2.840.113549.1.9.1=#161e76697267696e69612e677565727265726f4063617276616a616c2e636f6d,CN=VIRGINIA ANGELICA GUERRERO CERNA,OU=DNI 07530389,OU=RUC 20505779291,OU=Validated by ZyTrust Sociedad Anónima,O=CARVAJAL TECNOLOGIA Y SERVICIOS S.A.C.,L=LIMA,C=PE</X509SubjectName>
+							<X509Certificate>MIIGSjCCBTKgAwIBAgITMwAAUSEy8alrAzLekgAAAABRITANBgkqhkiG9w0BAQsFADCBkjELMAkG&#xD;
+A1UEBhMCQ0gxEDAOBgNVBAoTB1dJU2VLZXkxJjAkBgNVBAsTHUNvcHlyaWdodCAoYykgMjAxNiBX&#xD;
+SVNlS2V5IFNBMRYwFAYDVQQLEw1JbnRlcm5hdGlvbmFsMTEwLwYDVQQDEyhXSVNlS2V5IENlcnRp&#xD;
+ZnlJRCBBZHZhbmNlZCBTZXJ2aWNlcyBDQSA0MB4XDTIxMDUyMTE0MjAzMFoXDTI0MDUyMDE0MjAz&#xD;
+MFowggEJMQswCQYDVQQGEwJQRTENMAsGA1UEBxMETElNQTEvMC0GA1UEChMmQ0FSVkFKQUwgVEVD&#xD;
+Tk9MT0dJQSBZIFNFUlZJQ0lPUyBTLkEuQy4xLzAtBgNVBAsMJlZhbGlkYXRlZCBieSBaeVRydXN0&#xD;
+IFNvY2llZGFkIEFuw7NuaW1hMRgwFgYDVQQLEw9SVUMgMjA1MDU3NzkyOTExFTATBgNVBAsTDERO&#xD;
+SSAwNzUzMDM4OTEpMCcGA1UEAxMgVklSR0lOSUEgQU5HRUxJQ0EgR1VFUlJFUk8gQ0VSTkExLTAr&#xD;
+BgkqhkiG9w0BCQEWHnZpcmdpbmlhLmd1ZXJyZXJvQGNhcnZhamFsLmNvbTCCASIwDQYJKoZIhvcN&#xD;
+AQEBBQADggEPADCCAQoCggEBAL1LSh8cMRNuBVqbCiEX9F2BgyiOtZx8IrPmImFnIiwZN1tF6QcS&#xD;
+Xatmgxh1er1btNhulFjCZZk/S+0to1/o+bzrUvcDvsg1VdagGBzEpXta8Zt7Dka5N3PaebZPSYI6&#xD;
+X9Wkfw4w/xEnFjLNGr9RSONfEUCpJ+yWcJgb0KxM+EuYimrAskgDLcWteVV2w1Sz8I3k6I56q9jl&#xD;
+5N8eSAftuXXa7CNAHPGXLF961Cg/RkDjKTQRLLwU7oh7U4wwme8lf8qnI3u8fEf1U8mLEmLoZoT3&#xD;
+wTZT0ZR5/hHssrHLYdoPWEWxUdfrUK0qjc+nrXMV4aGA7PcNv/782J8QeJljGP0CAwEAAaOCAh0w&#xD;
+ggIZMB0GA1UdDgQWBBSW3+n5nxeSUeFsVfHllsVfCDl46jAOBgNVHQ8BAf8EBAMCBsAwHwYDVR0j&#xD;
+BBgwFoAU9OSbV9Kuwp6ITQC6K69lyWOph5swPAYDVR0fBDUwMzAxoC+gLYYraHR0cDovL3B1Ymxp&#xD;
+Yy53aXNla2V5LmNvbS9jcmwvd2NpZGFzY2E0LmNybDBtBggrBgEFBQcBAQRhMF8wNwYIKwYBBQUH&#xD;
+MAKGK2h0dHA6Ly9wdWJsaWMud2lzZWtleS5jb20vY3J0L3djaWRhc2NhNC5jcnQwJAYIKwYBBQUH&#xD;
+MAGGGGh0dHA6Ly9vY3NwLndpc2VrZXkuY29tLzApBgNVHSUEIjAgBggrBgEFBQcDAgYKKwYBBAGC&#xD;
+NwoDDAYIKwYBBQUHAwQwNQYJKwYBBAGCNxUKBCgwJjAKBggrBgEFBQcDAjAMBgorBgEEAYI3CgMM&#xD;
+MAoGCCsGAQUFBwMEMCkGA1UdEQQiMCCBHnZpcmdpbmlhLmd1ZXJyZXJvQGNhcnZhamFsLmNvbTBE&#xD;
+BgkqhkiG9w0BCQ8ENzA1MA4GCCqGSIb3DQMCAgIAgDAOBggqhkiG9w0DBAICAIAwBwYFKw4DAgcw&#xD;
+CgYIKoZIhvcNAwcwRwYDVR0gBEAwPjA8BghghXQFDggBATAwMC4GCCsGAQUFBwIBFiJodHRwOi8v&#xD;
+d3d3Lndpc2VrZXkuY29tL3JlcG9zaXRvcnkvMA0GCSqGSIb3DQEBCwUAA4IBAQBOWN+bGBli2hCX&#xD;
+Jd29RJ/a/1ahqdcWkPStYjH3b8Zr/NLpMBcWeYBHqWtnPT5oB3EdF7LoIZoTaprMoEow/KTjTGYi&#xD;
+wILizHEnGmGMqSgzFNetR+S0w0VcGcNBAuxPbQc6zd5FPt+hR0fOzVjVUu25Bq+VdqNafhQaOcDH&#xD;
++evA51a+bxkB5lEgnB8FOzQz2A0VtEdEwQDMD5gEggAkRrjwGujqwvExw59jk8+a/mrRbIuqcQJ4&#xD;
+JyIeiwoA35ZMYY+WEz4TlAHesRobu3MO9VEp3RtXttXHo0sEQDn927S2i/VSX0mkE/QaeKFnIrvJ&#xD;
+MdMRcW//1GMeCfdWgAKbRD30</X509Certificate>
+						</X509Data>
+					</KeyInfo>
+				</Signature>
+			</ext:ExtensionContent>
+		</ext:UBLExtension>
+	</ext:UBLExtensions>
+	<cbc:UBLVersionID>2.1</cbc:UBLVersionID>
+	<cbc:CustomizationID schemeAgencyName="PE:SUNAT">2.0</cbc:CustomizationID>
+	<cbc:ID>F103-00858391</cbc:ID>
+	<cbc:IssueDate>2024-04-12</cbc:IssueDate>
+	<cbc:IssueTime>11:46:07</cbc:IssueTime>
+	<cbc:DueDate>2024-04-12</cbc:DueDate>
+	<cbc:InvoiceTypeCode listAgencyName="PE:SUNAT" listID="0101" listName="Tipo de Documento" listSchemeURI="urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo51" listURI="urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo01" name="Tipo de Operacion">01</cbc:InvoiceTypeCode>
+	<cbc:Note languageLocaleID="1000">CIENTO CINCUENTA  Y NUEVE  Y 98/100 DOLARES AMERICANOS.</cbc:Note>
+	<cbc:DocumentCurrencyCode listAgencyName="United Nations Economic Commission for Europe" listID="ISO 4217 Alpha" listName="Currency">USD</cbc:DocumentCurrencyCode>
+	<cac:Signature>
+		<cbc:ID>SignatureSP</cbc:ID>
+		<cac:SignatoryParty>
+			<cac:PartyIdentification>
+				<cbc:ID>20505779291</cbc:ID>
+			</cac:PartyIdentification>
+			<cac:PartyName>
+				<cbc:Name>CARVAJAL TECNOLOGIA Y SERVICIOS S.A.C.</cbc:Name>
+			</cac:PartyName>
+		</cac:SignatoryParty>
+		<cac:DigitalSignatureAttachment>
+			<cac:ExternalReference>
+				<cbc:URI>#SignatureSP</cbc:URI>
+			</cac:ExternalReference>
+		</cac:DigitalSignatureAttachment>
+	</cac:Signature>
+	
+	<cac:AccountingSupplierParty>
+		<cac:Party>
+			<cac:PartyIdentification>
+				<cbc:ID schemeAgencyName="PE:SUNAT" schemeID="6" schemeName="Documento de Identidad" schemeURI="urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo06">20212331377</cbc:ID>
+			</cac:PartyIdentification>
+			<cac:PartyName>
+				<cbc:Name>DELTRON</cbc:Name>
+			</cac:PartyName>
+			<cac:PartyLegalEntity>
+				<cbc:RegistrationName>GRUPO DELTRON S.A.</cbc:RegistrationName>
+				<cac:RegistrationAddress>
+					<cbc:ID schemeAgencyName="PE:INEI" schemeName="Ubigeos">150115</cbc:ID>
+					<cbc:AddressTypeCode listAgencyName="PE:SUNAT" listName="Establecimientos anexos">0000</cbc:AddressTypeCode>
+					<cbc:CitySubdivisionName>SANTA CATALINA</cbc:CitySubdivisionName>
+					<cbc:CityName>LIMA</cbc:CityName>
+					<cbc:CountrySubentity>LIMA</cbc:CountrySubentity>
+					<cbc:District>LA VICTORIA</cbc:District>
+					<cac:AddressLine>
+						<cbc:Line>CALLE RAUL REBAGLIATI 170 URB SANTA CATALINA LA VICTORIA</cbc:Line>
+					</cac:AddressLine>
+					<cac:Country>
+						<cbc:IdentificationCode listAgencyName="United Nations Economic Commission for Europe" listID="ISO 3166-1" listName="Country">PE</cbc:IdentificationCode>
+						</cac:Country>
+				</cac:RegistrationAddress>
+			</cac:PartyLegalEntity>
+		</cac:Party>
+	</cac:AccountingSupplierParty>
+	
+	<cac:AccountingCustomerParty>
+		<cac:Party>
+			<cac:PartyIdentification>
+				<cbc:ID schemeAgencyName="PE:SUNAT" schemeID="6" schemeName="Documento de Identidad" schemeURI="urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo06">20557409921</cbc:ID>
+			</cac:PartyIdentification>
+			<cac:PartyLegalEntity>
+				<cbc:RegistrationName>SALYM TECHNOLOGIES E.I.R.L.</cbc:RegistrationName>
+				<cac:RegistrationAddress>
+					<cbc:ID schemeAgencyName="PE:INEI" schemeName="Ubigeos">150117</cbc:ID>
+					<cbc:CityName>LIMA</cbc:CityName>
+					<cbc:CountrySubentity>LIMA</cbc:CountrySubentity>
+					<cbc:District>LOS OLIVOS</cbc:District>
+					<cac:AddressLine>
+						<cbc:Line>CALL. VINCHAY NRO. 4946 URB. PARQUE NARANJAL. LOS OLIVOS - LIMA</cbc:Line>
+					</cac:AddressLine>
+					<cac:Country>
+						<cbc:IdentificationCode listAgencyName="United Nations Economic Commission for Europe" listID="ISO 3166-1" listName="Country">PE</cbc:IdentificationCode>
+					</cac:Country>
+				</cac:RegistrationAddress>
+			</cac:PartyLegalEntity>
+			<cac:Contact>
+				<cbc:ElectronicMail>PEREZVILLALTA@GMAIL.COM;xpand@deltron.com.pe</cbc:ElectronicMail>
+			</cac:Contact>
+		</cac:Party>
+	</cac:AccountingCustomerParty>
+	
+	<cac:BuyerCustomerParty/>
+	<cac:PaymentTerms>
+		<cbc:ID>FormaPago</cbc:ID>
+		<cbc:PaymentMeansID>Contado</cbc:PaymentMeansID>
+	</cac:PaymentTerms>
+	<cac:TaxTotal>
+		<cbc:TaxAmount currencyID="USD">24.40</cbc:TaxAmount>
+		<cac:TaxSubtotal>
+			<cbc:TaxableAmount currencyID="USD">135.58</cbc:TaxableAmount>
+			<cbc:TaxAmount currencyID="USD">24.40</cbc:TaxAmount>
+			<cac:TaxCategory>
+				<cac:TaxScheme>
+					<cbc:ID schemeAgencyName="PE:SUNAT" schemeName="Codigo de tributos" schemeURI="urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo05">1000</cbc:ID>
+					<cbc:Name>IGV</cbc:Name>
+					<cbc:TaxTypeCode>VAT</cbc:TaxTypeCode>
+				</cac:TaxScheme>
+			</cac:TaxCategory>
+		</cac:TaxSubtotal>
+	</cac:TaxTotal>
+	<cac:LegalMonetaryTotal>
+		<cbc:LineExtensionAmount currencyID="USD">135.58</cbc:LineExtensionAmount>
+		<cbc:TaxInclusiveAmount currencyID="USD">159.98</cbc:TaxInclusiveAmount>
+		<cbc:ChargeTotalAmount currencyID="USD">0.00</cbc:ChargeTotalAmount>
+		<cbc:PayableAmount currencyID="USD">159.98</cbc:PayableAmount>
+	</cac:LegalMonetaryTotal>
+	
+	<cac:InvoiceLine>
+		<cbc:ID>1</cbc:ID>
+		<cbc:InvoicedQuantity unitCode="NIU" unitCodeListAgencyName="United Nations Economic Commission for Europe" unitCodeListID="UN/ECE rec 20">2</cbc:InvoicedQuantity>
+		<cbc:LineExtensionAmount currencyID="USD">33.96</cbc:LineExtensionAmount>
+		<cac:PricingReference>
+			<cac:AlternativeConditionPrice>
+				<cbc:PriceAmount currencyID="USD">20.04</cbc:PriceAmount>
+				<cbc:PriceTypeCode listAgencyName="PE:SUNAT" listName="Tipo de Precio" listURI="urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo16">01</cbc:PriceTypeCode>
+			</cac:AlternativeConditionPrice>
+		</cac:PricingReference>
+		<cac:TaxTotal>
+			<cbc:TaxAmount currencyID="USD">6.11</cbc:TaxAmount>
+			<cac:TaxSubtotal>
+				<cbc:TaxableAmount currencyID="USD">33.96</cbc:TaxableAmount>
+				<cbc:TaxAmount currencyID="USD">6.11</cbc:TaxAmount>
+				<cac:TaxCategory>
+					<cbc:Percent>18</cbc:Percent>
+					<cbc:TaxExemptionReasonCode listAgencyName="PE:SUNAT" listName="Afectacion del IGV" listURI="urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo07">10</cbc:TaxExemptionReasonCode>
+					<cac:TaxScheme>
+						<cbc:ID schemeAgencyName="PE:SUNAT" schemeName="Codigo de tributos" schemeURI="urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo05">1000</cbc:ID>
+						<cbc:Name>IGV</cbc:Name>
+						<cbc:TaxTypeCode>VAT</cbc:TaxTypeCode>
+					</cac:TaxScheme>
+				</cac:TaxCategory>
+			</cac:TaxSubtotal>
+		</cac:TaxTotal>
+		<cac:Item>
+			<cbc:Description>MEM SODIMM TG 8GB 1600 1.35V</cbc:Description>
+			<cac:SellersItemIdentification>
+				<cbc:ID>ME8TGTED3L8G160</cbc:ID>
+			</cac:SellersItemIdentification>
+		</cac:Item>
+		<cac:Price>
+			<cbc:PriceAmount currencyID="USD">16.98</cbc:PriceAmount>
+		</cac:Price>
+	</cac:InvoiceLine>
+	<cac:InvoiceLine>
+		<cbc:ID>2</cbc:ID>
+		<cbc:InvoicedQuantity unitCode="NIU" unitCodeListAgencyName="United Nations Economic Commission for Europe" unitCodeListID="UN/ECE rec 20">2</cbc:InvoicedQuantity>
+		<cbc:LineExtensionAmount currencyID="USD">15.16</cbc:LineExtensionAmount>
+		<cac:PricingReference>
+			<cac:AlternativeConditionPrice>
+				<cbc:PriceAmount currencyID="USD">8.94</cbc:PriceAmount>
+				<cbc:PriceTypeCode listAgencyName="PE:SUNAT" listName="Tipo de Precio" listURI="urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo16">01</cbc:PriceTypeCode>
+			</cac:AlternativeConditionPrice>
+		</cac:PricingReference>
+		<cac:TaxTotal>
+			<cbc:TaxAmount currencyID="USD">2.73</cbc:TaxAmount>
+			<cac:TaxSubtotal>
+				<cbc:TaxableAmount currencyID="USD">15.16</cbc:TaxableAmount>
+				<cbc:TaxAmount currencyID="USD">2.73</cbc:TaxAmount>
+				<cac:TaxCategory>
+					<cbc:Percent>18</cbc:Percent>
+					<cbc:TaxExemptionReasonCode listAgencyName="PE:SUNAT" listName="Afectacion del IGV" listURI="urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo07">10</cbc:TaxExemptionReasonCode>
+					<cac:TaxScheme>
+						<cbc:ID schemeAgencyName="PE:SUNAT" schemeName="Codigo de tributos" schemeURI="urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo05">1000</cbc:ID>
+						<cbc:Name>IGV</cbc:Name>
+						<cbc:TaxTypeCode>VAT</cbc:TaxTypeCode>
+					</cac:TaxScheme>
+				</cac:TaxCategory>
+			</cac:TaxSubtotal>
+		</cac:TaxTotal>
+		<cac:Item>
+			<cbc:Description>TINTA EPSON AMARILLA T504</cbc:Description>
+			<cac:SellersItemIdentification>
+				<cbc:ID>STEPT504420</cbc:ID>
+			</cac:SellersItemIdentification>
+		</cac:Item>
+		<cac:Price>
+			<cbc:PriceAmount currencyID="USD">7.58</cbc:PriceAmount>
+		</cac:Price>
+	</cac:InvoiceLine>
+	<cac:InvoiceLine>
+		<cbc:ID>3</cbc:ID>
+		<cbc:InvoicedQuantity unitCode="NIU" unitCodeListAgencyName="United Nations Economic Commission for Europe" unitCodeListID="UN/ECE rec 20">2</cbc:InvoicedQuantity>
+		<cbc:LineExtensionAmount currencyID="USD">15.16</cbc:LineExtensionAmount>
+		<cac:PricingReference>
+			<cac:AlternativeConditionPrice>
+				<cbc:PriceAmount currencyID="USD">8.94</cbc:PriceAmount>
+				<cbc:PriceTypeCode listAgencyName="PE:SUNAT" listName="Tipo de Precio" listURI="urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo16">01</cbc:PriceTypeCode>
+			</cac:AlternativeConditionPrice>
+		</cac:PricingReference>
+		<cac:TaxTotal>
+			<cbc:TaxAmount currencyID="USD">2.73</cbc:TaxAmount>
+			<cac:TaxSubtotal>
+				<cbc:TaxableAmount currencyID="USD">15.16</cbc:TaxableAmount>
+				<cbc:TaxAmount currencyID="USD">2.73</cbc:TaxAmount>
+				<cac:TaxCategory>
+					<cbc:Percent>18</cbc:Percent>
+					<cbc:TaxExemptionReasonCode listAgencyName="PE:SUNAT" listName="Afectacion del IGV" listURI="urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo07">10</cbc:TaxExemptionReasonCode>
+					<cac:TaxScheme>
+						<cbc:ID schemeAgencyName="PE:SUNAT" schemeName="Codigo de tributos" schemeURI="urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo05">1000</cbc:ID>
+						<cbc:Name>IGV</cbc:Name>
+						<cbc:TaxTypeCode>VAT</cbc:TaxTypeCode>
+					</cac:TaxScheme>
+				</cac:TaxCategory>
+			</cac:TaxSubtotal>
+		</cac:TaxTotal>
+		<cac:Item>
+			<cbc:Description>TINTA EPSON CYAN BOTELLA T504</cbc:Description>
+			<cac:SellersItemIdentification>
+				<cbc:ID>STEPT504220</cbc:ID>
+			</cac:SellersItemIdentification>
+		</cac:Item>
+		<cac:Price>
+			<cbc:PriceAmount currencyID="USD">7.58</cbc:PriceAmount>
+		</cac:Price>
+	</cac:InvoiceLine>
+	<cac:InvoiceLine>
+		<cbc:ID>4</cbc:ID>
+		<cbc:InvoicedQuantity unitCode="NIU" unitCodeListAgencyName="United Nations Economic Commission for Europe" unitCodeListID="UN/ECE rec 20">5</cbc:InvoicedQuantity>
+		<cbc:LineExtensionAmount currencyID="USD">32.50</cbc:LineExtensionAmount>
+		<cac:PricingReference>
+			<cac:AlternativeConditionPrice>
+				<cbc:PriceAmount currencyID="USD">7.67</cbc:PriceAmount>
+				<cbc:PriceTypeCode listAgencyName="PE:SUNAT" listName="Tipo de Precio" listURI="urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo16">01</cbc:PriceTypeCode>
+			</cac:AlternativeConditionPrice>
+		</cac:PricingReference>
+		<cac:TaxTotal>
+			<cbc:TaxAmount currencyID="USD">5.85</cbc:TaxAmount>
+			<cac:TaxSubtotal>
+				<cbc:TaxableAmount currencyID="USD">32.50</cbc:TaxableAmount>
+				<cbc:TaxAmount currencyID="USD">5.85</cbc:TaxAmount>
+				<cac:TaxCategory>
+					<cbc:Percent>18</cbc:Percent>
+					<cbc:TaxExemptionReasonCode listAgencyName="PE:SUNAT" listName="Afectacion del IGV" listURI="urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo07">10</cbc:TaxExemptionReasonCode>
+					<cac:TaxScheme>
+						<cbc:ID schemeAgencyName="PE:SUNAT" schemeName="Codigo de tributos" schemeURI="urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo05">1000</cbc:ID>
+						<cbc:Name>IGV</cbc:Name>
+						<cbc:TaxTypeCode>VAT</cbc:TaxTypeCode>
+					</cac:TaxScheme>
+				</cac:TaxCategory>
+			</cac:TaxSubtotal>
+		</cac:TaxTotal>
+		<cac:Item>
+			<cbc:Description>TINTA EPSON NEGRA BOTELLA T504</cbc:Description>
+			<cac:SellersItemIdentification>
+				<cbc:ID>STEPT504120</cbc:ID>
+			</cac:SellersItemIdentification>
+		</cac:Item>
+		<cac:Price>
+			<cbc:PriceAmount currencyID="USD">6.50</cbc:PriceAmount>
+		</cac:Price>
+	</cac:InvoiceLine>
+	<cac:InvoiceLine>
+		<cbc:ID>5</cbc:ID>
+		<cbc:InvoicedQuantity unitCode="NIU" unitCodeListAgencyName="United Nations Economic Commission for Europe" unitCodeListID="UN/ECE rec 20">2</cbc:InvoicedQuantity>
+		<cbc:LineExtensionAmount currencyID="USD">38.80</cbc:LineExtensionAmount>
+		<cac:PricingReference>
+			<cac:AlternativeConditionPrice>
+				<cbc:PriceAmount currencyID="USD">22.89</cbc:PriceAmount>
+				<cbc:PriceTypeCode listAgencyName="PE:SUNAT" listName="Tipo de Precio" listURI="urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo16">01</cbc:PriceTypeCode>
+			</cac:AlternativeConditionPrice>
+		</cac:PricingReference>
+		<cac:TaxTotal>
+			<cbc:TaxAmount currencyID="USD">6.98</cbc:TaxAmount>
+			<cac:TaxSubtotal>
+				<cbc:TaxableAmount currencyID="USD">38.80</cbc:TaxableAmount>
+				<cbc:TaxAmount currencyID="USD">6.98</cbc:TaxAmount>
+				<cac:TaxCategory>
+					<cbc:Percent>18</cbc:Percent>
+					<cbc:TaxExemptionReasonCode listAgencyName="PE:SUNAT" listName="Afectacion del IGV" listURI="urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo07">10</cbc:TaxExemptionReasonCode>
+					<cac:TaxScheme>
+						<cbc:ID schemeAgencyName="PE:SUNAT" schemeName="Codigo de tributos" schemeURI="urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo05">1000</cbc:ID>
+						<cbc:Name>IGV</cbc:Name>
+						<cbc:TaxTypeCode>VAT</cbc:TaxTypeCode>
+					</cac:TaxScheme>
+				</cac:TaxCategory>
+			</cac:TaxSubtotal>
+		</cac:TaxTotal>
+		<cac:Item>
+			<cbc:Description>SSD TG 256GB CX2 SATA3 2.5''</cbc:Description>
+			<cac:SellersItemIdentification>
+				<cbc:ID>SSDTGT253X6256G</cbc:ID>
+			</cac:SellersItemIdentification>
+		</cac:Item>
+		<cac:Price>
+			<cbc:PriceAmount currencyID="USD">19.40</cbc:PriceAmount>
+		</cac:Price>
+	</cac:InvoiceLine>
+	
+	
+</Invoice>

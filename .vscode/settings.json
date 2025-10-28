@@ -1,0 +1,6 @@
+{
+    "fontAwesomeAutocomplete.insertionTemplate": {
+        
+        "**/*.html": "{style} {prefix}{name}"
+    }
+}

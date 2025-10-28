@@ -1,0 +1,2381 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2" xmlns:sac="urn:sunat:names:specification:ubl:peru:schema:xsd:SunatAggregateComponents-1" xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2" xmlns:udt="urn:un:unece:uncefact:data:specification:UnqualifiedDataTypesSchemaModule:2" xmlns:ccts="urn:un:unece:uncefact:documentation:2" xmlns:ext="urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2" xmlns:qdt="urn:oasis:names:specification:ubl:schema:xsd:QualifiedDatatypes-2" xmlns:ds="http://www.w3.org/2000/09/xmldsig#"   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+<ext:UBLExtensions>
+
+<ext:UBLExtension>
+
+<ext:ExtensionContent>
+
+<ds:Signature Id="SF003-1636095-240618141554"><ds:SignedInfo><ds:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/><ds:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/><ds:Reference URI=""><ds:Transforms><ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/></ds:Transforms><ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/><ds:DigestValue>QHhcXvOFyVhDHLy2WFq2380WEAY=</ds:DigestValue></ds:Reference></ds:SignedInfo><ds:SignatureValue>pF0Pv5IG1dTH4N3RGxG9hsERo0/N5diDEwDeIJ8pNWkF2YRXy89rXGpF8isff0sCCDYXQZRuznW4
+
+HJbgWPUszIfXnwljyR/Kd5z68wiEoSQG1Zvqszt9mV1oMas00cfYAYEAM0iZgpHo+bSb8sOF9tdP
+
+gkVF7kRZuI0dUSmsX0EfmDUMm83dRNxl5Xr8Geu4GLaLj/ZSPMD/RtGmdn+ka8keiikwAlX+RX7D
+
+OXDdXUy3VHDJNlqlnVRnHVIGiIYMatLKJGekdNIw5HKhhYozfaba95RwcAjqUSPC6HTJujvyiFfS
+
+BmJm52VU+oQ6+dT6bxg6sk1q/+rvUpiCtAzZqw==</ds:SignatureValue><ds:KeyInfo><ds:X509Data><ds:X509Certificate>MIIGHTCCBQWgAwIBAgITMwAAWoQTKApfyf3PpgAAAABahDANBgkqhkiG9w0BAQsFADCBkjELMAkG
+
+A1UEBhMCQ0gxEDAOBgNVBAoTB1dJU2VLZXkxJjAkBgNVBAsTHUNvcHlyaWdodCAoYykgMjAxNiBX
+
+SVNlS2V5IFNBMRYwFAYDVQQLEw1JbnRlcm5hdGlvbmFsMTEwLwYDVQQDEyhXSVNlS2V5IENlcnRp
+
+ZnlJRCBBZHZhbmNlZCBTZXJ2aWNlcyBDQSA0MB4XDTIyMDIwMzIyMDEzMFoXDTI1MDIwMjIyMDEz
+
+MFowgeYxCzAJBgNVBAYTAlBFMQ0wCwYDVQQHEwRMSU1BMSQwIgYDVQQKExtSRVBSRVNFTlRBQ0lP
+
+TkVTIERFQ08gUy5BLkMxLzAtBgNVBAsMJlZhbGlkYXRlZCBieSBaeVRydXN0IFNvY2llZGFkIEFu
+
+w7NuaW1hMRQwEgYDVQQLEwsyMDEwMDA2MTQ3NDERMA8GA1UECxMINDI2Njk2NDcxIjAgBgNVBAMT
+
+GUpVQU4gSk9TRSBTVU4gSEFOIEtPQ0NISVUxJDAiBgkqhkiG9w0BCQEWFWpqc3VuaGFuQGRlY29w
+
+ZXJ1LmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAPAkbVHVw1Rq41Cb6dAXNyc5
+
+Lh3iqXaJE2m5vITrLStP2EbMQA+AsMRmlBGnHCDN86uYa6et2NmsUEOKMZ17ASxf876jR1wQCYj1
+
+e/80iLsPmptPv4PzIMOmzmyUb+7xfBv1FBJnmPbigX2itreWuCE3bJWZ/PxM8oHM3L9e+3ZKhuV4
+
+V/CPorv9RPZ2ALFDvcvlwl+9FbyPTVtBXd7MKjPVHvzai0AkH6+qsLBQ4pUodXcVsZAYNyzcnohj
+
+BGXgCYP/5EybtIdJJa2aldIfzNAFLz5jKQsIY3C2cagmqhuDskN+EJra7R325boSq3XRtiIDuHPn
+
+mmqjHEWElbzIxjECAwEAAaOCAhQwggIQMB0GA1UdDgQWBBShNaNNqwfqxZZkBWs5uzhey5zDOjAO
+
+BgNVHQ8BAf8EBAMCBsAwHwYDVR0jBBgwFoAU9OSbV9Kuwp6ITQC6K69lyWOph5swPAYDVR0fBDUw
+
+MzAxoC+gLYYraHR0cDovL3B1YmxpYy53aXNla2V5LmNvbS9jcmwvd2NpZGFzY2E0LmNybDBtBggr
+
+BgEFBQcBAQRhMF8wNwYIKwYBBQUHMAKGK2h0dHA6Ly9wdWJsaWMud2lzZWtleS5jb20vY3J0L3dj
+
+aWRhc2NhNC5jcnQwJAYIKwYBBQUHMAGGGGh0dHA6Ly9vY3NwLndpc2VrZXkuY29tLzApBgNVHSUE
+
+IjAgBggrBgEFBQcDAgYKKwYBBAGCNwoDDAYIKwYBBQUHAwQwNQYJKwYBBAGCNxUKBCgwJjAKBggr
+
+BgEFBQcDAjAMBgorBgEEAYI3CgMMMAoGCCsGAQUFBwMEMCAGA1UdEQQZMBeBFWpqc3VuaGFuQGRl
+
+Y29wZXJ1LmNvbTBEBgkqhkiG9w0BCQ8ENzA1MA4GCCqGSIb3DQMCAgIAgDAOBggqhkiG9w0DBAIC
+
+AIAwBwYFKw4DAgcwCgYIKoZIhvcNAwcwRwYDVR0gBEAwPjA8BghghXQFDggBATAwMC4GCCsGAQUF
+
+BwIBFiJodHRwOi8vd3d3Lndpc2VrZXkuY29tL3JlcG9zaXRvcnkvMA0GCSqGSIb3DQEBCwUAA4IB
+
+AQCcJXfiGrK4b0GMkF2MHIKy/HdJnkwPzePx16EsWF22f3LZG7TW12WzwZjppDDrbR9AJ0HANQox
+
+/uEKn70hVClkHKZgksz8hbk/QkOEMsjSKtQjpRDzlthgDu0lR++/C9F8G1KWvzer+D6bdfKnTKO6
+
+gEh5KDFyVp8XkgnJ2FArVM2oOktwFZmop6vFLnxnqX2fAnJEHaYuoiI3SnF/15/s0XFyTS9J8EYz
+
+UgRcSJs3GCcwZbzT+U01bnOPy8MQPilGE49McPL+ParJUpgbFnwUTxJL2yVnIeKl1QRUn0GO84xT
+
+zJMy1p09yvLGGUbsvkR3rG2uNfMDRfcnl0eGnU0I</ds:X509Certificate></ds:X509Data></ds:KeyInfo></ds:Signature></ext:ExtensionContent>
+
+</ext:UBLExtension>
+
+<ext:UBLExtension>
+
+<ext:ExtensionContent>
+
+<CustomText>
+
+    <Text name="Impresora"><![CDATA[PRINTFEDECO1]]></Text>
+
+    <Text name="CTACLI"><![CDATA[2581     20240618 14:14]]></Text>
+
+    <Text name="correodist"><![CDATA[medinarojasm@hotmail.com,medinafarmagerencia@gmail.com]]></Text>
+
+    <Text name="NomComer"><![CDATA[INV SAN MARTIN SCRL]]></Text>
+
+    <Text name="Referencia"><![CDATA[MARISCAL CACERES DTO SAN MARTIN JUANJUI]]></Text>
+
+    <Text name="DocInter"><![CDATA[927807]]></Text>
+
+    <Text name="Condicion"><![CDATA[90 LETRA T90]]></Text>
+
+    <Text name="Ruta"><![CDATA[38J]]></Text>
+
+    <Text name="Zona"><![CDATA[65]]></Text>
+
+    <Text name="Vendedor"><![CDATA[CARLOS VALDERA]]></Text>
+
+    <Text name="Hora"><![CDATA[13:51]]></Text>
+
+    <Text name="OrdenCompra"><![CDATA[R65028]]></Text>
+
+    <Text name="TotUni"><![CDATA[172]]></Text>
+
+    <Text name="Telefono"><![CDATA[344-0241]]></Text>
+
+    <Text name="Fax"><![CDATA[344-0207]]></Text>
+
+    <Text name="TOTALPAGAR"><![CDATA[3168.50]]></Text>
+
+    <Text name="FECVCTO"><![CDATA[2024-09-16]]></Text>
+
+    <Text name="PERCEPPORC"><![CDATA[0.00]]></Text>
+
+    <Text name="PuntoLlegada"><![CDATA[JR.HUALLAGA Nro 601 JUANJUI-MRSCAL.CACERES-SAN MARTIN]]></Text>
+
+    <Text name="CodEstSUNAT"><![CDATA[0000]]></Text>
+
+    <Text name="NombreArchivo"><![CDATA[20100061474_01_F003-01636095_20240618.txt]]></Text>
+
+    <Text name="PPLOrigen"><![CDATA[SHF]]></Text>
+
+    <Section name="MensajesDt">
+
+        <Detail>
+
+            <Value><![CDATA[1]]></Value>
+
+            <Value><![CDATA[Somos Agente de Retencion IGV - R.S./037-2002/Sunat]]></Value>
+
+        </Detail>
+
+    </Section>
+
+</CustomText>
+
+</ext:ExtensionContent>
+
+</ext:UBLExtension>
+
+</ext:UBLExtensions>
+
+<cbc:UBLVersionID>2.1</cbc:UBLVersionID>
+
+<cbc:CustomizationID>2.0</cbc:CustomizationID>
+
+<cbc:ID>F003-1636095</cbc:ID>
+
+<cbc:IssueDate>2024-06-18</cbc:IssueDate>
+
+<cbc:DueDate>2024-09-16</cbc:DueDate>
+
+<cbc:InvoiceTypeCode listID="0101">01</cbc:InvoiceTypeCode>
+
+<cbc:Note languageLocaleID="1000"><![CDATA[SON: TRES MIL CIENTO SESENTIOCHO  Y  50/100  SOLES]]></cbc:Note>
+
+<cbc:DocumentCurrencyCode>PEN</cbc:DocumentCurrencyCode>
+
+<cac:OrderReference>
+
+<cbc:ID><![CDATA[R65028]]></cbc:ID>
+
+</cac:OrderReference>
+
+<cac:Signature>
+
+<cbc:ID>SF003-1636095</cbc:ID>
+
+<cac:SignatoryParty>
+
+<cac:PartyIdentification>
+
+<cbc:ID>20100061474</cbc:ID>
+
+</cac:PartyIdentification>
+
+<cac:PartyName>
+
+<cbc:Name><![CDATA[SUNAT]]></cbc:Name>
+
+</cac:PartyName>
+
+</cac:SignatoryParty>
+
+<cac:DigitalSignatureAttachment>
+
+<cac:ExternalReference>
+
+<cbc:URI>SF003-1636095-240618141554</cbc:URI>
+
+</cac:ExternalReference>
+
+</cac:DigitalSignatureAttachment>
+
+</cac:Signature>
+
+<cac:AccountingSupplierParty>
+
+<cac:Party>
+
+<cac:PartyIdentification>
+
+<cbc:ID schemeID="6">20100061474</cbc:ID>
+
+</cac:PartyIdentification>
+
+<cac:PartyName>
+
+<cbc:Name><![CDATA[REPRESENTACIONES DECO S.A.C.]]></cbc:Name>
+
+</cac:PartyName>
+
+<cac:PartyLegalEntity>
+
+<cbc:RegistrationName><![CDATA[REPRESENTACIONES DECO S.A.C.]]></cbc:RegistrationName>
+
+<cac:RegistrationAddress>
+
+<cbc:ID><![CDATA[150140]]></cbc:ID>
+
+<cbc:AddressTypeCode>0000</cbc:AddressTypeCode>
+
+<cbc:CitySubdivisionName><![CDATA[HUERTOS DE SAN ANTONIO]]></cbc:CitySubdivisionName>
+
+<cbc:CityName><![CDATA[LIMA]]></cbc:CityName>
+
+<cbc:CountrySubentity><![CDATA[LIMA]]></cbc:CountrySubentity>
+
+<cbc:District><![CDATA[SANTIAGO DE SURCO]]></cbc:District>
+
+<cac:AddressLine>
+
+<cbc:Line><![CDATA[JIRON ALFRED ROSENBLAT NRO. 145 URB. HUERTOS DE SAN ANTONIO]]></cbc:Line>
+
+</cac:AddressLine>
+
+<cac:Country>
+
+<cbc:IdentificationCode>PE</cbc:IdentificationCode>
+
+</cac:Country>
+
+</cac:RegistrationAddress>
+
+</cac:PartyLegalEntity>
+
+</cac:Party>
+
+</cac:AccountingSupplierParty>
+
+<cac:AccountingCustomerParty>
+
+<cac:Party>
+
+<cac:PartyIdentification>
+
+<cbc:ID schemeID="6">20450337839</cbc:ID>
+
+</cac:PartyIdentification>
+
+<cac:PostalAddress>
+
+<cbc:District><![CDATA[]]></cbc:District>
+
+<cac:AddressLine>
+
+<cbc:Line><![CDATA[JR.HUALLAGA Nro 601 JUANJUI-MRSCAL.CACERES-SAN MARTIN]]></cbc:Line>
+
+</cac:AddressLine>
+
+<cac:Country>
+
+<cbc:IdentificationCode>PE</cbc:IdentificationCode>
+
+</cac:Country>
+
+</cac:PostalAddress>
+
+<cac:PartyLegalEntity>
+
+<cbc:RegistrationName><![CDATA[INV SAN MARTIN SCRL]]></cbc:RegistrationName>
+
+<cac:RegistrationAddress>
+
+<cbc:ID><![CDATA[]]></cbc:ID>
+
+<cac:AddressLine>
+
+<cbc:Line><![CDATA[JR.HUALLAGA Nro 601 JUANJUI-MRSCAL.CACERES-SAN MARTIN]]></cbc:Line>
+
+</cac:AddressLine>
+
+<cac:Country>
+
+<cbc:IdentificationCode>PE</cbc:IdentificationCode>
+
+</cac:Country>
+
+</cac:RegistrationAddress>
+
+</cac:PartyLegalEntity>
+
+</cac:Party>
+
+</cac:AccountingCustomerParty>
+
+<cac:BuyerCustomerParty>
+
+<cac:Party>
+
+<cac:PartyIdentification>
+
+<cbc:ID schemeID="6">20450337839</cbc:ID>
+
+</cac:PartyIdentification>
+
+</cac:Party>
+
+</cac:BuyerCustomerParty>
+
+<cac:PaymentTerms>
+
+<cbc:ID>FormaPago</cbc:ID>
+
+<cbc:PaymentMeansID>Credito</cbc:PaymentMeansID>
+
+<cbc:Amount currencyID="PEN">3168.50</cbc:Amount>
+
+</cac:PaymentTerms>
+
+<cac:PaymentTerms>
+
+<cbc:ID>FormaPago</cbc:ID>
+
+<cbc:PaymentMeansID>Cuota001</cbc:PaymentMeansID>
+
+<cbc:Amount currencyID="PEN">3168.50</cbc:Amount>
+
+<cbc:PaymentDueDate>2024-09-16</cbc:PaymentDueDate>
+
+</cac:PaymentTerms>
+
+<cac:TaxTotal>
+
+<cbc:TaxAmount currencyID="PEN">483.35</cbc:TaxAmount>
+
+<cac:TaxSubtotal>
+
+<cbc:TaxableAmount currencyID="PEN">2685.15</cbc:TaxableAmount>
+
+<cbc:TaxAmount currencyID="PEN">483.35</cbc:TaxAmount>
+
+<cac:TaxCategory>
+
+<cac:TaxScheme>
+
+<cbc:ID>1000</cbc:ID>
+
+<cbc:Name>IGV</cbc:Name>
+
+<cbc:TaxTypeCode>VAT</cbc:TaxTypeCode>
+
+</cac:TaxScheme>
+
+</cac:TaxCategory>
+
+</cac:TaxSubtotal>
+
+<cac:TaxSubtotal>
+
+<cbc:TaxableAmount currencyID="PEN">500.50</cbc:TaxableAmount>
+
+<cbc:TaxAmount currencyID="PEN">0.00</cbc:TaxAmount>
+
+<cac:TaxCategory>
+
+<cac:TaxScheme>
+
+<cbc:ID>9996</cbc:ID>
+
+<cbc:Name>GRA</cbc:Name>
+
+<cbc:TaxTypeCode>FRE</cbc:TaxTypeCode>
+
+</cac:TaxScheme>
+
+</cac:TaxCategory>
+
+</cac:TaxSubtotal>
+
+</cac:TaxTotal>
+
+<cac:LegalMonetaryTotal>
+
+<cbc:LineExtensionAmount currencyID="PEN">2685.15</cbc:LineExtensionAmount>
+
+<cbc:TaxExclusiveAmount currencyID="PEN">483.35</cbc:TaxExclusiveAmount>
+
+<cbc:TaxInclusiveAmount currencyID="PEN">3168.50</cbc:TaxInclusiveAmount>
+
+<cbc:PayableAmount currencyID="PEN">3168.50</cbc:PayableAmount>
+
+</cac:LegalMonetaryTotal>
+
+<cac:InvoiceLine>
+
+<cbc:ID>1</cbc:ID>
+
+<cbc:InvoicedQuantity unitCode="NIU">20.00</cbc:InvoicedQuantity>
+
+<cbc:LineExtensionAmount currencyID="PEN">364.01</cbc:LineExtensionAmount>
+
+<cac:PricingReference>
+
+<cac:AlternativeConditionPrice>
+
+<cbc:PriceAmount currencyID="PEN">21.4765</cbc:PriceAmount>
+
+<cbc:PriceTypeCode>01</cbc:PriceTypeCode>
+
+</cac:AlternativeConditionPrice>
+
+</cac:PricingReference>
+
+<cac:TaxTotal>
+
+<cbc:TaxAmount currencyID="PEN">65.52</cbc:TaxAmount>
+
+<cac:TaxSubtotal>
+
+<cbc:TaxableAmount currencyID="PEN">364.01</cbc:TaxableAmount>
+
+<cbc:TaxAmount currencyID="PEN">65.52</cbc:TaxAmount>
+
+<cac:TaxCategory>
+
+<cbc:ID>S</cbc:ID>
+
+<cbc:Percent>18.00</cbc:Percent>
+
+<cbc:TaxExemptionReasonCode>10</cbc:TaxExemptionReasonCode>
+
+<cac:TaxScheme>
+
+<cbc:ID>1000</cbc:ID>
+
+<cbc:Name>IGV</cbc:Name>
+
+<cbc:TaxTypeCode>VAT</cbc:TaxTypeCode>
+
+</cac:TaxScheme>
+
+</cac:TaxCategory>
+
+</cac:TaxSubtotal>
+
+</cac:TaxTotal>
+
+<cac:Item>
+
+<cbc:Description><![CDATA[SOLUTRES 150ML S/JERIN (   20)2090503          9/2026]]></cbc:Description>
+
+<cac:SellersItemIdentification>
+
+<cbc:ID>65536</cbc:ID>
+
+</cac:SellersItemIdentification>
+
+<cac:CommodityClassification>
+
+<cbc:ItemClassificationCode>51181827</cbc:ItemClassificationCode>
+
+</cac:CommodityClassification>
+
+<cac:AdditionalItemProperty>
+
+<cbc:Name>Gastos Art. 37 Renta:  N�mero de Placa</cbc:Name>
+
+<cbc:NameCode>7000</cbc:NameCode>
+
+<cbc:Value>-</cbc:Value>
+
+</cac:AdditionalItemProperty>
+
+</cac:Item>
+
+<cac:Price>
+
+<cbc:PriceAmount currencyID="PEN">18.2005</cbc:PriceAmount>
+
+</cac:Price>
+
+</cac:InvoiceLine>
+
+<cac:InvoiceLine>
+
+<cbc:ID>2</cbc:ID>
+
+<cbc:InvoicedQuantity unitCode="NIU">2.00</cbc:InvoicedQuantity>
+
+<cbc:LineExtensionAmount currencyID="PEN">137.26</cbc:LineExtensionAmount>
+
+<cac:PricingReference>
+
+<cac:AlternativeConditionPrice>
+
+<cbc:PriceAmount currencyID="PEN">80.985</cbc:PriceAmount>
+
+<cbc:PriceTypeCode>01</cbc:PriceTypeCode>
+
+</cac:AlternativeConditionPrice>
+
+</cac:PricingReference>
+
+<cac:TaxTotal>
+
+<cbc:TaxAmount currencyID="PEN">24.71</cbc:TaxAmount>
+
+<cac:TaxSubtotal>
+
+<cbc:TaxableAmount currencyID="PEN">137.26</cbc:TaxableAmount>
+
+<cbc:TaxAmount currencyID="PEN">24.71</cbc:TaxAmount>
+
+<cac:TaxCategory>
+
+<cbc:ID>S</cbc:ID>
+
+<cbc:Percent>18.00</cbc:Percent>
+
+<cbc:TaxExemptionReasonCode>10</cbc:TaxExemptionReasonCode>
+
+<cac:TaxScheme>
+
+<cbc:ID>1000</cbc:ID>
+
+<cbc:Name>IGV</cbc:Name>
+
+<cbc:TaxTypeCode>VAT</cbc:TaxTypeCode>
+
+</cac:TaxScheme>
+
+</cac:TaxCategory>
+
+</cac:TaxSubtotal>
+
+</cac:TaxTotal>
+
+<cac:Item>
+
+<cbc:Description><![CDATA[LINCOPLUS 600MGx5AMP.  (    2)2060443          6/2026]]></cbc:Description>
+
+<cac:SellersItemIdentification>
+
+<cbc:ID>65076</cbc:ID>
+
+</cac:SellersItemIdentification>
+
+<cac:CommodityClassification>
+
+<cbc:ItemClassificationCode>51101504</cbc:ItemClassificationCode>
+
+</cac:CommodityClassification>
+
+<cac:AdditionalItemProperty>
+
+<cbc:Name>Gastos Art. 37 Renta:  N�mero de Placa</cbc:Name>
+
+<cbc:NameCode>7000</cbc:NameCode>
+
+<cbc:Value>-</cbc:Value>
+
+</cac:AdditionalItemProperty>
+
+</cac:Item>
+
+<cac:Price>
+
+<cbc:PriceAmount currencyID="PEN">68.63</cbc:PriceAmount>
+
+</cac:Price>
+
+</cac:InvoiceLine>
+
+<cac:InvoiceLine>
+
+<cbc:ID>3</cbc:ID>
+
+<cbc:InvoicedQuantity unitCode="NIU">20.00</cbc:InvoicedQuantity>
+
+<cbc:LineExtensionAmount currencyID="PEN">252.27</cbc:LineExtensionAmount>
+
+<cac:PricingReference>
+
+<cac:AlternativeConditionPrice>
+
+<cbc:PriceAmount currencyID="PEN">14.884</cbc:PriceAmount>
+
+<cbc:PriceTypeCode>01</cbc:PriceTypeCode>
+
+</cac:AlternativeConditionPrice>
+
+</cac:PricingReference>
+
+<cac:TaxTotal>
+
+<cbc:TaxAmount currencyID="PEN">45.41</cbc:TaxAmount>
+
+<cac:TaxSubtotal>
+
+<cbc:TaxableAmount currencyID="PEN">252.27</cbc:TaxableAmount>
+
+<cbc:TaxAmount currencyID="PEN">45.41</cbc:TaxAmount>
+
+<cac:TaxCategory>
+
+<cbc:ID>S</cbc:ID>
+
+<cbc:Percent>18.00</cbc:Percent>
+
+<cbc:TaxExemptionReasonCode>10</cbc:TaxExemptionReasonCode>
+
+<cac:TaxScheme>
+
+<cbc:ID>1000</cbc:ID>
+
+<cbc:Name>IGV</cbc:Name>
+
+<cbc:TaxTypeCode>VAT</cbc:TaxTypeCode>
+
+</cac:TaxScheme>
+
+</cac:TaxCategory>
+
+</cac:TaxSubtotal>
+
+</cac:TaxTotal>
+
+<cac:Item>
+
+<cbc:Description><![CDATA[SOLUNA 2ML S/JERINGA   (   20)2080723          8/2026]]></cbc:Description>
+
+<cac:SellersItemIdentification>
+
+<cbc:ID>65527</cbc:ID>
+
+</cac:SellersItemIdentification>
+
+<cac:CommodityClassification>
+
+<cbc:ItemClassificationCode>51181813</cbc:ItemClassificationCode>
+
+</cac:CommodityClassification>
+
+<cac:AdditionalItemProperty>
+
+<cbc:Name>Gastos Art. 37 Renta:  N�mero de Placa</cbc:Name>
+
+<cbc:NameCode>7000</cbc:NameCode>
+
+<cbc:Value>-</cbc:Value>
+
+</cac:AdditionalItemProperty>
+
+</cac:Item>
+
+<cac:Price>
+
+<cbc:PriceAmount currencyID="PEN">12.6135</cbc:PriceAmount>
+
+</cac:Price>
+
+</cac:InvoiceLine>
+
+<cac:InvoiceLine>
+
+<cbc:ID>4</cbc:ID>
+
+<cbc:InvoicedQuantity unitCode="NIU">6.00</cbc:InvoicedQuantity>
+
+<cbc:LineExtensionAmount currencyID="PEN">163.64</cbc:LineExtensionAmount>
+
+<cac:PricingReference>
+
+<cac:AlternativeConditionPrice>
+
+<cbc:PriceAmount currencyID="PEN">32.1833</cbc:PriceAmount>
+
+<cbc:PriceTypeCode>01</cbc:PriceTypeCode>
+
+</cac:AlternativeConditionPrice>
+
+</cac:PricingReference>
+
+<cac:TaxTotal>
+
+<cbc:TaxAmount currencyID="PEN">29.46</cbc:TaxAmount>
+
+<cac:TaxSubtotal>
+
+<cbc:TaxableAmount currencyID="PEN">163.64</cbc:TaxableAmount>
+
+<cbc:TaxAmount currencyID="PEN">29.46</cbc:TaxAmount>
+
+<cac:TaxCategory>
+
+<cbc:ID>S</cbc:ID>
+
+<cbc:Percent>18.00</cbc:Percent>
+
+<cbc:TaxExemptionReasonCode>10</cbc:TaxExemptionReasonCode>
+
+<cac:TaxScheme>
+
+<cbc:ID>1000</cbc:ID>
+
+<cbc:Name>IGV</cbc:Name>
+
+<cbc:TaxTypeCode>VAT</cbc:TaxTypeCode>
+
+</cac:TaxScheme>
+
+</cac:TaxCategory>
+
+</cac:TaxSubtotal>
+
+</cac:TaxTotal>
+
+<cac:Item>
+
+<cbc:Description><![CDATA[MEDICORT 4MG x 20TAB   (    6)2101753         10/2025]]></cbc:Description>
+
+<cac:SellersItemIdentification>
+
+<cbc:ID>65725</cbc:ID>
+
+</cac:SellersItemIdentification>
+
+<cac:CommodityClassification>
+
+<cbc:ItemClassificationCode>51181704</cbc:ItemClassificationCode>
+
+</cac:CommodityClassification>
+
+<cac:AdditionalItemProperty>
+
+<cbc:Name>Gastos Art. 37 Renta:  N�mero de Placa</cbc:Name>
+
+<cbc:NameCode>7000</cbc:NameCode>
+
+<cbc:Value>-</cbc:Value>
+
+</cac:AdditionalItemProperty>
+
+</cac:Item>
+
+<cac:Price>
+
+<cbc:PriceAmount currencyID="PEN">27.2733</cbc:PriceAmount>
+
+</cac:Price>
+
+</cac:InvoiceLine>
+
+<cac:InvoiceLine>
+
+<cbc:ID>5</cbc:ID>
+
+<cbc:InvoicedQuantity unitCode="NIU">3.00</cbc:InvoicedQuantity>
+
+<cbc:LineExtensionAmount currencyID="PEN">302.10</cbc:LineExtensionAmount>
+
+<cac:PricingReference>
+
+<cac:AlternativeConditionPrice>
+
+<cbc:PriceAmount currencyID="PEN">100.70</cbc:PriceAmount>
+
+<cbc:PriceTypeCode>02</cbc:PriceTypeCode>
+
+</cac:AlternativeConditionPrice>
+
+</cac:PricingReference>
+
+<cac:TaxTotal>
+
+<cbc:TaxAmount currencyID="PEN">0.00</cbc:TaxAmount>
+
+<cac:TaxSubtotal>
+
+<cbc:TaxableAmount currencyID="PEN">302.10</cbc:TaxableAmount>
+
+<cbc:TaxAmount currencyID="PEN">0.00</cbc:TaxAmount>
+
+<cac:TaxCategory>
+
+<cbc:Percent>0.00</cbc:Percent>
+
+<cbc:TaxExemptionReasonCode>31</cbc:TaxExemptionReasonCode>
+
+<cac:TaxScheme>
+
+<cbc:ID>9996</cbc:ID>
+
+<cbc:Name>GRA</cbc:Name>
+
+<cbc:TaxTypeCode>FRE</cbc:TaxTypeCode>
+
+</cac:TaxScheme>
+
+</cac:TaxCategory>
+
+</cac:TaxSubtotal>
+
+</cac:TaxTotal>
+
+<cac:Item>
+
+<cbc:Description><![CDATA[MEDICORT 4MG x 20TAB   (    3)2101753         10/2025 **BONIFICACION]]></cbc:Description>
+
+<cac:SellersItemIdentification>
+
+<cbc:ID>65725</cbc:ID>
+
+</cac:SellersItemIdentification>
+
+<cac:CommodityClassification>
+
+<cbc:ItemClassificationCode>51181704</cbc:ItemClassificationCode>
+
+</cac:CommodityClassification>
+
+<cac:AdditionalItemProperty>
+
+<cbc:Name>Gastos Art. 37 Renta:  N�mero de Placa</cbc:Name>
+
+<cbc:NameCode>7000</cbc:NameCode>
+
+<cbc:Value>-</cbc:Value>
+
+</cac:AdditionalItemProperty>
+
+</cac:Item>
+
+<cac:Price>
+
+<cbc:PriceAmount currencyID="PEN">0.00</cbc:PriceAmount>
+
+</cac:Price>
+
+</cac:InvoiceLine>
+
+<cac:InvoiceLine>
+
+<cbc:ID>6</cbc:ID>
+
+<cbc:InvoicedQuantity unitCode="NIU">9.00</cbc:InvoicedQuantity>
+
+<cbc:LineExtensionAmount currencyID="PEN">66.53</cbc:LineExtensionAmount>
+
+<cac:PricingReference>
+
+<cac:AlternativeConditionPrice>
+
+<cbc:PriceAmount currencyID="PEN">8.7233</cbc:PriceAmount>
+
+<cbc:PriceTypeCode>01</cbc:PriceTypeCode>
+
+</cac:AlternativeConditionPrice>
+
+</cac:PricingReference>
+
+<cac:TaxTotal>
+
+<cbc:TaxAmount currencyID="PEN">11.98</cbc:TaxAmount>
+
+<cac:TaxSubtotal>
+
+<cbc:TaxableAmount currencyID="PEN">66.53</cbc:TaxableAmount>
+
+<cbc:TaxAmount currencyID="PEN">11.98</cbc:TaxAmount>
+
+<cac:TaxCategory>
+
+<cbc:ID>S</cbc:ID>
+
+<cbc:Percent>18.00</cbc:Percent>
+
+<cbc:TaxExemptionReasonCode>10</cbc:TaxExemptionReasonCode>
+
+<cac:TaxScheme>
+
+<cbc:ID>1000</cbc:ID>
+
+<cbc:Name>IGV</cbc:Name>
+
+<cbc:TaxTypeCode>VAT</cbc:TaxTypeCode>
+
+</cac:TaxScheme>
+
+</cac:TaxCategory>
+
+</cac:TaxSubtotal>
+
+</cac:TaxTotal>
+
+<cac:Item>
+
+<cbc:Description><![CDATA[SULFAMED NF1%CREMAx15g (    9)2121973         12/2025]]></cbc:Description>
+
+<cac:SellersItemIdentification>
+
+<cbc:ID>65762</cbc:ID>
+
+</cac:SellersItemIdentification>
+
+<cac:CommodityClassification>
+
+<cbc:ItemClassificationCode>51142937</cbc:ItemClassificationCode>
+
+</cac:CommodityClassification>
+
+<cac:AdditionalItemProperty>
+
+<cbc:Name>Gastos Art. 37 Renta:  N�mero de Placa</cbc:Name>
+
+<cbc:NameCode>7000</cbc:NameCode>
+
+<cbc:Value>-</cbc:Value>
+
+</cac:AdditionalItemProperty>
+
+</cac:Item>
+
+<cac:Price>
+
+<cbc:PriceAmount currencyID="PEN">7.3922</cbc:PriceAmount>
+
+</cac:Price>
+
+</cac:InvoiceLine>
+
+<cac:InvoiceLine>
+
+<cbc:ID>7</cbc:ID>
+
+<cbc:InvoicedQuantity unitCode="NIU">8.00</cbc:InvoicedQuantity>
+
+<cbc:LineExtensionAmount currencyID="PEN">44.17</cbc:LineExtensionAmount>
+
+<cac:PricingReference>
+
+<cac:AlternativeConditionPrice>
+
+<cbc:PriceAmount currencyID="PEN">6.515</cbc:PriceAmount>
+
+<cbc:PriceTypeCode>01</cbc:PriceTypeCode>
+
+</cac:AlternativeConditionPrice>
+
+</cac:PricingReference>
+
+<cac:TaxTotal>
+
+<cbc:TaxAmount currencyID="PEN">7.95</cbc:TaxAmount>
+
+<cac:TaxSubtotal>
+
+<cbc:TaxableAmount currencyID="PEN">44.17</cbc:TaxableAmount>
+
+<cbc:TaxAmount currencyID="PEN">7.95</cbc:TaxAmount>
+
+<cac:TaxCategory>
+
+<cbc:ID>S</cbc:ID>
+
+<cbc:Percent>18.00</cbc:Percent>
+
+<cbc:TaxExemptionReasonCode>10</cbc:TaxExemptionReasonCode>
+
+<cac:TaxScheme>
+
+<cbc:ID>1000</cbc:ID>
+
+<cbc:Name>IGV</cbc:Name>
+
+<cbc:TaxTypeCode>VAT</cbc:TaxTypeCode>
+
+</cac:TaxScheme>
+
+</cac:TaxCategory>
+
+</cac:TaxSubtotal>
+
+</cac:TaxTotal>
+
+<cac:Item>
+
+<cbc:Description><![CDATA[LIMON.PURG.EVAKUA200ml (    8)2102413         10/2025]]></cbc:Description>
+
+<cac:SellersItemIdentification>
+
+<cbc:ID>22148</cbc:ID>
+
+</cac:SellersItemIdentification>
+
+<cac:CommodityClassification>
+
+<cbc:ItemClassificationCode>51171611</cbc:ItemClassificationCode>
+
+</cac:CommodityClassification>
+
+<cac:AdditionalItemProperty>
+
+<cbc:Name>Gastos Art. 37 Renta:  N�mero de Placa</cbc:Name>
+
+<cbc:NameCode>7000</cbc:NameCode>
+
+<cbc:Value>-</cbc:Value>
+
+</cac:AdditionalItemProperty>
+
+</cac:Item>
+
+<cac:Price>
+
+<cbc:PriceAmount currencyID="PEN">5.5213</cbc:PriceAmount>
+
+</cac:Price>
+
+</cac:InvoiceLine>
+
+<cac:InvoiceLine>
+
+<cbc:ID>8</cbc:ID>
+
+<cbc:InvoicedQuantity unitCode="NIU">1.00</cbc:InvoicedQuantity>
+
+<cbc:LineExtensionAmount currencyID="PEN">102.40</cbc:LineExtensionAmount>
+
+<cac:PricingReference>
+
+<cac:AlternativeConditionPrice>
+
+<cbc:PriceAmount currencyID="PEN">102.40</cbc:PriceAmount>
+
+<cbc:PriceTypeCode>02</cbc:PriceTypeCode>
+
+</cac:AlternativeConditionPrice>
+
+</cac:PricingReference>
+
+<cac:TaxTotal>
+
+<cbc:TaxAmount currencyID="PEN">0.00</cbc:TaxAmount>
+
+<cac:TaxSubtotal>
+
+<cbc:TaxableAmount currencyID="PEN">102.40</cbc:TaxableAmount>
+
+<cbc:TaxAmount currencyID="PEN">0.00</cbc:TaxAmount>
+
+<cac:TaxCategory>
+
+<cbc:Percent>0.00</cbc:Percent>
+
+<cbc:TaxExemptionReasonCode>31</cbc:TaxExemptionReasonCode>
+
+<cac:TaxScheme>
+
+<cbc:ID>9996</cbc:ID>
+
+<cbc:Name>GRA</cbc:Name>
+
+<cbc:TaxTypeCode>FRE</cbc:TaxTypeCode>
+
+</cac:TaxScheme>
+
+</cac:TaxCategory>
+
+</cac:TaxSubtotal>
+
+</cac:TaxTotal>
+
+<cac:Item>
+
+<cbc:Description><![CDATA[LINCOPLUS 500MG X 12CP (    1)205A703          5/2025 **BONIFICACION]]></cbc:Description>
+
+<cac:SellersItemIdentification>
+
+<cbc:ID>65075</cbc:ID>
+
+</cac:SellersItemIdentification>
+
+<cac:CommodityClassification>
+
+<cbc:ItemClassificationCode>51101504</cbc:ItemClassificationCode>
+
+</cac:CommodityClassification>
+
+<cac:AdditionalItemProperty>
+
+<cbc:Name>Gastos Art. 37 Renta:  N�mero de Placa</cbc:Name>
+
+<cbc:NameCode>7000</cbc:NameCode>
+
+<cbc:Value>-</cbc:Value>
+
+</cac:AdditionalItemProperty>
+
+</cac:Item>
+
+<cac:Price>
+
+<cbc:PriceAmount currencyID="PEN">0.00</cbc:PriceAmount>
+
+</cac:Price>
+
+</cac:InvoiceLine>
+
+<cac:InvoiceLine>
+
+<cbc:ID>9</cbc:ID>
+
+<cbc:InvoicedQuantity unitCode="NIU">3.00</cbc:InvoicedQuantity>
+
+<cbc:LineExtensionAmount currencyID="PEN">59.93</cbc:LineExtensionAmount>
+
+<cac:PricingReference>
+
+<cac:AlternativeConditionPrice>
+
+<cbc:PriceAmount currencyID="PEN">23.5733</cbc:PriceAmount>
+
+<cbc:PriceTypeCode>01</cbc:PriceTypeCode>
+
+</cac:AlternativeConditionPrice>
+
+</cac:PricingReference>
+
+<cac:TaxTotal>
+
+<cbc:TaxAmount currencyID="PEN">10.79</cbc:TaxAmount>
+
+<cac:TaxSubtotal>
+
+<cbc:TaxableAmount currencyID="PEN">59.93</cbc:TaxableAmount>
+
+<cbc:TaxAmount currencyID="PEN">10.79</cbc:TaxAmount>
+
+<cac:TaxCategory>
+
+<cbc:ID>S</cbc:ID>
+
+<cbc:Percent>18.00</cbc:Percent>
+
+<cbc:TaxExemptionReasonCode>10</cbc:TaxExemptionReasonCode>
+
+<cac:TaxScheme>
+
+<cbc:ID>1000</cbc:ID>
+
+<cbc:Name>IGV</cbc:Name>
+
+<cbc:TaxTypeCode>VAT</cbc:TaxTypeCode>
+
+</cac:TaxScheme>
+
+</cac:TaxCategory>
+
+</cac:TaxSubtotal>
+
+</cac:TaxTotal>
+
+<cac:Item>
+
+<cbc:Description><![CDATA[RYNAT D 0.05%x15ML FCO (    3)2096493          9/2026]]></cbc:Description>
+
+<cac:SellersItemIdentification>
+
+<cbc:ID>65217</cbc:ID>
+
+</cac:SellersItemIdentification>
+
+<cac:CommodityClassification>
+
+<cbc:ItemClassificationCode>51161901</cbc:ItemClassificationCode>
+
+</cac:CommodityClassification>
+
+<cac:AdditionalItemProperty>
+
+<cbc:Name>Gastos Art. 37 Renta:  N�mero de Placa</cbc:Name>
+
+<cbc:NameCode>7000</cbc:NameCode>
+
+<cbc:Value>-</cbc:Value>
+
+</cac:AdditionalItemProperty>
+
+</cac:Item>
+
+<cac:Price>
+
+<cbc:PriceAmount currencyID="PEN">19.9767</cbc:PriceAmount>
+
+</cac:Price>
+
+</cac:InvoiceLine>
+
+<cac:InvoiceLine>
+
+<cbc:ID>10</cbc:ID>
+
+<cbc:InvoicedQuantity unitCode="NIU">2.00</cbc:InvoicedQuantity>
+
+<cbc:LineExtensionAmount currencyID="PEN">105.65</cbc:LineExtensionAmount>
+
+<cac:PricingReference>
+
+<cac:AlternativeConditionPrice>
+
+<cbc:PriceAmount currencyID="PEN">62.335</cbc:PriceAmount>
+
+<cbc:PriceTypeCode>01</cbc:PriceTypeCode>
+
+</cac:AlternativeConditionPrice>
+
+</cac:PricingReference>
+
+<cac:TaxTotal>
+
+<cbc:TaxAmount currencyID="PEN">19.02</cbc:TaxAmount>
+
+<cac:TaxSubtotal>
+
+<cbc:TaxableAmount currencyID="PEN">105.65</cbc:TaxableAmount>
+
+<cbc:TaxAmount currencyID="PEN">19.02</cbc:TaxAmount>
+
+<cac:TaxCategory>
+
+<cbc:ID>S</cbc:ID>
+
+<cbc:Percent>18.00</cbc:Percent>
+
+<cbc:TaxExemptionReasonCode>10</cbc:TaxExemptionReasonCode>
+
+<cac:TaxScheme>
+
+<cbc:ID>1000</cbc:ID>
+
+<cbc:Name>IGV</cbc:Name>
+
+<cbc:TaxTypeCode>VAT</cbc:TaxTypeCode>
+
+</cac:TaxScheme>
+
+</cac:TaxCategory>
+
+</cac:TaxSubtotal>
+
+</cac:TaxTotal>
+
+<cac:Item>
+
+<cbc:Description><![CDATA[DEQUAZOL ORAL x 60TAB. (    2)2108273         10/2028]]></cbc:Description>
+
+<cac:SellersItemIdentification>
+
+<cbc:ID>65400</cbc:ID>
+
+</cac:SellersItemIdentification>
+
+<cac:CommodityClassification>
+
+<cbc:ItemClassificationCode>51101603</cbc:ItemClassificationCode>
+
+</cac:CommodityClassification>
+
+<cac:AdditionalItemProperty>
+
+<cbc:Name>Gastos Art. 37 Renta:  N�mero de Placa</cbc:Name>
+
+<cbc:NameCode>7000</cbc:NameCode>
+
+<cbc:Value>-</cbc:Value>
+
+</cac:AdditionalItemProperty>
+
+</cac:Item>
+
+<cac:Price>
+
+<cbc:PriceAmount currencyID="PEN">52.825</cbc:PriceAmount>
+
+</cac:Price>
+
+</cac:InvoiceLine>
+
+<cac:InvoiceLine>
+
+<cbc:ID>11</cbc:ID>
+
+<cbc:InvoicedQuantity unitCode="NIU">4.00</cbc:InvoicedQuantity>
+
+<cbc:LineExtensionAmount currencyID="PEN">263.45</cbc:LineExtensionAmount>
+
+<cac:PricingReference>
+
+<cac:AlternativeConditionPrice>
+
+<cbc:PriceAmount currencyID="PEN">77.7175</cbc:PriceAmount>
+
+<cbc:PriceTypeCode>01</cbc:PriceTypeCode>
+
+</cac:AlternativeConditionPrice>
+
+</cac:PricingReference>
+
+<cac:TaxTotal>
+
+<cbc:TaxAmount currencyID="PEN">47.42</cbc:TaxAmount>
+
+<cac:TaxSubtotal>
+
+<cbc:TaxableAmount currencyID="PEN">263.45</cbc:TaxableAmount>
+
+<cbc:TaxAmount currencyID="PEN">47.42</cbc:TaxAmount>
+
+<cac:TaxCategory>
+
+<cbc:ID>S</cbc:ID>
+
+<cbc:Percent>18.00</cbc:Percent>
+
+<cbc:TaxExemptionReasonCode>10</cbc:TaxExemptionReasonCode>
+
+<cac:TaxScheme>
+
+<cbc:ID>1000</cbc:ID>
+
+<cbc:Name>IGV</cbc:Name>
+
+<cbc:TaxTypeCode>VAT</cbc:TaxTypeCode>
+
+</cac:TaxScheme>
+
+</cac:TaxCategory>
+
+</cac:TaxSubtotal>
+
+</cac:TaxTotal>
+
+<cac:Item>
+
+<cbc:Description><![CDATA[DOLOMAX 400MGx100CP.BL (    4)2064463          6/2025]]></cbc:Description>
+
+<cac:SellersItemIdentification>
+
+<cbc:ID>65604</cbc:ID>
+
+</cac:SellersItemIdentification>
+
+<cac:CommodityClassification>
+
+<cbc:ItemClassificationCode>51142106</cbc:ItemClassificationCode>
+
+</cac:CommodityClassification>
+
+<cac:AdditionalItemProperty>
+
+<cbc:Name>Gastos Art. 37 Renta:  N�mero de Placa</cbc:Name>
+
+<cbc:NameCode>7000</cbc:NameCode>
+
+<cbc:Value>-</cbc:Value>
+
+</cac:AdditionalItemProperty>
+
+</cac:Item>
+
+<cac:Price>
+
+<cbc:PriceAmount currencyID="PEN">65.8625</cbc:PriceAmount>
+
+</cac:Price>
+
+</cac:InvoiceLine>
+
+<cac:InvoiceLine>
+
+<cbc:ID>12</cbc:ID>
+
+<cbc:InvoicedQuantity unitCode="NIU">20.00</cbc:InvoicedQuantity>
+
+<cbc:LineExtensionAmount currencyID="PEN">208.38</cbc:LineExtensionAmount>
+
+<cac:PricingReference>
+
+<cac:AlternativeConditionPrice>
+
+<cbc:PriceAmount currencyID="PEN">12.2945</cbc:PriceAmount>
+
+<cbc:PriceTypeCode>01</cbc:PriceTypeCode>
+
+</cac:AlternativeConditionPrice>
+
+</cac:PricingReference>
+
+<cac:TaxTotal>
+
+<cbc:TaxAmount currencyID="PEN">37.51</cbc:TaxAmount>
+
+<cac:TaxSubtotal>
+
+<cbc:TaxableAmount currencyID="PEN">208.38</cbc:TaxableAmount>
+
+<cbc:TaxAmount currencyID="PEN">37.51</cbc:TaxAmount>
+
+<cac:TaxCategory>
+
+<cbc:ID>S</cbc:ID>
+
+<cbc:Percent>18.00</cbc:Percent>
+
+<cbc:TaxExemptionReasonCode>10</cbc:TaxExemptionReasonCode>
+
+<cac:TaxScheme>
+
+<cbc:ID>1000</cbc:ID>
+
+<cbc:Name>IGV</cbc:Name>
+
+<cbc:TaxTypeCode>VAT</cbc:TaxTypeCode>
+
+</cac:TaxScheme>
+
+</cac:TaxCategory>
+
+</cac:TaxSubtotal>
+
+</cac:TaxTotal>
+
+<cac:Item>
+
+<cbc:Description><![CDATA[SOLOUNA 5 AMP S/JERING (   20)2010093          1/2027]]></cbc:Description>
+
+<cac:SellersItemIdentification>
+
+<cbc:ID>65537</cbc:ID>
+
+</cac:SellersItemIdentification>
+
+<cac:CommodityClassification>
+
+<cbc:ItemClassificationCode>51181813</cbc:ItemClassificationCode>
+
+</cac:CommodityClassification>
+
+<cac:AdditionalItemProperty>
+
+<cbc:Name>Gastos Art. 37 Renta:  N�mero de Placa</cbc:Name>
+
+<cbc:NameCode>7000</cbc:NameCode>
+
+<cbc:Value>-</cbc:Value>
+
+</cac:AdditionalItemProperty>
+
+</cac:Item>
+
+<cac:Price>
+
+<cbc:PriceAmount currencyID="PEN">10.419</cbc:PriceAmount>
+
+</cac:Price>
+
+</cac:InvoiceLine>
+
+<cac:InvoiceLine>
+
+<cbc:ID>13</cbc:ID>
+
+<cbc:InvoicedQuantity unitCode="NIU">2.00</cbc:InvoicedQuantity>
+
+<cbc:LineExtensionAmount currencyID="PEN">131.33</cbc:LineExtensionAmount>
+
+<cac:PricingReference>
+
+<cac:AlternativeConditionPrice>
+
+<cbc:PriceAmount currencyID="PEN">77.485</cbc:PriceAmount>
+
+<cbc:PriceTypeCode>01</cbc:PriceTypeCode>
+
+</cac:AlternativeConditionPrice>
+
+</cac:PricingReference>
+
+<cac:TaxTotal>
+
+<cbc:TaxAmount currencyID="PEN">23.64</cbc:TaxAmount>
+
+<cac:TaxSubtotal>
+
+<cbc:TaxableAmount currencyID="PEN">131.33</cbc:TaxableAmount>
+
+<cbc:TaxAmount currencyID="PEN">23.64</cbc:TaxAmount>
+
+<cac:TaxCategory>
+
+<cbc:ID>S</cbc:ID>
+
+<cbc:Percent>18.00</cbc:Percent>
+
+<cbc:TaxExemptionReasonCode>10</cbc:TaxExemptionReasonCode>
+
+<cac:TaxScheme>
+
+<cbc:ID>1000</cbc:ID>
+
+<cbc:Name>IGV</cbc:Name>
+
+<cbc:TaxTypeCode>VAT</cbc:TaxTypeCode>
+
+</cac:TaxScheme>
+
+</cac:TaxCategory>
+
+</cac:TaxSubtotal>
+
+</cac:TaxTotal>
+
+<cac:Item>
+
+<cbc:Description><![CDATA[CEFABRONCOL x 60 CAP.  (    2)2039233          3/2026]]></cbc:Description>
+
+<cac:SellersItemIdentification>
+
+<cbc:ID>65182</cbc:ID>
+
+</cac:SellersItemIdentification>
+
+<cac:CommodityClassification>
+
+<cbc:ItemClassificationCode>51101550</cbc:ItemClassificationCode>
+
+</cac:CommodityClassification>
+
+<cac:AdditionalItemProperty>
+
+<cbc:Name>Gastos Art. 37 Renta:  N�mero de Placa</cbc:Name>
+
+<cbc:NameCode>7000</cbc:NameCode>
+
+<cbc:Value>-</cbc:Value>
+
+</cac:AdditionalItemProperty>
+
+</cac:Item>
+
+<cac:Price>
+
+<cbc:PriceAmount currencyID="PEN">65.665</cbc:PriceAmount>
+
+</cac:Price>
+
+</cac:InvoiceLine>
+
+<cac:InvoiceLine>
+
+<cbc:ID>14</cbc:ID>
+
+<cbc:InvoicedQuantity unitCode="NIU">6.00</cbc:InvoicedQuantity>
+
+<cbc:LineExtensionAmount currencyID="PEN">69.68</cbc:LineExtensionAmount>
+
+<cac:PricingReference>
+
+<cac:AlternativeConditionPrice>
+
+<cbc:PriceAmount currencyID="PEN">13.7033</cbc:PriceAmount>
+
+<cbc:PriceTypeCode>01</cbc:PriceTypeCode>
+
+</cac:AlternativeConditionPrice>
+
+</cac:PricingReference>
+
+<cac:TaxTotal>
+
+<cbc:TaxAmount currencyID="PEN">12.54</cbc:TaxAmount>
+
+<cac:TaxSubtotal>
+
+<cbc:TaxableAmount currencyID="PEN">69.68</cbc:TaxableAmount>
+
+<cbc:TaxAmount currencyID="PEN">12.54</cbc:TaxAmount>
+
+<cac:TaxCategory>
+
+<cbc:ID>S</cbc:ID>
+
+<cbc:Percent>18.00</cbc:Percent>
+
+<cbc:TaxExemptionReasonCode>10</cbc:TaxExemptionReasonCode>
+
+<cac:TaxScheme>
+
+<cbc:ID>1000</cbc:ID>
+
+<cbc:Name>IGV</cbc:Name>
+
+<cbc:TaxTypeCode>VAT</cbc:TaxTypeCode>
+
+</cac:TaxScheme>
+
+</cac:TaxCategory>
+
+</cac:TaxSubtotal>
+
+</cac:TaxTotal>
+
+<cac:Item>
+
+<cbc:Description><![CDATA[BEN GAY GEL X 28 GR    (    6)2108013         10/2025]]></cbc:Description>
+
+<cac:SellersItemIdentification>
+
+<cbc:ID>11061</cbc:ID>
+
+</cac:SellersItemIdentification>
+
+<cac:CommodityClassification>
+
+<cbc:ItemClassificationCode>51241210</cbc:ItemClassificationCode>
+
+</cac:CommodityClassification>
+
+<cac:AdditionalItemProperty>
+
+<cbc:Name>Gastos Art. 37 Renta:  N�mero de Placa</cbc:Name>
+
+<cbc:NameCode>7000</cbc:NameCode>
+
+<cbc:Value>-</cbc:Value>
+
+</cac:AdditionalItemProperty>
+
+</cac:Item>
+
+<cac:Price>
+
+<cbc:PriceAmount currencyID="PEN">11.6133</cbc:PriceAmount>
+
+</cac:Price>
+
+</cac:InvoiceLine>
+
+<cac:InvoiceLine>
+
+<cbc:ID>15</cbc:ID>
+
+<cbc:InvoicedQuantity unitCode="NIU">40.00</cbc:InvoicedQuantity>
+
+<cbc:LineExtensionAmount currencyID="PEN">16.00</cbc:LineExtensionAmount>
+
+<cac:PricingReference>
+
+<cac:AlternativeConditionPrice>
+
+<cbc:PriceAmount currencyID="PEN">0.40</cbc:PriceAmount>
+
+<cbc:PriceTypeCode>02</cbc:PriceTypeCode>
+
+</cac:AlternativeConditionPrice>
+
+</cac:PricingReference>
+
+<cac:TaxTotal>
+
+<cbc:TaxAmount currencyID="PEN">0.00</cbc:TaxAmount>
+
+<cac:TaxSubtotal>
+
+<cbc:TaxableAmount currencyID="PEN">16.00</cbc:TaxableAmount>
+
+<cbc:TaxAmount currencyID="PEN">0.00</cbc:TaxAmount>
+
+<cac:TaxCategory>
+
+<cbc:Percent>0.00</cbc:Percent>
+
+<cbc:TaxExemptionReasonCode>31</cbc:TaxExemptionReasonCode>
+
+<cac:TaxScheme>
+
+<cbc:ID>9996</cbc:ID>
+
+<cbc:Name>GRA</cbc:Name>
+
+<cbc:TaxTypeCode>FRE</cbc:TaxTypeCode>
+
+</cac:TaxScheme>
+
+</cac:TaxCategory>
+
+</cac:TaxSubtotal>
+
+</cac:TaxTotal>
+
+<cac:Item>
+
+<cbc:Description><![CDATA[JERINGA x 3ML MEDIF.   (   40)22D1105J         3/2027 **BONIFICACION]]></cbc:Description>
+
+<cac:SellersItemIdentification>
+
+<cbc:ID>65787</cbc:ID>
+
+</cac:SellersItemIdentification>
+
+<cac:CommodityClassification>
+
+<cbc:ItemClassificationCode>42142609</cbc:ItemClassificationCode>
+
+</cac:CommodityClassification>
+
+<cac:AdditionalItemProperty>
+
+<cbc:Name>Gastos Art. 37 Renta:  N�mero de Placa</cbc:Name>
+
+<cbc:NameCode>7000</cbc:NameCode>
+
+<cbc:Value>-</cbc:Value>
+
+</cac:AdditionalItemProperty>
+
+</cac:Item>
+
+<cac:Price>
+
+<cbc:PriceAmount currencyID="PEN">0.00</cbc:PriceAmount>
+
+</cac:Price>
+
+</cac:InvoiceLine>
+
+<cac:InvoiceLine>
+
+<cbc:ID>16</cbc:ID>
+
+<cbc:InvoicedQuantity unitCode="NIU">2.00</cbc:InvoicedQuantity>
+
+<cbc:LineExtensionAmount currencyID="PEN">63.43</cbc:LineExtensionAmount>
+
+<cac:PricingReference>
+
+<cac:AlternativeConditionPrice>
+
+<cbc:PriceAmount currencyID="PEN">37.425</cbc:PriceAmount>
+
+<cbc:PriceTypeCode>01</cbc:PriceTypeCode>
+
+</cac:AlternativeConditionPrice>
+
+</cac:PricingReference>
+
+<cac:TaxTotal>
+
+<cbc:TaxAmount currencyID="PEN">11.42</cbc:TaxAmount>
+
+<cac:TaxSubtotal>
+
+<cbc:TaxableAmount currencyID="PEN">63.43</cbc:TaxableAmount>
+
+<cbc:TaxAmount currencyID="PEN">11.42</cbc:TaxAmount>
+
+<cac:TaxCategory>
+
+<cbc:ID>S</cbc:ID>
+
+<cbc:Percent>18.00</cbc:Percent>
+
+<cbc:TaxExemptionReasonCode>10</cbc:TaxExemptionReasonCode>
+
+<cac:TaxScheme>
+
+<cbc:ID>1000</cbc:ID>
+
+<cbc:Name>IGV</cbc:Name>
+
+<cbc:TaxTypeCode>VAT</cbc:TaxTypeCode>
+
+</cac:TaxScheme>
+
+</cac:TaxCategory>
+
+</cac:TaxSubtotal>
+
+</cac:TaxTotal>
+
+<cac:Item>
+
+<cbc:Description><![CDATA[CRESULEN 90MGx6 OVULOS (    2)2067043          6/2025]]></cbc:Description>
+
+<cac:SellersItemIdentification>
+
+<cbc:ID>65454</cbc:ID>
+
+</cac:SellersItemIdentification>
+
+<cac:CommodityClassification>
+
+<cbc:ItemClassificationCode>51131809</cbc:ItemClassificationCode>
+
+</cac:CommodityClassification>
+
+<cac:AdditionalItemProperty>
+
+<cbc:Name>Gastos Art. 37 Renta:  N�mero de Placa</cbc:Name>
+
+<cbc:NameCode>7000</cbc:NameCode>
+
+<cbc:Value>-</cbc:Value>
+
+</cac:AdditionalItemProperty>
+
+</cac:Item>
+
+<cac:Price>
+
+<cbc:PriceAmount currencyID="PEN">31.715</cbc:PriceAmount>
+
+</cac:Price>
+
+</cac:InvoiceLine>
+
+<cac:InvoiceLine>
+
+<cbc:ID>17</cbc:ID>
+
+<cbc:InvoicedQuantity unitCode="NIU">1.00</cbc:InvoicedQuantity>
+
+<cbc:LineExtensionAmount currencyID="PEN">80.00</cbc:LineExtensionAmount>
+
+<cac:PricingReference>
+
+<cac:AlternativeConditionPrice>
+
+<cbc:PriceAmount currencyID="PEN">80.00</cbc:PriceAmount>
+
+<cbc:PriceTypeCode>02</cbc:PriceTypeCode>
+
+</cac:AlternativeConditionPrice>
+
+</cac:PricingReference>
+
+<cac:TaxTotal>
+
+<cbc:TaxAmount currencyID="PEN">0.00</cbc:TaxAmount>
+
+<cac:TaxSubtotal>
+
+<cbc:TaxableAmount currencyID="PEN">80.00</cbc:TaxableAmount>
+
+<cbc:TaxAmount currencyID="PEN">0.00</cbc:TaxAmount>
+
+<cac:TaxCategory>
+
+<cbc:Percent>0.00</cbc:Percent>
+
+<cbc:TaxExemptionReasonCode>31</cbc:TaxExemptionReasonCode>
+
+<cac:TaxScheme>
+
+<cbc:ID>9996</cbc:ID>
+
+<cbc:Name>GRA</cbc:Name>
+
+<cbc:TaxTypeCode>FRE</cbc:TaxTypeCode>
+
+</cac:TaxScheme>
+
+</cac:TaxCategory>
+
+</cac:TaxSubtotal>
+
+</cac:TaxTotal>
+
+<cac:Item>
+
+<cbc:Description><![CDATA[GASEOVET MS X 220ml    (    1)2024954          2/2027 **BONIFICACION]]></cbc:Description>
+
+<cac:SellersItemIdentification>
+
+<cbc:ID>65455</cbc:ID>
+
+</cac:SellersItemIdentification>
+
+<cac:CommodityClassification>
+
+<cbc:ItemClassificationCode>51171502</cbc:ItemClassificationCode>
+
+</cac:CommodityClassification>
+
+<cac:AdditionalItemProperty>
+
+<cbc:Name>Gastos Art. 37 Renta:  N�mero de Placa</cbc:Name>
+
+<cbc:NameCode>7000</cbc:NameCode>
+
+<cbc:Value>-</cbc:Value>
+
+</cac:AdditionalItemProperty>
+
+</cac:Item>
+
+<cac:Price>
+
+<cbc:PriceAmount currencyID="PEN">0.00</cbc:PriceAmount>
+
+</cac:Price>
+
+</cac:InvoiceLine>
+
+<cac:InvoiceLine>
+
+<cbc:ID>18</cbc:ID>
+
+<cbc:InvoicedQuantity unitCode="NIU">3.00</cbc:InvoicedQuantity>
+
+<cbc:LineExtensionAmount currencyID="PEN">73.87</cbc:LineExtensionAmount>
+
+<cac:PricingReference>
+
+<cac:AlternativeConditionPrice>
+
+<cbc:PriceAmount currencyID="PEN">29.0567</cbc:PriceAmount>
+
+<cbc:PriceTypeCode>01</cbc:PriceTypeCode>
+
+</cac:AlternativeConditionPrice>
+
+</cac:PricingReference>
+
+<cac:TaxTotal>
+
+<cbc:TaxAmount currencyID="PEN">13.30</cbc:TaxAmount>
+
+<cac:TaxSubtotal>
+
+<cbc:TaxableAmount currencyID="PEN">73.87</cbc:TaxableAmount>
+
+<cbc:TaxAmount currencyID="PEN">13.30</cbc:TaxAmount>
+
+<cac:TaxCategory>
+
+<cbc:ID>S</cbc:ID>
+
+<cbc:Percent>18.00</cbc:Percent>
+
+<cbc:TaxExemptionReasonCode>10</cbc:TaxExemptionReasonCode>
+
+<cac:TaxScheme>
+
+<cbc:ID>1000</cbc:ID>
+
+<cbc:Name>IGV</cbc:Name>
+
+<cbc:TaxTypeCode>VAT</cbc:TaxTypeCode>
+
+</cac:TaxScheme>
+
+</cac:TaxCategory>
+
+</cac:TaxSubtotal>
+
+</cac:TaxTotal>
+
+<cac:Item>
+
+<cbc:Description><![CDATA[EVACUOL PLUS x 133mL   (    3)2025154          2/2028]]></cbc:Description>
+
+<cac:SellersItemIdentification>
+
+<cbc:ID>83263</cbc:ID>
+
+</cac:SellersItemIdentification>
+
+<cac:CommodityClassification>
+
+<cbc:ItemClassificationCode>51182408</cbc:ItemClassificationCode>
+
+</cac:CommodityClassification>
+
+<cac:AdditionalItemProperty>
+
+<cbc:Name>Gastos Art. 37 Renta:  N�mero de Placa</cbc:Name>
+
+<cbc:NameCode>7000</cbc:NameCode>
+
+<cbc:Value>-</cbc:Value>
+
+</cac:AdditionalItemProperty>
+
+</cac:Item>
+
+<cac:Price>
+
+<cbc:PriceAmount currencyID="PEN">24.6233</cbc:PriceAmount>
+
+</cac:Price>
+
+</cac:InvoiceLine>
+
+<cac:InvoiceLine>
+
+<cbc:ID>19</cbc:ID>
+
+<cbc:InvoicedQuantity unitCode="NIU">3.00</cbc:InvoicedQuantity>
+
+<cbc:LineExtensionAmount currencyID="PEN">124.29</cbc:LineExtensionAmount>
+
+<cac:PricingReference>
+
+<cac:AlternativeConditionPrice>
+
+<cbc:PriceAmount currencyID="PEN">48.8867</cbc:PriceAmount>
+
+<cbc:PriceTypeCode>01</cbc:PriceTypeCode>
+
+</cac:AlternativeConditionPrice>
+
+</cac:PricingReference>
+
+<cac:TaxTotal>
+
+<cbc:TaxAmount currencyID="PEN">22.37</cbc:TaxAmount>
+
+<cac:TaxSubtotal>
+
+<cbc:TaxableAmount currencyID="PEN">124.29</cbc:TaxableAmount>
+
+<cbc:TaxAmount currencyID="PEN">22.37</cbc:TaxAmount>
+
+<cac:TaxCategory>
+
+<cbc:ID>S</cbc:ID>
+
+<cbc:Percent>18.00</cbc:Percent>
+
+<cbc:TaxExemptionReasonCode>10</cbc:TaxExemptionReasonCode>
+
+<cac:TaxScheme>
+
+<cbc:ID>1000</cbc:ID>
+
+<cbc:Name>IGV</cbc:Name>
+
+<cbc:TaxTypeCode>VAT</cbc:TaxTypeCode>
+
+</cac:TaxScheme>
+
+</cac:TaxCategory>
+
+</cac:TaxSubtotal>
+
+</cac:TaxTotal>
+
+<cac:Item>
+
+<cbc:Description><![CDATA[EVACUOL F NF x 45mL    (    3)2033704          3/2028]]></cbc:Description>
+
+<cac:SellersItemIdentification>
+
+<cbc:ID>83267</cbc:ID>
+
+</cac:SellersItemIdentification>
+
+<cac:CommodityClassification>
+
+<cbc:ItemClassificationCode>51182408</cbc:ItemClassificationCode>
+
+</cac:CommodityClassification>
+
+<cac:AdditionalItemProperty>
+
+<cbc:Name>Gastos Art. 37 Renta:  N�mero de Placa</cbc:Name>
+
+<cbc:NameCode>7000</cbc:NameCode>
+
+<cbc:Value>-</cbc:Value>
+
+</cac:AdditionalItemProperty>
+
+</cac:Item>
+
+<cac:Price>
+
+<cbc:PriceAmount currencyID="PEN">41.43</cbc:PriceAmount>
+
+</cac:Price>
+
+</cac:InvoiceLine>
+
+<cac:InvoiceLine>
+
+<cbc:ID>20</cbc:ID>
+
+<cbc:InvoicedQuantity unitCode="NIU">1.00</cbc:InvoicedQuantity>
+
+<cbc:LineExtensionAmount currencyID="PEN">102.74</cbc:LineExtensionAmount>
+
+<cac:PricingReference>
+
+<cac:AlternativeConditionPrice>
+
+<cbc:PriceAmount currencyID="PEN">121.23</cbc:PriceAmount>
+
+<cbc:PriceTypeCode>01</cbc:PriceTypeCode>
+
+</cac:AlternativeConditionPrice>
+
+</cac:PricingReference>
+
+<cac:TaxTotal>
+
+<cbc:TaxAmount currencyID="PEN">18.49</cbc:TaxAmount>
+
+<cac:TaxSubtotal>
+
+<cbc:TaxableAmount currencyID="PEN">102.74</cbc:TaxableAmount>
+
+<cbc:TaxAmount currencyID="PEN">18.49</cbc:TaxAmount>
+
+<cac:TaxCategory>
+
+<cbc:ID>S</cbc:ID>
+
+<cbc:Percent>18.00</cbc:Percent>
+
+<cbc:TaxExemptionReasonCode>10</cbc:TaxExemptionReasonCode>
+
+<cac:TaxScheme>
+
+<cbc:ID>1000</cbc:ID>
+
+<cbc:Name>IGV</cbc:Name>
+
+<cbc:TaxTypeCode>VAT</cbc:TaxTypeCode>
+
+</cac:TaxScheme>
+
+</cac:TaxCategory>
+
+</cac:TaxSubtotal>
+
+</cac:TaxTotal>
+
+<cac:Item>
+
+<cbc:Description><![CDATA[AMIZAL 45MGx30COMP     (    1)T004518T         3/2025]]></cbc:Description>
+
+<cac:SellersItemIdentification>
+
+<cbc:ID>84300</cbc:ID>
+
+</cac:SellersItemIdentification>
+
+<cac:CommodityClassification>
+
+<cbc:ItemClassificationCode>51151509</cbc:ItemClassificationCode>
+
+</cac:CommodityClassification>
+
+<cac:AdditionalItemProperty>
+
+<cbc:Name>Gastos Art. 37 Renta:  N�mero de Placa</cbc:Name>
+
+<cbc:NameCode>7000</cbc:NameCode>
+
+<cbc:Value>-</cbc:Value>
+
+</cac:AdditionalItemProperty>
+
+</cac:Item>
+
+<cac:Price>
+
+<cbc:PriceAmount currencyID="PEN">102.74</cbc:PriceAmount>
+
+</cac:Price>
+
+</cac:InvoiceLine>
+
+<cac:InvoiceLine>
+
+<cbc:ID>21</cbc:ID>
+
+<cbc:InvoicedQuantity unitCode="NIU">12.00</cbc:InvoicedQuantity>
+
+<cbc:LineExtensionAmount currencyID="PEN">293.15</cbc:LineExtensionAmount>
+
+<cac:PricingReference>
+
+<cac:AlternativeConditionPrice>
+
+<cbc:PriceAmount currencyID="PEN">28.8267</cbc:PriceAmount>
+
+<cbc:PriceTypeCode>01</cbc:PriceTypeCode>
+
+</cac:AlternativeConditionPrice>
+
+</cac:PricingReference>
+
+<cac:TaxTotal>
+
+<cbc:TaxAmount currencyID="PEN">52.77</cbc:TaxAmount>
+
+<cac:TaxSubtotal>
+
+<cbc:TaxableAmount currencyID="PEN">293.15</cbc:TaxableAmount>
+
+<cbc:TaxAmount currencyID="PEN">52.77</cbc:TaxAmount>
+
+<cac:TaxCategory>
+
+<cbc:ID>S</cbc:ID>
+
+<cbc:Percent>18.00</cbc:Percent>
+
+<cbc:TaxExemptionReasonCode>10</cbc:TaxExemptionReasonCode>
+
+<cac:TaxScheme>
+
+<cbc:ID>1000</cbc:ID>
+
+<cbc:Name>IGV</cbc:Name>
+
+<cbc:TaxTypeCode>VAT</cbc:TaxTypeCode>
+
+</cac:TaxScheme>
+
+</cac:TaxCategory>
+
+</cac:TaxSubtotal>
+
+</cac:TaxTotal>
+
+<cac:Item>
+
+<cbc:Description><![CDATA[VARIMINE FCOx200ML+SOB (   12)T001T001319T     3/2026]]></cbc:Description>
+
+<cac:SellersItemIdentification>
+
+<cbc:ID>84311</cbc:ID>
+
+</cac:SellersItemIdentification>
+
+<cac:CommodityClassification>
+
+<cbc:ItemClassificationCode>51251002</cbc:ItemClassificationCode>
+
+</cac:CommodityClassification>
+
+<cac:AdditionalItemProperty>
+
+<cbc:Name>Gastos Art. 37 Renta:  N�mero de Placa</cbc:Name>
+
+<cbc:NameCode>7000</cbc:NameCode>
+
+<cbc:Value>-</cbc:Value>
+
+</cac:AdditionalItemProperty>
+
+</cac:Item>
+
+<cac:Price>
+
+<cbc:PriceAmount currencyID="PEN">24.4292</cbc:PriceAmount>
+
+</cac:Price>
+
+</cac:InvoiceLine>
+
+<cac:InvoiceLine>
+
+<cbc:ID>22</cbc:ID>
+
+<cbc:InvoicedQuantity unitCode="NIU">4.00</cbc:InvoicedQuantity>
+
+<cbc:LineExtensionAmount currencyID="PEN">161.37</cbc:LineExtensionAmount>
+
+<cac:PricingReference>
+
+<cac:AlternativeConditionPrice>
+
+<cbc:PriceAmount currencyID="PEN">47.605</cbc:PriceAmount>
+
+<cbc:PriceTypeCode>01</cbc:PriceTypeCode>
+
+</cac:AlternativeConditionPrice>
+
+</cac:PricingReference>
+
+<cac:TaxTotal>
+
+<cbc:TaxAmount currencyID="PEN">29.05</cbc:TaxAmount>
+
+<cac:TaxSubtotal>
+
+<cbc:TaxableAmount currencyID="PEN">161.37</cbc:TaxableAmount>
+
+<cbc:TaxAmount currencyID="PEN">29.05</cbc:TaxAmount>
+
+<cac:TaxCategory>
+
+<cbc:ID>S</cbc:ID>
+
+<cbc:Percent>18.00</cbc:Percent>
+
+<cbc:TaxExemptionReasonCode>10</cbc:TaxExemptionReasonCode>
+
+<cac:TaxScheme>
+
+<cbc:ID>1000</cbc:ID>
+
+<cbc:Name>IGV</cbc:Name>
+
+<cbc:TaxTypeCode>VAT</cbc:TaxTypeCode>
+
+</cac:TaxScheme>
+
+</cac:TaxCategory>
+
+</cac:TaxSubtotal>
+
+</cac:TaxTotal>
+
+<cac:Item>
+
+<cbc:Description><![CDATA[VARIMINE STRESSx20COMP (    4)T001209T         2/2026]]></cbc:Description>
+
+<cac:SellersItemIdentification>
+
+<cbc:ID>84313</cbc:ID>
+
+</cac:SellersItemIdentification>
+
+<cac:CommodityClassification>
+
+<cbc:ItemClassificationCode>51131517</cbc:ItemClassificationCode>
+
+</cac:CommodityClassification>
+
+<cac:AdditionalItemProperty>
+
+<cbc:Name>Gastos Art. 37 Renta:  N�mero de Placa</cbc:Name>
+
+<cbc:NameCode>7000</cbc:NameCode>
+
+<cbc:Value>-</cbc:Value>
+
+</cac:AdditionalItemProperty>
+
+</cac:Item>
+
+<cac:Price>
+
+<cbc:PriceAmount currencyID="PEN">40.3425</cbc:PriceAmount>
+
+</cac:Price>
+
+</cac:InvoiceLine>
+
+</Invoice>
