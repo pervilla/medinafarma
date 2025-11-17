@@ -1,0 +1,9 @@
+name = "pharma-matching"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+# Configuración para Cloudflare Workers
+# Plan gratuito: 100,000 requests/día
+
+[env.production]
+name = "pharma-matching-prod"

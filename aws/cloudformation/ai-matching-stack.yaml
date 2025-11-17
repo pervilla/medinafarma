@@ -1,0 +1,68 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AI Matching Infrastructure for Pharmaceutical Products'
+
+Resources:
+  # IAM Role for Lambda
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: pharma-matching-lambda-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: ComprehendMedicalAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - comprehendmedical:DetectEntitiesV2
+                  - comprehendmedical:InferRxNorm
+                  - comprehendmedical:DetectPHI
+                Resource: '*'
+
+  # Lambda Function
+  PharmaMatchingFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: pharma-matching-processor
+      Runtime: python3.11
+      Handler: pharma_matching.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 300
+      MemorySize: 512
+      Environment:
+        Variables:
+          REGION: !Ref AWS::Region
+      Code:
+        ZipFile: |
+          # Placeholder - Deploy actual code via CLI or CI/CD
+          def lambda_handler(event, context):
+              return {'statusCode': 200, 'body': 'Deploy actual code'}
+
+  # CloudWatch Log Group
+  LambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${PharmaMatchingFunction}'
+      RetentionInDays: 30
+
+Outputs:
+  LambdaFunctionArn:
+    Description: ARN of the Lambda function
+    Value: !GetAtt PharmaMatchingFunction.Arn
+    Export:
+      Name: PharmaMatchingFunctionArn
+  
+  LambdaRoleArn:
+    Description: ARN of the Lambda execution role
+    Value: !GetAtt LambdaExecutionRole.Arn
+    Export:
+      Name: PharmaMatchingRoleArn

@@ -1,0 +1,14 @@
+{
+  "name": "pharma-matching-worker",
+  "version": "1.0.0",
+  "description": "Cloudflare Worker para matching de productos farmacéuticos",
+  "main": "worker.js",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "tail": "wrangler tail"
+  },
+  "keywords": ["cloudflare", "worker", "pharmaceutical", "matching"],
+  "author": "",
+  "license": "MIT"
+}

@@ -1,0 +1,7 @@
+# Dependencias adicionales para el módulo AI Matching
+
+# AWS SDK para PHP (si se usa integración AWS)
+composer require aws/aws-sdk-php
+
+# Opcional: Para mejor manejo de strings
+composer require symfony/string

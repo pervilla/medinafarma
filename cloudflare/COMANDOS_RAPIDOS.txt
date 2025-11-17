@@ -1,0 +1,53 @@
+===========================================
+COMANDOS RÁPIDOS - CLOUDFLARE WORKERS
+===========================================
+
+1. INSTALAR WRANGLER (solo una vez)
+   npm install -g wrangler
+
+2. LOGIN (solo una vez)
+   wrangler login
+
+3. DESPLEGAR
+   cd e:\DESARROLLO\medinafarma\cloudflare
+   wrangler deploy
+
+4. VER LOGS EN TIEMPO REAL
+   wrangler tail
+
+5. PROBAR LOCALMENTE
+   wrangler dev
+   (Abre: http://localhost:8787)
+
+6. ACTUALIZAR CÓDIGO
+   - Edita worker.js
+   - Ejecuta: wrangler deploy
+
+===========================================
+DESPUÉS DE DESPLEGAR
+===========================================
+
+1. Copia la URL que aparece (ejemplo):
+   https://pharma-matching.tu-cuenta.workers.dev
+
+2. Pégala en: app/Config/AIMatching.php
+   public $cloudflareWorkerUrl = 'TU_URL_AQUI';
+
+3. Prueba en: http://localhost/medinafarma/aimatching
+
+===========================================
+DASHBOARD
+===========================================
+
+Ver estadísticas:
+https://dash.cloudflare.com/workers
+
+===========================================
+PROBAR CON CURL
+===========================================
+
+curl -X POST https://pharma-matching.tu-cuenta.workers.dev ^
+  -H "Content-Type: application/json" ^
+  -d "{\"products\":[{\"Cod_Prod\":123,\"Nom_Prod\":\"PARACETAMOL 500MG\",\"Concent\":\"500MG\"}],\"articles\":[{\"ART_KEY\":456,\"ART_NOMBRE\":\"PARACETAMOL 500MG TAB\"}]}"
+
+===========================================
