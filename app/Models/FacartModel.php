@@ -45,23 +45,35 @@ class FacartModel extends Model
 
     public function get_comisiones($mes, $anio)
     {
-        $sql = 'SELECT T2.VEM_CODVEN, T2.VEM_NOMBRE,T2.VEM_META,';
-        $sql .= 'ROUND(sum(T1.FAR_CANTIDAD/T1.FAR_EQUIV*T1.FAR_PRECIO*0.8474576271186441),2,0) as COMISION '; /* MENOS 18% IGV */
-        $sql .= 'FROM FACART T1 ';
-        $sql .= 'INNER JOIN VEMAEST T2 ON (T1.FAR_CODVEN = T2.VEM_CODVEN AND T1.FAR_CODCIA = T2.VEM_CODCIA) ';
-        $sql .= 'WHERE MONTH(T1.FAR_FECHA) = ' . $mes . ' AND ';
-        $sql .= 'YEAR(T1.FAR_FECHA) = ' . $anio . ' AND ';
-        $sql .= "T1.FAR_ESTADO <> 'E' AND ";
-        $sql .= "T1.FAR_ESTADO2 <> 'L' AND ";
-        $sql .= 'T1.FAR_TIPMOV = 10 AND ';
-        $sql .= "T1.FAR_CODART NOT IN(SELECT art_key FROM dbo.ARTI WHERE ART_GRUPOP=566) ";
-        $sql .= 'GROUP BY T2.VEM_CODVEN,T2.VEM_NOMBRE,T2.VEM_META ';
-        $sql .= 'ORDER BY T2.VEM_CODVEN,T2.VEM_NOMBRE,T2.VEM_META ';
-        //echo $sql;
+        $sql = 'SELECT 
+            T2.VEM_CODVEN, 
+            T2.VEM_NOMBRE, 
+            T2.VEM_META,
+            COALESCE(T3.COMISION, 0) as COMISION
+        FROM VEMAEST T2
+        LEFT JOIN (
+            SELECT 
+                FAR_CODVEN,
+                FAR_CODCIA,
+                ROUND(SUM(FAR_CANTIDAD/FAR_EQUIV*FAR_PRECIO*0.8474576271186441), 2) as COMISION
+            FROM FACART 
+            WHERE MONTH(FAR_FECHA) = ' . $mes . ' 
+                AND YEAR(FAR_FECHA) = ' . $anio . ' 
+                AND FAR_ESTADO <> \'E\' 
+                AND FAR_ESTADO2 <> \'L\'
+                AND FAR_TIPMOV = 10
+                AND FAR_CODART NOT IN (SELECT art_key FROM dbo.ARTI WHERE ART_GRUPOP = 566)
+            GROUP BY FAR_CODVEN, FAR_CODCIA
+        ) T3 ON (T2.VEM_CODVEN = T3.FAR_CODVEN AND T2.VEM_CODCIA = T3.FAR_CODCIA)
+        WHERE T2.VEM_DESACTIVO <> \'A\' 
+            AND T2.VEM_CODVEN <> 0 
+            AND T2.VEM_CODCIA = 25
+        ORDER BY T2.VEM_CODVEN, T2.VEM_NOMBRE, T2.VEM_META';
+
+        echo $sql;
         $query = $this->db->query($sql);
         return $query->getResult();
     }
-
     public function get_comisiones_empleado($mes, $anio)
     {
         $sql = 'SELECT T2.VEM_CODVEN, T2.VEM_NOMBRE,T2.VEM_META,';
@@ -78,28 +90,41 @@ class FacartModel extends Model
         $query =  $this->db->query($sql);
         return $query->getResult();
     }
-
     public function get_rentabilidad_empleado($mes, $anio)
     {
-        $sql = 'SELECT T2.VEM_CODVEN, T2.VEM_NOMBRE,T2.VEM_META,';
-        $sql .= 'ROUND(sum(T1.FAR_CANTIDAD/T1.FAR_EQUIV*T1.FAR_PRECIO*0.8474576271186441),2,0) as VENTA, '; /* MENOS 18% IGV */
-        $sql .= 'ROUND(sum(T1.FAR_CANTIDAD/T1.FAR_EQUIV*T1.FAR_PRECIO),2,0) as NETO,';
-        $sql .= 'ROUND(sum(T1.FAR_CANTIDAD/T1.FAR_EQUIV*T1.FAR_COSPRO),2,0) as COSTO ';
-        $sql .= 'FROM FACART T1 ';
-        $sql .= 'INNER JOIN VEMAEST T2 ON (T1.FAR_CODVEN = T2.VEM_CODVEN AND T1.FAR_CODCIA = T2.VEM_CODCIA) ';
-        $sql .= 'WHERE MONTH(T1.FAR_FECHA) = ' . $mes . ' AND ';
-        $sql .= 'YEAR(T1.FAR_FECHA) = ' . $anio . ' AND ';
-        $sql .= "T1.FAR_ESTADO <> 'E' AND ";
-        $sql .= "T1.FAR_ESTADO2 <> 'L' AND ";
-        $sql .= 'T1.FAR_TIPMOV = 10 AND ';
-        $sql .= "T1.FAR_CODART NOT IN(SELECT art_key FROM dbo.ARTI WHERE ART_GRUPOP=566) ";
-        $sql .= 'GROUP BY T2.VEM_CODVEN,T2.VEM_NOMBRE,T2.VEM_META ';
-        $sql .= 'ORDER BY T2.VEM_CODVEN,T2.VEM_NOMBRE,T2.VEM_META ';
+        $sql = 'SELECT 
+            T2.VEM_CODVEN, 
+            T2.VEM_NOMBRE, 
+            T2.VEM_META,
+            COALESCE(T3.VENTA, 0) as VENTA,
+            COALESCE(T3.NETO, 0) as NETO,
+            COALESCE(T3.COSTO, 0) as COSTO
+        FROM VEMAEST T2
+        LEFT JOIN (
+            SELECT 
+                FAR_CODVEN,
+                FAR_CODCIA,
+                ROUND(SUM(FAR_CANTIDAD/FAR_EQUIV*FAR_PRECIO*0.8474576271186441), 2) as VENTA,
+                ROUND(SUM(FAR_CANTIDAD/FAR_EQUIV*FAR_PRECIO), 2) as NETO,
+                ROUND(SUM(FAR_CANTIDAD/FAR_EQUIV*FAR_COSPRO), 2) as COSTO
+            FROM FACART 
+            WHERE MONTH(FAR_FECHA) = ' . $mes . ' 
+                AND YEAR(FAR_FECHA) = ' . $anio . ' 
+                AND FAR_ESTADO <> \'E\' 
+                AND FAR_ESTADO2 <> \'L\'
+                AND FAR_TIPMOV = 10
+                AND FAR_CODART NOT IN (SELECT art_key FROM dbo.ARTI WHERE ART_GRUPOP = 566)
+            GROUP BY FAR_CODVEN, FAR_CODCIA
+        ) T3 ON (T2.VEM_CODVEN = T3.FAR_CODVEN AND T2.VEM_CODCIA = T3.FAR_CODCIA)
+        WHERE T2.VEM_DESACTIVO <> \'A\' 
+            AND T2.VEM_CODVEN <> 0 
+            AND T2.VEM_CODCIA = 25
+        ORDER BY T2.VEM_CODVEN, T2.VEM_NOMBRE, T2.VEM_META';
+
         //echo $sql;
         $query = $this->db->query($sql);
         return $query->getResult();
     }
-
     public function get_guia($fecha, $serie, $factura)
     {
         $sql = 'SELECT FAR_NUMSEC,FAR_FECHA,FAR_CODART,FAR_PRECIO,FAR_COSPRO,FAR_BRUTO, ';

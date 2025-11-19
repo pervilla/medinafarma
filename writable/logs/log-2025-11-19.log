@@ -1,0 +1,58 @@
+ERROR - 2025-11-19 13:13:58 --> Error connecting to the database: CodeIgniter\Database\Exceptions\DatabaseException: [Microsoft][ODBC Driver 17 for SQL Server]TCP Provider: Tiempo de espera de la operación de espera agotado.
+ SQLSTATE: 08001, code: 258
+[Microsoft][ODBC Driver 17 for SQL Server]Login timeout expired SQLSTATE: HYT00, code: 0
+[Microsoft][ODBC Driver 17 for SQL Server]A network-related or instance-specific error has occurred while establishing a connection to SQL Server. Server is not found or not accessible. Check if instance name is correct and if SQL Server is configured to allow remote connections. For more information see SQL Server Books Online. SQLSTATE: 08001, code: 258 in E:\DESARROLLO\medinafarma\system\Database\SQLSRV\Connection.php:142
+Stack trace:
+#0 E:\DESARROLLO\medinafarma\system\Database\BaseConnection.php(392): CodeIgniter\Database\SQLSRV\Connection->connect(false)
+#1 E:\DESARROLLO\medinafarma\system\Database\BaseConnection.php(575): CodeIgniter\Database\BaseConnection->initialize()
+#2 E:\DESARROLLO\medinafarma\app\Models\Server03Model.php(104): CodeIgniter\Database\BaseConnection->query('SELECT T2.VEM_C...')
+#3 E:\DESARROLLO\medinafarma\app\Controllers\Empleado.php(33): App\Models\Server03Model->get_rentabilidad_empleado('11', '2025', 3)
+#4 E:\DESARROLLO\medinafarma\system\CodeIgniter.php(942): App\Controllers\Empleado->get_rentabilidad()
+#5 E:\DESARROLLO\medinafarma\system\CodeIgniter.php(502): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Empleado))
+#6 E:\DESARROLLO\medinafarma\system\CodeIgniter.php(361): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#7 E:\DESARROLLO\medinafarma\public\index.php(79): CodeIgniter\CodeIgniter->run()
+#8 E:\DESARROLLO\medinafarma\system\Commands\Server\rewrite.php(47): require_once('E:\\DESARROLLO\\m...')
+#9 {main}
+CRITICAL - 2025-11-19 13:13:58 --> Unable to connect to the database.
+Main connection [sqlsrv]: [Microsoft][ODBC Driver 17 for SQL Server]TCP Provider: Tiempo de espera de la operación de espera agotado.
+ SQLSTATE: 08001, code: 258
+[Microsoft][ODBC Driver 17 for SQL Server]Login timeout expired SQLSTATE: HYT00, code: 0
+[Microsoft][ODBC Driver 17 for SQL Server]A network-related or instance-specific error has occurred while establishing a connection to SQL Server. Server is not found or not accessible. Check if instance name is correct and if SQL Server is configured to allow remote connections. For more information see SQL Server Books Online. SQLSTATE: 08001, code: 258
+in SYSTEMPATH\Database\BaseConnection.php on line 428.
+ 1 SYSTEMPATH\Database\BaseConnection.php(575): CodeIgniter\Database\BaseConnection->initialize()
+ 2 APPPATH\Models\Server03Model.php(104): CodeIgniter\Database\BaseConnection->query('SELECT T2.VEM_CODVEN,T2.VEM_NOMBRE, ROUND(sum(T1.FAR_CANTIDAD/T1.FAR_EQUIV*T1.FAR_PRECIO*0.8474576271186441),2,0) as VENTA, ROUND(sum(T1.FAR_CANTIDAD/T1.FAR_EQUIV*T1.FAR_PRECIO),2,0) as NETO,ROUND(sum(T1.FAR_CANTIDAD/T1.FAR_EQUIV*T1.FAR_COSPRO),2,0) as COSTO FROM FACART T1 INNER JOIN VEMAEST T2 ON (T1.FAR_CODVEN = T2.VEM_CODVEN AND T1.FAR_CODCIA = T2.VEM_CODCIA) WHERE MONTH(T1.FAR_FECHA) = 11 AND YEAR(T1.FAR_FECHA) = 2025 AND T1.FAR_ESTADO <> \'E\' AND T1.FAR_ESTADO2 <> \'L\' AND T1.FAR_TIPMOV = 10 AND T1.FAR_CODART NOT IN(SELECT art_key FROM dbo.ARTI WHERE ART_GRUPOP=566) GROUP BY T2.VEM_CODVEN,T2.VEM_NOMBRE ORDER BY T2.VEM_CODVEN,T2.VEM_NOMBRE ')
+ 3 APPPATH\Controllers\Empleado.php(33): App\Models\Server03Model->get_rentabilidad_empleado('11', '2025', 3)
+ 4 SYSTEMPATH\CodeIgniter.php(942): App\Controllers\Empleado->get_rentabilidad()
+ 5 SYSTEMPATH\CodeIgniter.php(502): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Empleado))
+ 6 SYSTEMPATH\CodeIgniter.php(361): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 7 FCPATH\index.php(79): CodeIgniter\CodeIgniter->run()
+ 8 SYSTEMPATH\Commands\Server\rewrite.php(47): require_once('E:\\DESARROLLO\\medinafarma\\public\\index.php')
+ERROR - 2025-11-19 13:14:13 --> Error connecting to the database: CodeIgniter\Database\Exceptions\DatabaseException: [Microsoft][ODBC Driver 17 for SQL Server]TCP Provider: Tiempo de espera de la operación de espera agotado.
+ SQLSTATE: 08001, code: 258
+[Microsoft][ODBC Driver 17 for SQL Server]Login timeout expired SQLSTATE: HYT00, code: 0
+[Microsoft][ODBC Driver 17 for SQL Server]A network-related or instance-specific error has occurred while establishing a connection to SQL Server. Server is not found or not accessible. Check if instance name is correct and if SQL Server is configured to allow remote connections. For more information see SQL Server Books Online. SQLSTATE: 08001, code: 258 in E:\DESARROLLO\medinafarma\system\Database\SQLSRV\Connection.php:142
+Stack trace:
+#0 E:\DESARROLLO\medinafarma\system\Database\BaseConnection.php(392): CodeIgniter\Database\SQLSRV\Connection->connect(false)
+#1 E:\DESARROLLO\medinafarma\system\Database\BaseConnection.php(575): CodeIgniter\Database\BaseConnection->initialize()
+#2 E:\DESARROLLO\medinafarma\app\Models\Server03Model.php(104): CodeIgniter\Database\BaseConnection->query('SELECT T2.VEM_C...')
+#3 E:\DESARROLLO\medinafarma\app\Controllers\Empleado.php(33): App\Models\Server03Model->get_rentabilidad_empleado('11', '2025', 3)
+#4 E:\DESARROLLO\medinafarma\system\CodeIgniter.php(942): App\Controllers\Empleado->get_rentabilidad()
+#5 E:\DESARROLLO\medinafarma\system\CodeIgniter.php(502): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Empleado))
+#6 E:\DESARROLLO\medinafarma\system\CodeIgniter.php(361): CodeIgniter\CodeIgniter->handleRequest(NULL, Object(Config\Cache), false)
+#7 E:\DESARROLLO\medinafarma\public\index.php(79): CodeIgniter\CodeIgniter->run()
+#8 E:\DESARROLLO\medinafarma\system\Commands\Server\rewrite.php(47): require_once('E:\\DESARROLLO\\m...')
+#9 {main}
+CRITICAL - 2025-11-19 13:14:13 --> Unable to connect to the database.
+Main connection [sqlsrv]: [Microsoft][ODBC Driver 17 for SQL Server]TCP Provider: Tiempo de espera de la operación de espera agotado.
+ SQLSTATE: 08001, code: 258
+[Microsoft][ODBC Driver 17 for SQL Server]Login timeout expired SQLSTATE: HYT00, code: 0
+[Microsoft][ODBC Driver 17 for SQL Server]A network-related or instance-specific error has occurred while establishing a connection to SQL Server. Server is not found or not accessible. Check if instance name is correct and if SQL Server is configured to allow remote connections. For more information see SQL Server Books Online. SQLSTATE: 08001, code: 258
+in SYSTEMPATH\Database\BaseConnection.php on line 428.
+ 1 SYSTEMPATH\Database\BaseConnection.php(575): CodeIgniter\Database\BaseConnection->initialize()
+ 2 APPPATH\Models\Server03Model.php(104): CodeIgniter\Database\BaseConnection->query('SELECT T2.VEM_CODVEN,T2.VEM_NOMBRE, ROUND(sum(T1.FAR_CANTIDAD/T1.FAR_EQUIV*T1.FAR_PRECIO*0.8474576271186441),2,0) as VENTA, ROUND(sum(T1.FAR_CANTIDAD/T1.FAR_EQUIV*T1.FAR_PRECIO),2,0) as NETO,ROUND(sum(T1.FAR_CANTIDAD/T1.FAR_EQUIV*T1.FAR_COSPRO),2,0) as COSTO FROM FACART T1 INNER JOIN VEMAEST T2 ON (T1.FAR_CODVEN = T2.VEM_CODVEN AND T1.FAR_CODCIA = T2.VEM_CODCIA) WHERE MONTH(T1.FAR_FECHA) = 11 AND YEAR(T1.FAR_FECHA) = 2025 AND T1.FAR_ESTADO <> \'E\' AND T1.FAR_ESTADO2 <> \'L\' AND T1.FAR_TIPMOV = 10 AND T1.FAR_CODART NOT IN(SELECT art_key FROM dbo.ARTI WHERE ART_GRUPOP=566) GROUP BY T2.VEM_CODVEN,T2.VEM_NOMBRE ORDER BY T2.VEM_CODVEN,T2.VEM_NOMBRE ')
+ 3 APPPATH\Controllers\Empleado.php(33): App\Models\Server03Model->get_rentabilidad_empleado('11', '2025', 3)
+ 4 SYSTEMPATH\CodeIgniter.php(942): App\Controllers\Empleado->get_rentabilidad()
+ 5 SYSTEMPATH\CodeIgniter.php(502): CodeIgniter\CodeIgniter->runController(Object(App\Controllers\Empleado))
+ 6 SYSTEMPATH\CodeIgniter.php(361): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
+ 7 FCPATH\index.php(79): CodeIgniter\CodeIgniter->run()
+ 8 SYSTEMPATH\Commands\Server\rewrite.php(47): require_once('E:\\DESARROLLO\\medinafarma\\public\\index.php')
