@@ -200,10 +200,10 @@
                             <thead class="thead-dark">
                                 <tr>
                                     <th>Vendedor</th>
-                                    <th>Ventas C</th>
-                                    <th>Costo C</th>
-                                    <th>Ventas PM</th>
-                                    <th>Costo PM</th>
+                                    <th>Ventas Ctro</th>
+                                    <th>Costo Ctro</th>
+                                    <!--th>Ventas PM</th>
+                                    <th>Costo PM</th-->
                                     <th>Ventas JCILLO</th>
                                     <th>Costo JCILLO</th>
                                     <th>Total Ventas</th>
@@ -255,8 +255,8 @@ $(document).ready(function() {
             {data: 'VEM_NOMBRE', render: function(data) { return data.trim(); }},
             {data: 'COMISION', type: 'num', render: function(data) { return formatCurrency(data); }},
             {data: 'COSTO', type: 'num', render: function(data) { return formatCurrency(data); }},
-            {data: 'COMISION3', type: 'num', render: function(data) { return formatCurrency(data); }},
-            {data: 'COSTO3', type: 'num', render: function(data) { return formatCurrency(data); }},
+            //{data: 'COMISION3', type: 'num', render: function(data) { return formatCurrency(data); }},
+            //{data: 'COSTO3', type: 'num', render: function(data) { return formatCurrency(data); }},
             {data: 'COMISION2', type: 'num', render: function(data) { return formatCurrency(data); }},
             {data: 'COSTO2', type: 'num', render: function(data) { return formatCurrency(data); }},
             {
