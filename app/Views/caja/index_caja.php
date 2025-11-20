@@ -168,7 +168,7 @@
     <div class="modal-dialog">
         <div class="modal-content bg-<?=$color;?>">
             <div class="modal-header">
-                <h4 class="modal-title">Movimiento de Caja</h4>
+                <h4 class="modal-title"><i class="fas fa-cash-register"></i> Movimiento de Caja</h4>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -185,26 +185,42 @@
                             </select>
                         </div>
                     </div>
-                    <div class="form-group row" id="DV_CMV_CODVEN">
-                        <label for="cmvvend" class="col-sm-2 col-form-label">Trabaj</label>
+                    <div class="form-group row" id="DV_CMV_CODVEN" style="display:none;">
+                        <label for="cmvvend" class="col-sm-2 col-form-label"><i class="fas fa-user"></i> Empleado</label>
                         <div class="col-sm-10">
                             <select class="form-control" id="CMV_CODVEN" name="CMV_CODVEN">
+                                <option value="">Seleccionar empleado...</option>
                                 <?php foreach ($empleados as $empleado) { ?>
                                     <option value="<?= $empleado->VEM_CODVEN; ?>"><?= $empleado->VEM_CODVEN . ' - ' . trim($empleado->VEM_NOMBRE); ?></option>
                                 <?php } ?>
                             </select>
                         </div>
                     </div>
-                    <div class="form-group row">
-                        <label for="cvmmotivo3" class="col-sm-2 col-form-label">Motivo</label>
+                    <div class="form-group row" id="DV_CMV_COMPROBANTE" style="display:none;">
+                        <label for="cmvcomp" class="col-sm-2 col-form-label"><i class="fas fa-receipt"></i> Comprobante</label>
                         <div class="col-sm-10">
-                            <input type="text" class="form-control" id="CMV_DESCRI" placeholder="Motivo" style="text-transform:uppercase">
+                            <select class="form-control" id="CMV_COMPROBANTE">
+                                <option value="">Seleccionar comprobante...</option>
+                            </select>
+                            <small class="form-text text-muted">Últimos 10 comprobantes del día</small>
                         </div>
                     </div>
                     <div class="form-group row">
-                        <label for="cvmmonto3" class="col-sm-2 col-form-label">Monto</label>
+                        <label for="cvmmotivo3" class="col-sm-2 col-form-label" id="LBL_MOTIVO"><i class="fas fa-comment"></i> Motivo</label>
                         <div class="col-sm-10">
-                            <input type="number" class="form-control" id="CMV_MONTO" placeholder="0.00">
+                            <input type="text" class="form-control" id="CMV_DESCRI" placeholder="Motivo" style="text-transform:uppercase">
+                            <small class="form-text text-muted" id="HELP_MOTIVO">Descripción del movimiento</small>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="cvmmonto3" class="col-sm-2 col-form-label"><i class="fas fa-dollar-sign"></i> Monto</label>
+                        <div class="col-sm-10">
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">S/.</span>
+                                </div>
+                                <input type="number" class="form-control" id="CMV_MONTO" placeholder="0.00" step="0.01" min="0">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -348,7 +364,12 @@
                 var motivos = <?php echo json_encode($motivo_gasto); ?>;
                 return motivos[row.CMV_TIPO];
             }},
-            {data: 'CMV_DESCRIPCION'},
+            {data: 'CMV_DESCRIPCION',render:function(data, type, row, meta){
+                if((row.CMV_TIPO == 6 || row.CMV_TIPO == 7) && row.VEM_NOMBRE){
+                    return '<strong>' + row.VEM_NOMBRE + '</strong><br>' + data;
+                }
+                return data;
+            }},
             {data: 'CMV_MONTO'},
             {data: 'CMV_NRO',
                 render: function(data, type, row, meta) {
@@ -532,12 +553,45 @@
         clearInterval(running_time);
     });
     $("#movimientos").click(function () {
+        var tipo = $("#CMV_TIPO").val();
+        var monto = $("#CMV_MONTO").val();
+        var descripcion = $("#CMV_DESCRI").val();
+        var empleado = $("#CMV_CODVEN").val();
+        
+        // Validaciones
+        if(!monto || parseFloat(monto) <= 0) {
+            $.alert({
+                title: 'Error',
+                content: 'Debe ingresar un monto válido',
+                type: 'red'
+            });
+            return;
+        }
+        
+        if((tipo == '6' || tipo == '7') && !empleado) {
+            $.alert({
+                title: 'Error', 
+                content: 'Debe seleccionar un empleado para ' + (tipo == '6' ? 'adelantos' : 'créditos'),
+                type: 'red'
+            });
+            return;
+        }
+        
+        if(tipo == '7' && !descripcion) {
+            $.alert({
+                title: 'Error',
+                content: 'Debe seleccionar un comprobante para créditos',
+                type: 'red'
+            });
+            return;
+        }
+        
         $.post("agregar_movimiento", {
-            cmv_tipo: $( "select#CMV_TIPO option:checked" ).val(),
+            cmv_tipo: tipo,
             cmv_caja: $("input#CAJ_NRO").val(),
-            cmv_codven: $( "select#CMV_CODVEN option:checked" ).val(),
-            cmv_descri: $("#CMV_DESCRI").val(),
-            cvm_monto:$("#CMV_MONTO").val()
+            cmv_codven: empleado,
+            cmv_descri: descripcion,
+            cvm_monto: monto
         }, function (htmlexterno) {
             dtableMovimiento.ajax.reload();
             $('#modal-movimiento').modal('hide');
@@ -545,17 +599,68 @@
     });
     $("#CMV_TIPO" ).change(function() {
         var opt = $(this).find("option:selected").attr('value'); 
-        if(opt == 6 || opt == 7){
+        
+        // Reset campos
+        $('#DV_CMV_CODVEN').hide();
+        $('#DV_CMV_COMPROBANTE').hide();
+        $('#CMV_MONTO').val('').removeAttr('readonly');
+        $('#CMV_DESCRI').val('').removeAttr('readonly');
+        $('#LBL_MOTIVO').html('<i class="fas fa-comment"></i> Motivo');
+        $('#HELP_MOTIVO').text('Descripción del movimiento');
+        
+        if(opt == 6) { // ADELANTO
             $('#DV_CMV_CODVEN').show();
-        }else{
-            $('#DV_CMV_CODVEN').hide();
+            $('#LBL_MOTIVO').html('<i class="fas fa-comment"></i> Motivo (opcional)');
+            $('#HELP_MOTIVO').text('Motivo del adelanto (opcional)');
+        } else if(opt == 7) { // CREDITO
+            $('#DV_CMV_CODVEN').show();
+            $('#DV_CMV_COMPROBANTE').show();
+            $('#LBL_MOTIVO').html('<i class="fas fa-receipt"></i> Comprobante');
+            $('#HELP_MOTIVO').text('Se completará automáticamente al seleccionar comprobante');
+            $('#CMV_DESCRI').attr('readonly', true);
+            cargarComprobantes();
         }
-        $('#CMV_MONTO').removeAttr('value');
     });
+    
+    $("#CMV_COMPROBANTE").change(function() {
+        var selectedOption = $(this).find('option:selected');
+        var comprobante = selectedOption.text();
+        var monto = selectedOption.data('monto');
+        
+        if(comprobante && comprobante !== 'Seleccionar comprobante...') {
+            $('#CMV_DESCRI').val(comprobante);
+            $('#CMV_MONTO').val(monto);
+        }
+    });
+    
+    function cargarComprobantes() {
+        var select = $('#CMV_COMPROBANTE');
+        select.empty().append('<option value="">Cargando comprobantes...</option>').prop('disabled', true);
+        
+        $.post("<?= site_url('caja/get_comprobantes') ?>", {}, function(data) {
+            select.empty().append('<option value="">Seleccionar comprobante...</option>').prop('disabled', false);
+            
+            if(data && data.length > 0) {
+                $.each(data, function(index, item) {
+                    select.append('<option value="' + item.COMPROBANTE + '" data-monto="' + item.ALL_NETO + '">' + 
+                                 item.COMPROBANTE + ' - S/. ' + parseFloat(item.ALL_NETO).toFixed(2) + '</option>');
+                });
+            } else {
+                select.append('<option value="">No hay comprobantes disponibles</option>');
+            }
+        }, 'json').fail(function() {
+            select.empty().append('<option value="">Error al cargar comprobantes</option>').prop('disabled', false);
+        });
+    }
     $('#modal-movimiento').on('shown.bs.modal', function(e) {
-        var tipo = $("#CMV_TIPO" ).find("option:selected").attr('value');
+        // Reset form
+        $('#CMV_TIPO').val('1').trigger('change');
         $('#CMV_MONTO').val('');
         $('#CMV_DESCRI').val('');
+        $('#CMV_CODVEN').val('');
+        $('#CMV_COMPROBANTE').empty().append('<option value="">Seleccionar comprobante...</option>');
+        // Focus en el primer campo
+        $('#CMV_TIPO').focus();
     });
     $('#table_movimientos tbody').on('click', '#delmov', function(event) {
         var data = dtableMovimiento.row($(this).parents('tr')).data();

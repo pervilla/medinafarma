@@ -208,4 +208,31 @@ class AllogModel  extends Model {
         $sql.= ' WHERE ALL_CODCLIE = '.$CLIENTE2;
         return $this->db->simpleQuery($sql);
     }
+
+    public function get_comprobantes_dia($fecha, $server){
+        $sql = "SELECT TOP 10 ";
+        $sql.= "CASE ";
+        $sql.= "WHEN ALL_FBG = 'B' THEN 'BO' + RTRIM(ALL_NUMSER) + '-' + CONVERT(VARCHAR, ALL_NUMFAC) ";
+        $sql.= "WHEN ALL_FBG = 'G' THEN 'GI' + RTRIM(ALL_NUMSER) + '-' + CONVERT(VARCHAR, ALL_NUMFAC) ";
+        $sql.= "WHEN ALL_FBG = 'F' THEN 'FA' + RTRIM(ALL_NUMSER) + '-' + CONVERT(VARCHAR, ALL_NUMFAC) ";
+        $sql.= "ELSE ALL_FBG + ALL_NUMSER + '-' + CONVERT(VARCHAR, ALL_NUMFAC) ";
+        $sql.= "END AS COMPROBANTE, ";
+        $sql.= "ALL_NETO ";
+        $sql.= "FROM dbo.ALLOG ";
+        $sql.= "WHERE ALL_CODCIA = 25 ";
+        $sql.= "AND ALL_TIPMOV = 10 ";
+        $sql.= "AND ALL_FECHA_DIA = '$fecha' ";
+        $sql.= "AND ALL_FLAG_EXT <> 'E' ";
+        $sql.= "AND ALL_CODCLIE <> 0 ";
+        $sql.= "ORDER BY ALL_NUMOPER DESC";
+        
+        if($server==2){
+            $query = $this->dbjj->query($sql);
+        }elseif($server==3){
+            $query = $this->dbpm->query($sql);
+        }else{
+            $query = $this->db->query($sql);
+        }
+        return $query->getResult();
+    }
 }

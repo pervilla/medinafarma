@@ -170,6 +170,17 @@ public function dia(){
         $data['menu']['i'] = 14;
     return view('caja/index_caja',$data);
 }
+
+public function get_comprobantes(){
+    $session = session();
+    $caja = $session->get('caja');
+    $fecha = date('d/m/Y');
+    
+    $Allog = new AllogModel();
+    $comprobantes = $Allog->get_comprobantes_dia($fecha, $caja);
+    
+    return $this->response->setJSON($comprobantes);
+}
 public function get_cajas_dia(){
     $ani = $this->request->getVar('anio');
     $mes = $this->request->getVar('mes');
@@ -359,41 +370,63 @@ public function get_cajas_dia(){
             $printer -> text("╚═══════╩══════════════╝ \n");
             $printer -> text("┌─────────────┐ \n");
             $printer -> text("│ MOVIMIENTOS │ \n");
-            $printer -> text("├─────────────┴───────────────────┬────────────┐\n");
-            $printer -> text("│ CONCEPTO                        │    MONTO   │\n");
-            $printer -> text("├─────────────────────────────────┼────────────┤\n");
+            $printer -> text("├─────────────┴──────────────────┬─────────────┐\n");
+            $printer -> text("│ CONCEPTO                       │    MONTO    │\n");
+            $printer -> text("├────────────────────────────────┼─────────────┤\n");
 
-            foreach ($movimientos as $val) { 
-                // 31 array ( 0 => (object) array( 'CMV_NRO' => 322, 'CMV_CAJA' => 313, 'CMV_TIPO' => 1, 'CMV_CODVEN' => 18, 'CMV_DESCRIPCION' => 'DEPOSITO', 'CMV_MONTO' => '100.00', ), ) -->
-                $concep = $this->motivos[$val->CMV_TIPO]." : ".$val->CMV_DESCRIPCION;
-                $find = array('á','é','í','ó','ú','â','ê','î','ô','û','ã','õ','ç','ñ','Á','É','Í','Ó','Ú','Â','Ê','Î','Ô','Û','Ã','Õ','Ç','Ñ');
-                $repl = array('a','e','i','o','u','a','e','i','o','u','a','o','c','n','A','E','I','O','U','A','E','I','O','U','A','O','C','N');
-                $concep = str_replace($find, $repl, $concep);
-                $partes = str_split(trim($concep), 31);
-                $tamano = count($partes);
-                $a=0;
-                if($tamano>1){
+            // Agrupar movimientos por tipo
+            $agrupados = [];
+            foreach ($movimientos as $val) {
+                $tipo = $val->CMV_TIPO;
+                if(!isset($agrupados[$tipo])){
+                    $agrupados[$tipo] = [
+                        'nombre' => $this->motivos[$tipo],
+                        'items' => [],
+                        'total' => 0
+                    ];
+                }
+                $agrupados[$tipo]['items'][] = $val;
+                $agrupados[$tipo]['total'] += floatval($val->CMV_MONTO);
+            }
+
+            $find = array('á','é','í','ó','ú','â','ê','î','ô','û','ã','õ','ç','ñ','Á','É','Í','Ó','Ú','Â','Ê','Î','Ô','Û','Ã','Õ','Ç','Ñ');
+            $repl = array('a','e','i','o','u','a','e','i','o','u','a','o','c','n','A','E','I','O','U','A','E','I','O','U','A','O','C','N');
+
+            foreach ($agrupados as $grupo) {
+                // Imprimir cada item del grupo
+                foreach($grupo['items'] as $val){
+                    $detalle = "";
+                    if(($val->CMV_TIPO == 6 || $val->CMV_TIPO == 7) && !empty($val->VEM_NOMBRE)){
+                        $detalle .= $val->VEM_NOMBRE." - ";
+                    }
+                    $detalle .= $val->CMV_DESCRIPCION;
+                    $detalle = str_replace($find, $repl, $detalle);
+                    
+                    $partes = str_split(trim($detalle), 30);
+                    $a=0;
                     foreach($partes as $parte){
-                        $concepto = str_pad(substr($parte, 0, 31),31," ");
-                        $monto = $a==0?"S/." . str_pad($val->CMV_MONTO, 7, " ", STR_PAD_LEFT):'          '; 
+                        $concepto = str_pad(substr($parte, 0, 30),30," ");
+                        $monto = $a==0?"S/." . str_pad(number_format($val->CMV_MONTO,2), 8, " ", STR_PAD_LEFT):'           '; 
                         $printer -> text("│ ".$concepto." │ ".$monto." │\n");
                         $a++;
                     }
-                }else{
-                    $concepto = str_pad(substr($partes[0], 0, 31),31," ");
-                    $monto = "S/." . str_pad($val->CMV_MONTO, 7, " ", STR_PAD_LEFT); 
-                    $printer -> text("│ ".$concepto." │ ".$monto." │\n");
                 }
-                }   
+                
+                // Imprimir subtotal del grupo
+                $printer -> text("├────────────────────────────────┼─────────────┤\n");
+                $printer -> text("│ SUBTOTAL ".str_pad($grupo['nombre'], 22)."│ S/." . str_pad(number_format($grupo['total'],2), 8, " ", STR_PAD_LEFT)." │\n");
+                $printer -> text("├────────────────────────────────┼─────────────┤\n");
+            }   
 
-            $printer -> text("└─────────────────────────────────┴────────────┘\n");
-            $printer -> text("                                  ┌────────────┐\n");
-            $printer -> text("              MONTO TOTAL DE CAJA │ S/." . str_pad(number_format((float)round(($cajar[0]->TOT_MOVIM+$cajar[0]->TOT_EFECTIVO),2, PHP_ROUND_HALF_DOWN),2,'.',''), 7, " ", STR_PAD_LEFT)." │\n");
-            $printer -> text("                                  ├────────────┤\n");
-            $printer -> text("                MONTO DEL SISTEMA │ S/." . str_pad(number_format((float)round( $cajar[0]->TOT_VENTAS ,2, PHP_ROUND_HALF_DOWN),2,'.',''), 7, " ", STR_PAD_LEFT)." │\n");
-            $printer -> text("                                  ├────────────┤\n");
-            $printer -> text("                       DIFERENCIA │ S/." . str_pad(number_format((float)round(($cajar[0]->TOT_MOVIM+$cajar[0]->TOT_EFECTIVO)-$cajar[0]->TOT_VENTAS,2, PHP_ROUND_HALF_DOWN),2,'.',''), 7, " ", STR_PAD_LEFT)." │\n");
-            $printer -> text("                                  └────────────┘\n");
+            $printer -> text("└────────────────────────────────┴─────────────┘\n");
+            $printer -> text("                                               \n");
+            $printer -> text("                                 ┌─────────────┐\n");
+            $printer -> text("             MONTO TOTAL DE CAJA │ S/." . str_pad(number_format((float)round(($cajar[0]->TOT_MOVIM+$cajar[0]->TOT_EFECTIVO),2, PHP_ROUND_HALF_DOWN),2,'.',''), 8, " ", STR_PAD_LEFT)." │\n");
+            $printer -> text("                                 ├─────────────┤\n");
+            $printer -> text("               MONTO DEL SISTEMA │ S/." . str_pad(number_format((float)round( $cajar[0]->TOT_VENTAS ,2, PHP_ROUND_HALF_DOWN),2,'.',''), 8, " ", STR_PAD_LEFT)." │\n");
+            $printer -> text("                                 ├─────────────┤\n");
+            $printer -> text("                      DIFERENCIA │ S/." . str_pad(number_format((float)round(($cajar[0]->TOT_MOVIM+$cajar[0]->TOT_EFECTIVO)-$cajar[0]->TOT_VENTAS,2, PHP_ROUND_HALF_DOWN),2,'.',''), 8, " ", STR_PAD_LEFT)." │\n");
+            $printer -> text("                                 └─────────────┘\n");
             $printer -> text("┌────────────────────────────┬─────────────────┐\n");
             $printer -> text("│ CAJERO:                    │ FIRMA:          │\n");
             $printer -> text("│ ".str_pad(trim($cajar[0]->VEM_NOMBRE), 26)." │                 │\n");
@@ -475,7 +508,11 @@ public function get_cajas_dia(){
         $movimientos = $CajaMov->get_movimientos($request->getPost('cmv_caja'),$caja);
         foreach ($movimientos as $val) {
             $moti = $this->motivos[$val->CMV_TIPO];
-            $tr = "<tr><td>$moti</td><td>$val->CMV_DESCRIPCION</td><td>$val->CMV_MONTO</td>";            
+            $descripcion = $val->CMV_DESCRIPCION;
+            if(($val->CMV_TIPO == 6 || $val->CMV_TIPO == 7) && !empty($val->VEM_NOMBRE)){
+                $descripcion = "<strong>".$val->VEM_NOMBRE."</strong><br>".$descripcion;
+            }
+            $tr = "<tr><td>$moti</td><td>$descripcion</td><td>$val->CMV_MONTO</td>";            
             $tr.= "<td><a href='#' class='nav-link' title='Eliminar'><span class='float-right badge bg-danger'><i class='fas fa-trash' onclick='quitar_mov($val->CMV_NRO)'></i></span></a></td>";
             echo $tr;
         }

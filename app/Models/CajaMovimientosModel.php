@@ -29,10 +29,10 @@ class CajaMovimientosModel extends Model {
     }
 
     public function get_movimientos($idcaja,$server) {
-        $sql = 'SELECT * ';
-        $sql .= 'FROM dbo.CAJA_MOVIMIENTOS ';
-        $sql .= 'WHERE ';
-        $sql .= 'CMV_CAJA = ' . $idcaja;
+        $sql = 'SELECT CM.*, RTRIM(VEM.VEM_NOMBRE) AS VEM_NOMBRE ';
+        $sql .= 'FROM dbo.CAJA_MOVIMIENTOS AS CM ';
+        $sql .= 'LEFT JOIN dbo.VEMAEST AS VEM ON (CM.CMV_CODVEN = VEM.VEM_CODVEN AND VEM.VEM_CODCIA = 25) ';
+        $sql .= 'WHERE CM.CMV_CAJA = ' . $idcaja;
         if($server==2){
             $query =  $this->dbjj->query($sql);
         }elseif($server==3){
