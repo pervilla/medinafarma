@@ -1,9 +1,0 @@
-CRITICAL - 2025-11-19 16:44:36 --> syntax error, unexpected identifier "a", expecting "function" or "const"
-in APPPATH\Controllers\Caja.php on line 270.
- 1 SYSTEMPATH\Router\Router.php(514): CodeIgniter\Router\AutoRouter->getRoute('caja/dia', 'get')
- 2 SYSTEMPATH\Router\Router.php(210): CodeIgniter\Router\Router->autoRoute('caja/dia')
- 3 SYSTEMPATH\CodeIgniter.php(823): CodeIgniter\Router\Router->handle('caja/dia')
- 4 SYSTEMPATH\CodeIgniter.php(450): CodeIgniter\CodeIgniter->tryToRouteIt(Object(CodeIgniter\Router\RouteCollection))
- 5 SYSTEMPATH\CodeIgniter.php(361): CodeIgniter\CodeIgniter->handleRequest(null, Object(Config\Cache), false)
- 6 FCPATH\index.php(79): CodeIgniter\CodeIgniter->run()
- 7 SYSTEMPATH\Commands\Server\rewrite.php(47): require_once('E:\\DESARROLLO\\medinafarma\\public\\index.php')
