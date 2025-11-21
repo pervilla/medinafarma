@@ -501,6 +501,26 @@
                                 </ul>
                             </li>
                             
+                            <?php if($session->get('user_id')){?>  
+                            <li class="nav-item <?=$menu['p']==80?'menu-open':''?> has-treeview">
+                                <a href="#" class="nav-link <?=$menu['p']==80?'active':''?>">
+                                    <i class="nav-icon fas fa-calendar-alt"></i>
+                                    <p>
+                                        Administración
+                                        <i class="fas fa-angle-left right"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="<?= site_url('calendario') ?>" class="nav-link <?=$menu['i']==81?'active':''?>">
+                                            <i class="fas fa-calendar-day nav-icon"></i>
+                                            <p>Calendario</p>
+                                        </a>
+                                    </li>                                                              
+                                </ul>
+                            </li>
+                            <?php } ?>
+                            
                         </ul>
                     </nav>
                     <!-- /.sidebar-menu -->

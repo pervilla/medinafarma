@@ -70,7 +70,7 @@ class FacartModel extends Model
             AND T2.VEM_CODCIA = 25
         ORDER BY T2.VEM_CODVEN, T2.VEM_NOMBRE, T2.VEM_META';
 
-        echo $sql;
+        //echo $sql;
         $query = $this->db->query($sql);
         return $query->getResult();
     }

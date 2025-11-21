@@ -120,3 +120,12 @@ $routes->post('citas/generarComprobante', 'Citas::generarComprobante');
 $routes->post('citas/cambiarEstadoCita', 'Citas::cambiarEstadoCita');
 $routes->get('citas/reportePagos', 'Citas::reportePagos');
 $routes->post('citas/getReportePagos', 'Citas::getReportePagos');
+
+/*
+ * -------------------------
+ * RUTAS CALENDARIO
+ * -------------------------
+ */
+$routes->get('calendario', 'Calendario::index');
+$routes->post('calendario/generar', 'Calendario::generar');
+$routes->post('calendario/cerrar', 'Calendario::cerrar');
