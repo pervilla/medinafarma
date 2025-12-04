@@ -120,7 +120,7 @@ class Consultorio extends BaseController {
         $campania = $CampaniaModel->get_campanias(null,'todos');
         $tipcampa = $CampaniaModel->get_tipos_campanias();
         $ClientesModel = new ClientesModel();
-        $medicos = $ClientesModel->get_personas('','25','M','');
+        $medicos = $ClientesModel->get_personas(null, null, '25', 'M');
 
         $data['campanias'] = $campania;
         $data['tipocampa'] = $tipcampa;
@@ -134,7 +134,7 @@ class Consultorio extends BaseController {
         $CIT_CODCIT = $this->request->uri->getSegment(4);
         $CIT_CODCLIE = $this->request->uri->getSegment(5);
         $ClientesModel = new ClientesModel();
-        $clientes = $ClientesModel->get_personas($CIT_CODCLIE,'25','','');       
+        $clientes = $ClientesModel->get_personas(null, $CIT_CODCLIE, '25');       
         $HistoriaModel = new HistoriaModel();
         a:
         $nrohist = $HistoriaModel->get_nro_historia($CIT_CODCIT,$CIT_CODCLIE,$CIT_CODCAMP);
@@ -161,7 +161,7 @@ class Consultorio extends BaseController {
         $CIT_CODCIT = $this->request->uri->getSegment(4);
         $CIT_CODCLIE = $this->request->uri->getSegment(5);
         $ClientesModel = new ClientesModel();
-        $clientes = $ClientesModel->get_personas($CIT_CODCLIE,'25','','');       
+        $clientes = $ClientesModel->get_personas(null, $CIT_CODCLIE, '25');       
         $HistoriaModel = new HistoriaModel();
         a:
         $nrohist = $HistoriaModel->get_nro_historia($CIT_CODCIT,$CIT_CODCLIE,$CIT_CODCAMP);
@@ -189,7 +189,7 @@ class Consultorio extends BaseController {
         $CIT_CODCIT = $this->request->uri->getSegment(4);
         $CIT_CODCLIE = $this->request->uri->getSegment(5);
         $ClientesModel = new ClientesModel();
-        $clientes = $ClientesModel->get_personas($CIT_CODCLIE,'25','','');       
+        $clientes = $ClientesModel->get_personas(null, $CIT_CODCLIE, '25');       
         $HistoriaModel = new HistoriaModel();
         $nrohist = $HistoriaModel->get_nro_historia($CIT_CODCIT,$CIT_CODCLIE,$CIT_CODCAMP);
         $historia = $HistoriaModel->get_historia($nrohist);
@@ -214,7 +214,7 @@ class Consultorio extends BaseController {
         $CIT_CODCIT = $this->request->uri->getSegment(4);
         $CIT_CODCLIE = $this->request->uri->getSegment(5);
         $ClientesModel = new ClientesModel();
-        $clientes = $ClientesModel->get_personas($CIT_CODCLIE,'25','','');       
+        $clientes = $ClientesModel->get_personas(null, $CIT_CODCLIE, '25');       
         $HistoriaModel = new HistoriaModel();
         $nrohist = $HistoriaModel->get_nro_historia($CIT_CODCIT,$CIT_CODCLIE,$CIT_CODCAMP);
         $historia = $HistoriaModel->get_historia($nrohist);
@@ -245,7 +245,7 @@ class Consultorio extends BaseController {
         $CIT_CODCIT = $this->request->uri->getSegment(4);
         $CIT_CODCLIE = $this->request->uri->getSegment(5);
         $ClientesModel = new ClientesModel();
-        $clientes = $ClientesModel->get_personas($CIT_CODCLIE,'25','','');       
+        $clientes = $ClientesModel->get_personas(null, $CIT_CODCLIE, '25');       
         $HistoriaModel = new HistoriaModel();
         $nrohist = $HistoriaModel->get_nro_historia($CIT_CODCIT,$CIT_CODCLIE,$CIT_CODCAMP);
         $historia = $HistoriaModel->get_historia($nrohist);

@@ -27,95 +27,121 @@ class ClientesModel extends Model
         parent::__construct();
         $this->db = \Config\Database::connect();
     }
-    public function get_personas($CODCLIE, $CODCIA, $CLICP, $busqueda)
+    /**
+     * Búsqueda unificada de personas/clientes con normalización de texto
+     * 
+     * @param string|null $busqueda Término de búsqueda (nombre, código, RUC)
+     * @param int|null $CODCLIE Código específico del cliente
+     * @param int|null $CODCIA Código de compañía
+     * @param string|null $CLICP Tipo de cliente ('C' = Cliente, 'P' = Proveedor)
+     * @param string $formato Formato de retorno: 'completo' o 'simple' (id, text)
+     * @param bool $busqueda_avanzada Si es true, usa búsqueda por palabras con normalización de acentos
+     * @return array Resultados de la búsqueda
+     */
+    public function get_personas($busqueda = null, $CODCLIE = null, $CODCIA = null, $CLICP = null, $formato = 'completo', $busqueda_avanzada = true)
     {
-        $sql = 'SELECT CLI_CODCLIE,CLI_CODCIA,CLI_CP,RTRIM(CLI_NOMBRE) CLI_NOMBRE,RTRIM(CLI_NOMBRE_ESPOSA) CLI_NOMBRE_ESPOSA,CLI_123,';
-        $sql .= 'RTRIM(CLI_CASA_DIREC) CLI_CASA_DIREC,CLI_CASA_NUM,CLI_CASA_ZONA,CLI_CASA_SUBZONA,RTRIM(CLI_RUC_ESPOSO) CLI_RUC_ESPOSO,';
-        $sql .= 'RTRIM(CLI_RUC_ESPOSA) CLI_RUC_ESPOSA,CLI_ESTADO,CLI_MONEDA,CLI_TIPOCLI,CLI_ZONA_NEW,CLI_TELEF1,CLI_FECHA_NAC, ';
-        $sql .= "floor((cast(convert(varchar(8),getdate(),112) as int)-cast(convert(varchar(8),CLI_FECHA_NAC,112) as int)) / 10000) as EDAD ";
+        // Determinar campos a seleccionar según el formato
+        if ($formato === 'simple') {
+            $sql = 'SELECT CLI_CODCLIE AS id, RTRIM(CLI_NOMBRE) AS text ';
+        } else {
+            $sql = 'SELECT CLI_CODCLIE,CLI_CODCIA,CLI_CP,RTRIM(CLI_NOMBRE) CLI_NOMBRE,RTRIM(CLI_NOMBRE_ESPOSA) CLI_NOMBRE_ESPOSA,CLI_123,';
+            $sql .= 'RTRIM(CLI_CASA_DIREC) CLI_CASA_DIREC,CLI_CASA_NUM,CLI_CASA_ZONA,CLI_CASA_SUBZONA,RTRIM(CLI_RUC_ESPOSO) CLI_RUC_ESPOSO,';
+            $sql .= 'RTRIM(CLI_RUC_ESPOSA) CLI_RUC_ESPOSA,CLI_ESTADO,CLI_MONEDA,CLI_TIPOCLI,CLI_ZONA_NEW,CLI_TELEF1,CLI_FECHA_NAC, ';
+            $sql .= "floor((cast(convert(varchar(8),getdate(),112) as int)-cast(convert(varchar(8),CLI_FECHA_NAC,112) as int)) / 10000) as EDAD ";
+        }
+
         $sql .= "FROM dbo.CLIENTES ";
-        $sql .= "WHERE CLI_CODCLIE<>1 ";
+        $sql .= "WHERE CLI_CODCLIE <> 1 ";
+
+        // Filtros específicos
         $sql .= empty($CODCLIE) ? "" : "AND CLI_CODCLIE = $CODCLIE ";
         $sql .= empty($CODCIA) ? "" : "AND CLI_CODCIA = $CODCIA ";
         $sql .= empty($CLICP) ? "" : "AND CLI_CP = '$CLICP' ";
-        $sql .= empty($busqueda) ? "" : "AND (CLI_NOMBRE like '%$busqueda%' OR CLI_CODCLIE=(case when ISNUMERIC('$busqueda')=1 then '$busqueda' else '0' end)) ";
-        //echo $sql; die();
-        $query = $this->db->query($sql);
-        return $query->getResult();
-    }
-    public function get_personas3($busqueda)
-    {
-        $sql = 'SELECT CLI_CODCLIE as id,RTRIM(CLI_NOMBRE) as text ';
-        $sql .= "FROM dbo.CLIENTES ";
-        $sql .= "WHERE CLI_CODCLIE<>1 ";
-        $sql .= "AND CLI_CP = 'C' ";
-        $sql .= empty($busqueda) ? "" : "AND (CLI_NOMBRE like '%$busqueda%' OR CLI_CODCLIE=(case when ISNUMERIC('$busqueda')=1 then '$busqueda' else '0' end)) ";
-        //echo $sql; die();
-        $query = $this->db->query($sql);
-        return $query->getResult();
-    }
-    public function get_personas2($busqueda)
-    {
-        // Convertir a mayúsculas y reemplazar caracteres acentuados
-        $busqueda = strtoupper($busqueda);
-        $busqueda = str_replace(
-            ['Á', 'É', 'Í', 'Ó', 'Ú', 'Ñ'],
-            ['A', 'E', 'I', 'O', 'U', 'Ñ'],
-            $busqueda
-        );
 
-        // Limpiar caracteres no alfanuméricos pero conservar espacios y "Ñ"
-        $busqueda = preg_replace('/[^A-Z0-9 Ñ]/', '', $busqueda);
+        // Búsqueda por término
+        if (!empty($busqueda)) {
+            if ($busqueda_avanzada) {
+                // Normalizar búsqueda: convertir a mayúsculas y reemplazar acentos
+                $busqueda_normalizada = strtoupper($busqueda);
+                $busqueda_normalizada = str_replace(
+                    ['Á', 'É', 'Í', 'Ó', 'Ú', 'Ñ'],
+                    ['A', 'E', 'I', 'O', 'U', 'Ñ'],
+                    $busqueda_normalizada
+                );
 
-        // Eliminar espacios al principio y al final, y dividir por palabras
-        $palabras = array_filter(array_map('trim', explode(' ', $busqueda)));
+                // Limpiar caracteres no alfanuméricos pero conservar espacios y "Ñ"
+                $busqueda_normalizada = preg_replace('/[^A-Z0-9 Ñ]/', '', $busqueda_normalizada);
 
-        // Construir condiciones de búsqueda para cada palabra
-        $condiciones = [];
-        foreach ($palabras as $palabra) {
-            if (is_numeric($palabra)) {
-                $condiciones[] = "CLI_CODCLIE = $palabra OR CLI_RUC_ESPOSO LIKE '%$palabra%' OR CLI_RUC_ESPOSA LIKE '%$palabra%'";
+                // Dividir por palabras
+                $palabras = array_filter(array_map('trim', explode(' ', $busqueda_normalizada)));
+
+                // Construir condiciones de búsqueda para cada palabra
+                $condiciones = [];
+                foreach ($palabras as $palabra) {
+                    if (is_numeric($palabra)) {
+                        // Si es numérico, buscar en código y RUCs
+                        $condiciones[] = "(CLI_CODCLIE = $palabra OR CLI_RUC_ESPOSO LIKE '%$palabra%' OR CLI_RUC_ESPOSA LIKE '%$palabra%')";
+                    } else {
+                        // Si es texto, buscar en nombre
+                        $condiciones[] = "CLI_NOMBRE LIKE '%$palabra%'";
+                    }
+                }
+
+                // Agregar condiciones a la consulta
+                if (!empty($condiciones)) {
+                    $sql .= "AND (" . implode(' AND ', $condiciones) . ") ";
+                }
             } else {
-                $condiciones[] = "CLI_NOMBRE LIKE '%$palabra%'";
+                // Búsqueda simple (original)
+                $sql .= "AND (CLI_NOMBRE LIKE '%$busqueda%' OR CLI_CODCLIE = (CASE WHEN ISNUMERIC('$busqueda')=1 THEN '$busqueda' ELSE '0' END)) ";
             }
         }
 
-        // Validar si hay condiciones
-        $condiciones_str = !empty($condiciones) ? implode(' AND ', $condiciones) : '1=1';
+        // Ordenar resultados
+        $sql .= "ORDER BY CLI_NOMBRE";
 
-        // Construir consulta SQL
-        $sql = 'SELECT CLI_CODCLIE AS id, RTRIM(CLI_NOMBRE) AS text ';
-        $sql .= 'FROM dbo.CLIENTES ';
-        $sql .= "WHERE CLI_CODCLIE <> 1 ";
-        $sql .= "AND CLI_CP = 'C' ";
-        $sql .= "AND $condiciones_str ";
-        $sql .= 'ORDER BY CLI_NOMBRE';
+        // Depuración
+        log_message('debug', "Consulta get_personas: $sql");
 
-        // Depuración del SQL generado
-        log_message('debug', "Consulta generada: $sql");
-
-        // Ejecutar la consulta
+        // Ejecutar consulta
         $query = $this->db->query($sql);
 
-        // Verificar si la consulta falló
+        // Verificar errores
         if (!$query) {
-            log_message('error', 'Database query failed: ' . $this->db->error());
+            log_message('error', 'Database query failed in get_personas: ' . $this->db->error());
             return [];
         }
 
         return $query->getResult();
     }
 
-    public function get_proveedores($busqueda)
+    /**
+     * Alias para mantener compatibilidad con código existente que usa get_personas2
+     * @deprecated Usar get_personas() con $busqueda_avanzada = true
+     */
+    public function get_personas2($busqueda)
     {
-        $sql = 'SELECT CLI_CODCLIE as id,RTRIM(CLI_NOMBRE) as text ';
-        $sql .= "FROM dbo.CLIENTES ";
-        $sql .= "WHERE CLI_CODCLIE<>1 ";
-        $sql .= "AND CLI_CP = 'P' ";
-        $sql .= empty($busqueda) ? "" : "AND (CLI_NOMBRE like '%$busqueda%' OR CLI_CODCLIE=(case when ISNUMERIC('$busqueda')=1 then '$busqueda' else '0' end)) ";
-        //echo $sql; die();
-        $query = $this->db->query($sql);
-        return $query->getResult();
+        return $this->get_personas($busqueda, null, null, 'C', 'simple', true);
+    }
+
+    /**
+     * Alias para mantener compatibilidad con código existente que usa get_personas3
+     * @deprecated Usar get_personas() con formato = 'simple'
+     */
+    public function get_personas3($busqueda)
+    {
+        return $this->get_personas($busqueda, null, null, 'C', 'simple', false);
+    }
+
+    /**
+     * Búsqueda de proveedores
+     * @param string $busqueda Término de búsqueda
+     * @param bool $busqueda_avanzada Si es true, usa búsqueda avanzada con normalización
+     * @return array Resultados de la búsqueda
+     */
+    public function get_proveedores($busqueda, $busqueda_avanzada = true)
+    {
+        return $this->get_personas($busqueda, null, null, 'P', 'simple', $busqueda_avanzada);
     }
     public function get_max_id()
     {

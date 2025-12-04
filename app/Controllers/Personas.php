@@ -31,7 +31,7 @@ class Personas extends BaseController {
         $tipoCli = $this->request->getVar('tipoCli');
         
         $ClientesModel = new ClientesModel();
-        $clientes = $ClientesModel->get_personas('','',$tipoCli,$busqueda);
+        $clientes = $ClientesModel->get_personas($busqueda, null, null, $tipoCli);
         return $this->response->setJSON($clientes);
     }
     
@@ -190,7 +190,7 @@ class Personas extends BaseController {
             $clienteExistente = $ClientesModel->get_pos_id($documento, $tipoDoc);
             
             if (!empty($clienteExistente)) {
-                $cliente = $ClientesModel->get_personas($clienteExistente, '', '', '')[0];
+                $cliente = $ClientesModel->get_personas(null, $clienteExistente)[0];
                 return $this->response->setJSON([
                     'status' => 'exists',
                     'message' => 'El documento ya está registrado',
@@ -299,7 +299,7 @@ class Personas extends BaseController {
         if(empty($codcli)){
             $new_id = $ClientesModel->get_max_id();
         }else{
-            $clientes = $ClientesModel->get_personas($codcli,'','','');
+            $clientes = $ClientesModel->get_personas(null, $codcli);
             $tip = 3;
         }        
         if($tip==1){
@@ -360,7 +360,7 @@ class Personas extends BaseController {
     public function get_persona_id($codcli=false){
         $codcli = $codcli?trim($codcli):trim($this->request->getVar('codcli'));        
         $ClientesModel = new ClientesModel();
-        $clientes = $ClientesModel->get_personas($codcli,'','','');        
+        $clientes = $ClientesModel->get_personas(null, $codcli);        
         if($clientes){
             $client = $clientes[0];
             $datos = array(

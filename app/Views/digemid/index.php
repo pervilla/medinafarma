@@ -27,7 +27,8 @@
                                     <select class="form-control" name="cod_estab" required>
                                         <option value="">Seleccionar...</option>
                                         <option value="0060004">Centro (0060004)</option>
-                                        <option value="0042586">Juan Juicillo (0042586)</option>
+                                        <option value="0042586">Juanjuicillo (0042586)</option>
+					<option value="0125065">dr (0125065)</option>
                                     </select>
                                 </div>
                                 

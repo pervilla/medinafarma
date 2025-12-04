@@ -242,6 +242,7 @@ class SireSunat extends BaseController
         $valor = isset($comprobante->procedenciaMasiva->mtoImporteTotal) 
         ? $comprobante->procedenciaMasiva->mtoImporteTotal 
         : ($comprobante->procedenciaIndivual->mtoImporteTotal ?? null);
+        
         // Preparar los datos de la factura
         $factura = [
             'CLI_CODCLI' => $cliente->CLI_CODCLIE,
@@ -255,8 +256,43 @@ class SireSunat extends BaseController
             'ESTADO' => 0
         ];
 
-        // Crear la factura en la base de datos
-        $idImport = $importFactModel->crear_factura($factura);
+        // Verificar si el comprobante ya existe
+        $db = \Config\Database::connect();
+        $comprobanteExistente = $db->table('IMPORT_FACT')
+            ->where('RUC', $factura['RUC'])
+            ->where('NRO_FACTURA', $factura['NRO_FACTURA'])
+            ->get()
+            ->getRow();
+
+        $esActualizacion = false;
+        
+        if ($comprobanteExistente) {
+            // Si ya existe y tiene estado diferente de 10 o 0 (ya fue procesado), no permitir re-importar
+            if ($comprobanteExistente->ESTADO != 10 && $comprobanteExistente->ESTADO != 0) {
+                log_message('warning', "Comprobante {$factura['NRO_FACTURA']} ya fue importado y procesado (Estado: {$comprobanteExistente->ESTADO})");
+                return $this->respond([
+                    'status' => 409, 
+                    'message' => 'El comprobante ya fue importado anteriormente y está en proceso o completado. No se puede re-importar.'
+                ]);
+            }
+            
+            // Si existe con estado 10 o 0 (pendiente), eliminar los detalles antiguos
+            log_message('info', "Comprobante {$factura['NRO_FACTURA']} ya existe (ID: {$comprobanteExistente->ID}), actualizando...");
+            $db->table('IMPORT_FACT_DET')
+                ->where('IDFACT', $comprobanteExistente->ID)
+                ->delete();
+            
+            $idImport = $comprobanteExistente->ID;
+            $esActualizacion = true;
+            
+            // Actualizar la factura existente
+            $db->table('IMPORT_FACT')
+                ->where('ID', $idImport)
+                ->update($factura);
+        } else {
+            // Crear la factura en la base de datos
+            $idImport = $importFactModel->crear_factura($factura);
+        }
 
         if ($idImport) {
             // Procesar los productos de la factura
@@ -287,7 +323,13 @@ class SireSunat extends BaseController
             $importFactModel->crear_factura_detalle($productos);
         }
 
-        return $this->respond(['status' => 200, 'message' => 'Comprobante importado con éxito.']);
+        $mensaje = $esActualizacion 
+            ? 'Comprobante actualizado exitosamente desde SUNAT.' 
+            : 'Comprobante importado con éxito.';
+        
+        log_message('info', $mensaje . ' - ' . $factura['NRO_FACTURA']);
+        
+        return $this->respond(['status' => 200, 'message' => $mensaje]);
     }
 
     public function getComprobanteHtml($ruc, $tipoDoc, $nroFactura, $tipoData = '2')

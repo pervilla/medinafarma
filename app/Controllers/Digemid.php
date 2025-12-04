@@ -45,7 +45,7 @@ class Digemid extends Controller
             }
 
             // Generar nombre del archivo
-            $ruc = '20450337839';
+            $ruc = $codEstab == '0125065'?'20613974866':'20450337839';
             $nombreArchivo = "{$ruc}_{$codEstab}_{$mes}_{$anio}";
             
             // Crear CSV

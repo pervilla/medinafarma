@@ -51,6 +51,7 @@ class Importar extends BaseController
         $cod = $this->request->getVar('cod');
         $rpta = 2;
         $cod = $cod=='07'?'F7':$cod;
+        
         // Validar que los datos no estén vacíos
         if ($ruc === '' || $nro === '' || $cod === '') {
             return $this->response->setJSON([
@@ -66,11 +67,50 @@ class Importar extends BaseController
                 'message' => 'Formato incorrecto en el número de comprobante.'
             ]);
         }
+        
         $serie = $doc[0]; 
         $numero = $doc[1];
+        
+        // PASO 1: Intentar primero con SUNAT
         $SireSunat = new SireSunat();
-        // Llamar al método getComprobantesPorFecha
-        return $SireSunat->getDetalleComprobante($ruc, $cod, $serie, $numero, $rpta);
+        $resultado = $SireSunat->getDetalleComprobante($ruc, $cod, $serie, $numero, $rpta);
+        
+        // Verificar si SUNAT respondió exitosamente
+        $resultadoArray = json_decode(json_encode($resultado), true);
+        
+        if (isset($resultadoArray['status']) && $resultadoArray['status'] == 200) {
+            return $resultado;
+        }
+        
+        // PASO 2: Si SUNAT falló, intentar con Factiliza (respaldo)
+        log_message('warning', "SUNAT falló para comprobante {$nro}. Intentando con Factiliza (respaldo)...");
+        
+        try {
+            $FactilizaBackup = new \App\Controllers\FactilizaBackup();
+            $resultadoFactiliza = $FactilizaBackup->getDetalleComprobante($ruc, $cod, $serie, $numero);
+            
+            // Verificar si Factiliza respondió exitosamente
+            $resultadoFactilizaArray = json_decode(json_encode($resultadoFactiliza), true);
+            
+            if (isset($resultadoFactilizaArray['status']) && $resultadoFactilizaArray['status'] == 200) {
+                log_message('info', "Comprobante {$nro} importado exitosamente desde Factiliza (respaldo)");
+                return $this->response->setStatusCode(200)->setJSON($resultadoFactilizaArray);
+            }
+            
+            // Si Factiliza también falló, devolver el error
+            log_message('error', "Factiliza también falló para comprobante {$nro}");
+            return $this->response->setJSON([
+                'status' => 500,
+                'message' => 'No se pudo importar el comprobante. SUNAT y Factiliza fallaron. Error: ' . ($resultadoFactilizaArray['message'] ?? 'Error desconocido')
+            ]);
+            
+        } catch (\Exception $e) {
+            log_message('error', "Error al intentar con Factiliza para {$nro}: " . $e->getMessage());
+            return $this->response->setJSON([
+                'status' => 500,
+                'message' => 'No se pudo importar el comprobante. SUNAT falló y hubo un error al intentar con Factiliza: ' . $e->getMessage()
+            ]);
+        }
     }
     public function listarDocumentos()
     {
@@ -543,10 +583,12 @@ class Importar extends BaseController
         $nroFactura = $this->request->getVar('nroFactura');
         $tipoData = $this->request->getVar('tipoData') ?? '2';
         $tipoDoc = $tipoDoc=='07'?'F7':$tipoDoc;
+        
         if (!$ruc || !$tipoDoc || !$nroFactura) {
             return $this->response->setStatusCode(400)->setBody('Parámetros faltantes');
         }
         
+        // PASO 1: Intentar obtener HTML desde SUNAT
         $SireSunat = new SireSunat();
         $html = $SireSunat->getComprobanteHtml($ruc, $tipoDoc, $nroFactura, $tipoData);
         
@@ -580,6 +622,239 @@ class Importar extends BaseController
             return $this->response->setHeader('Content-Type', 'text/html')->setBody($html);
         }
         
-        return $this->response->setStatusCode(404)->setBody('Comprobante no encontrado');
+        // PASO 2: Si SUNAT falló, intentar con Factiliza
+        log_message('warning', "SUNAT no devolvió HTML para {$nroFactura}. Intentando con Factiliza...");
+        
+        try {
+            // Separar serie y número
+            $parts = explode('-', $nroFactura);
+            if (count($parts) < 2) {
+                return $this->response->setStatusCode(400)->setBody('Formato de factura inválido');
+            }
+            
+            $serie = $parts[0];
+            $numero = $parts[1];
+            
+            // Obtener datos desde Factiliza (SOLO VISTA, sin guardar)
+            $FactilizaBackup = new \App\Controllers\FactilizaBackup();
+            $datosFactiliza = $FactilizaBackup->getComprobanteSoloVista($ruc, $tipoDoc, $serie, $numero);
+            
+            if ($datosFactiliza) {
+                // Generar HTML con los datos de Factiliza
+                $htmlFactiliza = $this->generarHtmlDesdeFactiliza($datosFactiliza);
+                
+                log_message('info', "HTML generado desde Factiliza para {$nroFactura}");
+                
+                return $this->response->setHeader('Content-Type', 'text/html')->setBody($htmlFactiliza);
+            }
+            
+        } catch (\Exception $e) {
+            log_message('error', "Error al obtener HTML desde Factiliza: " . $e->getMessage());
+        }
+        
+        return $this->response->setStatusCode(404)->setBody('Comprobante no encontrado en SUNAT ni en Factiliza');
+    }
+    
+    /**
+     * Genera HTML básico para visualizar comprobante desde datos de Factiliza
+     */
+    private function generarHtmlDesdeFactiliza($data)
+    {
+        // Extraer datos del comprobante
+        $rucEmisor = $data->numeroRuc ?? 'N/A';
+        $razonSocial = $data->razonSocial ?? 'N/A';
+        $direccion = ($data->nombreCalle ?? '') . ', ' . ($data->nombreDistrito ?? '') . ', ' . ($data->nombreProvincia ?? '');
+        
+        $tipoDoc = $data->tipoComprobante ?? '01';
+        $tipoDocNombre = $tipoDoc == '01' ? 'FACTURA ELECTRÓNICA' : ($tipoDoc == '03' ? 'BOLETA ELECTRÓNICA' : 'COMPROBANTE');
+        $serie = $data->serieComprobante ?? '';
+        $numero = $data->numeroComprobante ?? '';
+        $fechaEmision = $data->fechaEmision ?? 'N/A';
+        $fechaVencimiento = $data->fechaVencimiento ?? '-';
+        
+        $moneda = $data->codigoMoneda ?? 'PEN';
+        $simboloMoneda = $data->simboloMoneda ?? 'S/';
+        
+        $tipoDocCliente = $data->tipoDocumentoCliente ?? '6';
+        $numDocCliente = $data->numeroDocumentoCliente ?? '';
+        $nombreCliente = $data->nombreCliente ?? '';
+        
+        $subtotal = number_format($data->totalValorVenta ?? 0, 2);
+        $igv = number_format($data->totalIGV ?? 0, 2);
+        $total = number_format($data->montoTotalGeneral ?? 0, 2);
+        $totalTexto = $data->montoTotalTexto ?? '';
+        
+        $items = $data->detalleComprobanteBean ?? [];
+        
+        $html = '
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Comprobante - Factiliza</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; font-size: 12px; }
+                .container { max-width: 800px; margin: 0 auto; }
+                .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; }
+                .header h2 { margin: 5px 0; }
+                .badge { 
+                    background: #28a745; 
+                    color: white; 
+                    padding: 5px 10px; 
+                    border-radius: 3px; 
+                    font-size: 0.9em;
+                    display: inline-block;
+                    margin-top: 10px;
+                }
+                .info-section { margin: 15px 0; }
+                .info-row { display: flex; margin: 5px 0; }
+                .info-label { font-weight: bold; width: 150px; }
+                .info-value { flex: 1; }
+                .box { border: 1px solid #ddd; padding: 10px; margin: 10px 0; }
+                table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 11px; }
+                th { background-color: #f2f2f2; font-weight: bold; }
+                .text-right { text-align: right; }
+                .text-center { text-align: center; }
+                .totals { margin-top: 20px; }
+                .totals-row { display: flex; justify-content: flex-end; margin: 5px 0; }
+                .totals-label { font-weight: bold; width: 150px; text-align: right; padding-right: 10px; }
+                .totals-value { width: 120px; text-align: right; }
+                .total-final { font-size: 1.2em; border-top: 2px solid #333; padding-top: 5px; margin-top: 5px; }
+                .print-btn {
+                    position: fixed;
+                    top: 10px;
+                    right: 10px;
+                    z-index: 1000;
+                    padding: 10px 20px;
+                    background: #28a745;
+                    color: white;
+                    border: none;
+                    border-radius: 5px;
+                    cursor: pointer;
+                }
+                @media print {
+                    .no-print { display: none !important; }
+                    body { font-size: 10px; }
+                }
+            </style>
+        </head>
+        <body>
+            <button class="print-btn no-print" onclick="window.print()">Imprimir</button>
+            
+            <div class="container">
+                <div class="header">
+                    <h2>' . $tipoDocNombre . '</h2>
+                    <h3>' . $serie . '-' . $numero . '</h3>
+                    <span class="badge no-print">Fuente: Factiliza</span>
+                </div>
+                
+                <div class="box">
+                    <h3 style="margin-top: 0;">EMISOR</h3>
+                    <div class="info-row">
+                        <div class="info-label">RUC:</div>
+                        <div class="info-value">' . $rucEmisor . '</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Razón Social:</div>
+                        <div class="info-value">' . $razonSocial . '</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Dirección:</div>
+                        <div class="info-value">' . $direccion . '</div>
+                    </div>
+                </div>
+                
+                <div class="box">
+                    <h3 style="margin-top: 0;">CLIENTE</h3>
+                    <div class="info-row">
+                        <div class="info-label">Documento:</div>
+                        <div class="info-value">' . ($tipoDocCliente == '6' ? 'RUC' : 'DNI') . ': ' . $numDocCliente . '</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Nombre:</div>
+                        <div class="info-value">' . $nombreCliente . '</div>
+                    </div>
+                </div>
+                
+                <div class="box">
+                    <h3 style="margin-top: 0;">DATOS DEL COMPROBANTE</h3>
+                    <div class="info-row">
+                        <div class="info-label">Fecha Emisión:</div>
+                        <div class="info-value">' . $fechaEmision . '</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Fecha Vencimiento:</div>
+                        <div class="info-value">' . $fechaVencimiento . '</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Moneda:</div>
+                        <div class="info-value">' . $moneda . '</div>
+                    </div>
+                </div>
+                
+                <h3>DETALLE DE ITEMS</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="text-center" width="5%">#</th>
+                            <th width="10%">Código</th>
+                            <th width="45%">Descripción</th>
+                            <th class="text-center" width="10%">Cantidad</th>
+                            <th class="text-right" width="15%">P. Unit.</th>
+                            <th class="text-right" width="15%">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>';
+        
+        // Agregar items
+        foreach ($items as $index => $item) {
+            $cantidad = $item->cantidad ?? '0';
+            $precioUnit = number_format($item->valorVtaUnitario ?? 0, 2);
+            $totalItem = number_format(($item->cantidad ?? 0) * ($item->valorVtaUnitario ?? 0), 2);
+            
+            $html .= '
+                        <tr>
+                            <td class="text-center">' . ($index + 1) . '</td>
+                            <td>' . ($item->codigoItem ?? '-') . '</td>
+                            <td>' . ($item->descripcion ?? '') . '</td>
+                            <td class="text-center">' . $cantidad . '</td>
+                            <td class="text-right">' . $simboloMoneda . ' ' . $precioUnit . '</td>
+                            <td class="text-right">' . $simboloMoneda . ' ' . $totalItem . '</td>
+                        </tr>';
+        }
+        
+        $html .= '
+                    </tbody>
+                </table>
+                
+                <div class="totals">
+                    <div class="totals-row">
+                        <div class="totals-label">SUBTOTAL:</div>
+                        <div class="totals-value">' . $simboloMoneda . ' ' . $subtotal . '</div>
+                    </div>
+                    <div class="totals-row">
+                        <div class="totals-label">IGV (18%):</div>
+                        <div class="totals-value">' . $simboloMoneda . ' ' . $igv . '</div>
+                    </div>
+                    <div class="totals-row total-final">
+                        <div class="totals-label">TOTAL:</div>
+                        <div class="totals-value">' . $simboloMoneda . ' ' . $total . '</div>
+                    </div>
+                    <div class="totals-row">
+                        <div class="totals-label"></div>
+                        <div class="totals-value" style="font-size: 0.9em; font-style: italic;">' . $totalTexto . '</div>
+                    </div>
+                </div>
+                
+                <div class="box no-print" style="background: #fff3cd; border-color: #ffc107; margin-top: 20px;">
+                    <p style="margin: 0;"><strong>Nota:</strong> Este comprobante fue obtenido desde el servicio de respaldo (Factiliza) 
+                    porque no se pudo acceder a SUNAT en este momento. Los datos NO han sido guardados en la base de datos.</p>
+                </div>
+            </div>
+        </body>
+        </html>';
+        
+        return $html;
     }
 }
