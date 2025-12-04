@@ -37,7 +37,8 @@ class Caja extends BaseController {
         '11' => 'GASTOS BOTICA',
         '12' => 'DELIVERY',
         '13' => 'PAGO A MEDICO',
-        '14' => 'FALTO DIGITAR COMPRA'
+        '14' => 'FALTO DIGITAR COMPRA',
+        '15' => 'DESCUENTO POR FALTANTES',
     ];
 
     public function index() {  
