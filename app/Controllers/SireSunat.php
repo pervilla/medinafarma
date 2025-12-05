@@ -380,7 +380,7 @@ class SireSunat extends BaseController
         if (strpos($contentEncoding, 'gzip') !== false) {
             $body = gzdecode($body);
         }
-
+log_message('debug', "body {$body}");
         // Convertir JSON en objeto
         $data = json_decode($body);
 

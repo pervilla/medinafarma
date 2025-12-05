@@ -76,10 +76,13 @@ class Importar extends BaseController
         $resultado = $SireSunat->getDetalleComprobante($ruc, $cod, $serie, $numero, $rpta);
         
         // Verificar si SUNAT respondió exitosamente
-        $resultadoArray = json_decode(json_encode($resultado), true);
-        
-        if (isset($resultadoArray['status']) && $resultadoArray['status'] == 200) {
-            return $resultado;
+        // El método respond() devuelve un objeto Response, necesitamos verificar el status code
+        if (is_object($resultado) && method_exists($resultado, 'getStatusCode')) {
+            $statusCode = $resultado->getStatusCode();
+            if ($statusCode == 200) {
+                log_message('info', "Comprobante {$nro} importado exitosamente desde SUNAT");
+                return $resultado;
+            }
         }
         
         // PASO 2: Si SUNAT falló, intentar con Factiliza (respaldo)
