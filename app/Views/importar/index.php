@@ -506,7 +506,7 @@
                         });
                     },
                     success: function(response) {
-                        tablePrinFact.ajax.reload();
+                        tablePrinFact.ajax.reload(null, false);
                         $('#importarSireModal').modal('hide');
                         Swal.fire("Éxito", "Datos procesados correctamente.", "success");
                     },
@@ -568,7 +568,7 @@
                                 idfact: idfact,
                                 vflete: flete
                             }, function(htmlexterno) {
-                                dtablefac.ajax.reload();
+                                dtablefac.ajax.reload(null, false);
                             });
                         }
                     },
@@ -716,7 +716,7 @@
                                         buttons: {
                                             ok: function() {
                                                 // Recargar la tabla después de la importación
-                                                tablePrinFact.ajax.reload();
+                                                tablePrinFact.ajax.reload(null, false);
                                             }
                                         }
                                     });
@@ -749,7 +749,7 @@
 
             var data = tablePrinFact.row($(this).parents('tr')).data();
             idfact = data['ID'];
-            dtablefac.ajax.reload();
+            dtablefac.ajax.reload(null, false);
             $("#imp_ruc_f").val(data['CLI_CODCLIE']);
             $("#fac_cod").val(data['CLI_CODCLIE']);
             $("#fac_cli").val(data['CLI_NOMBRE']);
@@ -1009,7 +1009,7 @@
                         });
 
                         if (response.status == 200) {
-                            dtablefac.ajax.reload();
+                            dtablefac.ajax.reload(null, false);
                             $('#modal-producto').modal('hide');
                         }
                     },
@@ -1053,7 +1053,7 @@
                         autohide: true,
                         delay: 2500
                     });
-                    dtablefac.ajax.reload();
+                    dtablefac.ajax.reload(null, false);
                     $('#modal-producto').modal('hide');
                 }
             );
@@ -1088,7 +1088,7 @@
                                     idfact: idfact,
                                     total: $('#fac_tot').val()
                                 }, function(htmlexterno) {
-                                    dtablefac.ajax.reload();
+                                    dtablefac.ajax.reload(null, false);
                                 });
                             }
                         },
@@ -1198,7 +1198,7 @@
                                 idfact: idfact,
                                 ids: idscmb
                             }, function(htmlexterno) {
-                                dtablefac.ajax.reload();
+                                dtablefac.ajax.reload(null, false);
                             });
                         }
                     },
@@ -1294,7 +1294,7 @@
                                     idfact: idfact,
                                     codclie: $("#fac_cod").val()
                                 }, function(htmlexterno) {
-                                    tablePrinFact.ajax.reload();
+                                    tablePrinFact.ajax.reload(null, false);
                                 });
                             }
                         },
