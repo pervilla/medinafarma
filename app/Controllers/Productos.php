@@ -488,4 +488,20 @@ class Productos extends BaseController
         $data   = $precio->get_equiv($keyar);
         return json_encode($data);
     }
+    public function createpdf_masvendidos()
+    {
+        set_time_limit(300);
+        $anio = $this->request->getVar('anio') ?: date('Y');
+        $cantidad = $this->request->getVar('cantidad') ?: 100;
+        
+        $FacartModel = new FacartModel();
+        $data['productos'] = $FacartModel->get_productos_mas_vendidos($anio, $cantidad);
+        $data['anio'] = $anio;
+        
+        $dompdf = new Dompdf();
+        $dompdf->loadHtml(view('productos/index_pdf_mas_vendidos', $data));
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+        $dompdf->stream();
+    }
 }

@@ -339,4 +339,39 @@ class FacartModel extends Model
             return false;
         }
     }
+    public function get_productos_mas_vendidos($anio, $cantidad)
+    {
+        $sql = "SELECT * FROM (
+            SELECT TOP $cantidad
+                A.ART_KEY AS Codigo_Articulo,
+                A.ART_NOMBRE AS Nombre_Articulo,
+                T.TAB_NOMLARGO AS Familia,
+                P.PRE_UNIDAD AS Unidad,
+                P.PRE_EQUIV AS Equivalencia,
+                SUM(F.FAR_CANTIDAD) AS Total_Vendido
+            FROM FACART F
+            INNER JOIN ARTI A 
+                ON F.FAR_CODART = A.ART_KEY 
+               AND F.FAR_CODCIA = A.ART_CODCIA
+            LEFT JOIN TABLAS T
+                ON A.ART_CODCIA = T.TAB_CODCIA
+               AND A.ART_FAMILIA = T.TAB_NUMTAB
+               AND T.TAB_TIPREG = 122
+            LEFT JOIN PRECIOS P
+                ON A.ART_CODCIA = P.PRE_CODCIA
+               AND A.ART_KEY = P.PRE_CODART
+               AND P.PRE_FLAG_UNIDAD = 'A'
+            WHERE F.FAR_TIPMOV = 10
+              AND F.FAR_ESTADO <> 'E'
+              AND F.FAR_ESTADO2 <> 'L'
+              AND A.ART_CODCIA = 25
+              AND F.FAR_FECHA BETWEEN '01/01/$anio' AND '31/12/$anio'
+            GROUP BY A.ART_KEY, A.ART_NOMBRE, T.TAB_NOMLARGO, P.PRE_UNIDAD, P.PRE_EQUIV
+            ORDER BY SUM(F.FAR_CANTIDAD) DESC
+        ) AS TopProducts
+        ORDER BY Familia ASC, Total_Vendido DESC";
+
+        $query = $this->db->query($sql);
+        return $query->getResult();
+    }
 }

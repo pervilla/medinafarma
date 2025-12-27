@@ -23,7 +23,9 @@
                                 <div class="dropdown-menu" role="menu">
                                     <a class="dropdown-item" href="<?= site_url('productos/createpdf') ?>"><i class='fas fa-file-pdf'></i> Inventario C/Stock</a>
                                     <a class="dropdown-item" href="<?= site_url('productos/createpdfsv') ?>"><i class='fas fa-file-pdf'></i> Inventario S/Stock</a>
-                                    <a class="dropdown-item" href="<?= site_url('productos/createlistaprecios') ?>"><i class='fas fa-file-pdf'></i> Lista de Precios</a>                                       
+                                    <a class="dropdown-item" href="<?= site_url('productos/createlistaprecios') ?>"><i class='fas fa-file-pdf'></i> Lista de Precios</a>
+                                    <div class="dropdown-divider"></div>
+                                    <a class="dropdown-item" href="#" data-toggle="modal" data-target="#modal-mas-vendidos"><i class='fas fa-star'></i> Inventario Mas Vendidos</a>
                                 </div>
                             </div>
                             <div class="btn-group btn-group-toggle" data-toggle="buttons">
@@ -184,5 +186,46 @@
 </script>
 
 
+
+
+<!-- Modal Mas Vendidos -->
+<div class="modal fade" id="modal-mas-vendidos" tabindex="-1" role="dialog" aria-labelledby="modalMasVendidosLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalMasVendidosLabel">Reporte: Inventario Mas Vendidos</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="formMasVendidos">
+                    <div class="form-group">
+                        <label for="anio">Año</label>
+                        <input type="number" class="form-control" id="anio" name="anio" value="<?= date('Y') ?>" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="cantidad">Cantidad de Productos</label>
+                        <input type="number" class="form-control" id="cantidad" name="cantidad" value="100" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" id="btnGenerarReporte">Generar Reporte</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('btnGenerarReporte').addEventListener('click', function() {
+        var anio = document.getElementById('anio').value;
+        var cantidad = document.getElementById('cantidad').value;
+        var url = "<?= site_url('productos/createpdf_masvendidos') ?>?anio=" + anio + "&cantidad=" + cantidad;
+        window.open(url, '_blank');
+        $('#modal-mas-vendidos').modal('hide');
+    });
+</script>
 
 <?= $this->endSection(); ?>
