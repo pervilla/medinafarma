@@ -129,3 +129,9 @@ $routes->post('citas/getReportePagos', 'Citas::getReportePagos');
 $routes->get('calendario', 'Calendario::index');
 $routes->post('calendario/generar', 'Calendario::generar');
 $routes->post('calendario/cerrar', 'Calendario::cerrar');
+/*
+ * -------------------------
+ * RUTAS FACTURACION AUTOMATICA
+ * -------------------------
+ */
+$routes->get('facturacion/monitor', 'FacturacionMonitor::index');

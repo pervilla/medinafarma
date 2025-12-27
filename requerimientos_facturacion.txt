@@ -1,0 +1,694 @@
+Ayudame a crear un modulo basado en la libreria "Greenter" que me permita enviar mis resumenes diarios y mis facturas de forma automatica, ahora uso el facturador sunat, pero tengo problemas porque a veces deja de funcionar o nos olvidamos de revisarlo y hay facturas que no pasan en el tiempo limite,
+el otro problema es que hay comprobantes que se anulan pasando un dia o mas, y esos comprobantes no se estan informando a la sunat.
+Mi otro problema es que son 2 locales, los 2 locales tiene su base de datos en sql server 2008 r2, y estan linqueados.
+Uso algo asi para determinar cual bd usar: 
+-- Determinar tablas de origen y destino
+        SET @origen_table = CASE @servidor_origen
+                               WHEN 1 THEN '[BDATOS].[dbo]'
+                               WHEN 2 THEN '[SERVER02].[BDATOS].[dbo]'
+                               WHEN 3 THEN '[SERVER03].[BDATOS].[dbo]'
+                               ELSE '[BDATOS].[dbo]'
+                            END;
+							
+lOCAL CENTRAL (\\SERVER)(Horario 7am - 11pm) Y BOTICA02 (\\SERVER02)(Horario 9am - 10pm) todos los dias, 
+
+
+Y esto encontre de otro sistema que habia, que creo que podemos usar porque es parecido a lo que quiero si no que usaba un lenguaje antiguo y se dejo de usar.
+Ahi falta la logica de la columna ALL_ESTADO_FE de la tabla ALLOG, Que supongo se actualiza cuando se envia los comprobantes a la sunat. 
+
+/*
+exec sp_NotificacionBaja_LE '25','16/05/2018','16/05/2018'
+*/
+CREATE procedure [dbo].[sp_NotificacionBaja_LE]
+	@Codcia CHAR(2),
+	@FechaIni DATETIME,
+	@FechaFin DATETIME
+AS
+select 
+'INVERSIONES SAN MARTIN S.C.R.L.' AS [RazonSocialEmpresa],
+	'20450337839' AS [RUCEmpresa],
+	'INVERSIONES SAN MARTIN S.C.R.L.' AS [NombreComercial],
+	'220601' [CodigoUbigeo],
+	'' [DireccionCompleta],
+	'San Martin' [Departamento],
+	'Mariscal Cáceres' [Provincia],
+	'Juanjuí' [Distrito],
+	'PE' [Pais],
+	--DATEADD(DAY,1,ALL_FECHA_DIA) [FechaBaja],
+	ALL_FECHA_DIA [FechaBaja],
+	(select top 1 ALL_FECHA_DIA from ALLOG l1 where l1.ALL_CODCIA=t1.ALL_CODCIA and l1.ALL_TIPMOV=t1.ALL_TIPMOV and l1.ALL_FBG=t1.ALL_FBG and l1.ALL_NUMSER=t1.ALL_NUMSER and l1.ALL_NUMFAC=t1.ALL_NUMFAC and ALL_CODTRA<>1111) [FechaEmisiónDocumentoAnulado],
+	case all_tipmov when 10 then
+			case when all_fbg ='F' then '01' else '03' end 
+		when 97 then '07'
+		when 98 then '08'
+		else ''
+	end [TipoDocumentoAnulado],
+	case all_tipmov when 10 then
+		CASE WHEN all_fbg='F' THEN 'FA' + RIGHT('000'+ ltrim(str(all_numser)),2) ELSE 'BO' + RIGHT('000'+ ltrim(str(all_numser)),2) END
+		when 97 then 
+			CASE WHEN T1.ALL_TIPO_BLOQ_ANT ='F' THEN 'FA' + RIGHT('000'+ ltrim(str(all_numser)),2) WHEN T1.ALL_TIPO_BLOQ_ANT ='F' THEN  'BO'+ RIGHT('000'+ ltrim(str(all_numser)),2) ELSE '' END 
+		when 98 then 
+			CASE WHEN T1.ALL_TIPO_BLOQ_ANT ='F' THEN 'FA' + RIGHT('000'+ ltrim(str(all_numser)),2) WHEN T1.ALL_TIPO_BLOQ_ANT ='F' THEN  'BO'+ RIGHT('000'+ ltrim(str(all_numser)),2) ELSE '' END 
+		else ''
+	end [SerieDocumentoAnulado],
+	--CASE WHEN CAST(ALL_NUMFAC AS NVARCHAR(MAX)) IN ('22143','22144','22145','22146') THEN 'FF11' ELSE 'FF12' END [SerieDocumentoAnulado],
+	right('00000000'+ltrim(CAST(ALL_NUMFAC AS NVARCHAR(MAX))),8) [CorrelativoDocumentoAnulado],
+	'ERROR INTERNO' [MotivoBaja],
+	--(SELECT COUNT(*) + 1 FROM DeclaracionDocumentoElectronico WHERE Fecha = CAST(GETDATE() AS date) AND TipoDocumento = 'RA') [Correlativo],
+	(SELECT COUNT(*) + 3 FROM DeclaracionDocumentoElectronico WHERE Fecha = ALL_FECHA_DIA AND TipoDocumento = 'RA') [Correlativo],
+	--CONVERT(nvarchar(100),all_fecha_dia,12) + ltrim(str(all_numoper)) [Correlativo],
+	CONVERT(nvarchar(100),all_fecha_dia,12) + ltrim(str(all_numoper)) [DocEntry]
+FROM ALLOG T1 INNER JOIN PARGEN T2 ON T1.all_CODCIA=T2.PAR_CODCIA 
+WHERE all_codcia=@Codcia AND all_tipmov in (10,97,98) and ALL_CODTRA=1111  AND all_fecha_dia >=@FechaIni AND all_fecha_dia <=@FechaFin and ALL_CP='C' AND ALL_DOC_ELECTRONICO='A' and isnull(t1.ALL_ESTADO_FE,0) in (0,3)
+and case all_tipmov when 10 then ALL_FBG else ALL_TIPO_BLOQ_ANT end = 'F'
+ORDER BY all_fecha_dia,all_fbg,all_numser,all_numfac
+GO
+
+
+
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+GO
+
+/*
+EXEC [usp_GetResumenDocumento2] 25, '17/01/2018','17/01/2018'
+*/
+CREATE PROCEDURE [dbo].[usp_GetResumenDocumento2]
+	@Cia CHAR(2),
+	@FechaIni DATETIME,
+	@FechaFin DATETIME
+AS
+/* BOLETAS */
+SELECT distinct  
+	CONVERT(nvarchar(100),FAR_FECHA,12) + ltrim(str(FAR_NUMOPER)) [NumOper]
+	,CONVERT(numeric(18,4),CASE WHEN FAR_EX_IGV ='A' THEN FAR_BRUTO ELSE 
+		( CONVERT(NUMERIC(13,4),FAR_BRUTO )) END) [LineTotal]
+	,convert(numeric(18,4),CASE WHEN FAR_EX_IGV ='A'  THEN 0 else
+		FAR_IMPTO END) [IGV]
+	,CONVERT(numeric(18,2),FAR_BRUTO + FAR_IMPTO) [SubTotal]
+	INTO #Ventas	
+FROM facart 
+WHERE far_codcia=@Cia AND far_tipmov in (10) AND far_fecha_compra >=@FechaIni AND far_fecha_compra <=@FechaFin
+AND far_flag_so<>'X' and FAR_FBG ='B' and FAR_CP='C'
+
+
+SELECT distinct  
+	CONVERT(nvarchar(100),FAR_FECHA,12) + ltrim(str(FAR_NUMOPER)) [NumOper]
+	,sum(CONVERT(numeric(18,2),FAR_PRECIO_NETO)) [PrecioMin]
+	INTO #Ventas2
+FROM facart 
+WHERE far_codcia=@Cia AND far_tipmov =10 AND far_fecha_compra >=@FechaIni AND far_fecha_compra <=@FechaFin
+AND far_flag_so<>'X' and FAR_FBG='B' and FAR_CP='C'
+GROUP BY CONVERT(nvarchar(100),FAR_FECHA,12) + ltrim(str(FAR_NUMOPER))
+/* ====================== */
+
+/* NOTA CREDITO */
+select * 	INTO #NotaCred	from (
+SELECT distinct 
+	CONVERT(nvarchar(100),FAR_FECHA,12) + ltrim(str(FAR_NUMOPER)) [NumOper]
+	,FAR_OC
+	,FAR_TIPO_BLOQ_ACT1
+	,FAR_NUMSER_C
+	,FAR_NUMFAC_C 
+	,CONVERT(numeric(18,4),CASE WHEN FAR_EX_IGV ='A' THEN FAR_BRUTO ELSE 
+		( CONVERT(NUMERIC(13,4),FAR_BRUTO )) END) [LineTotal]
+	,convert(numeric(18,4),CASE WHEN FAR_EX_IGV ='A'  THEN 0 else
+		FAR_IMPTO END) [IGV]
+	,CONVERT(numeric(18,2),FAR_BRUTO + FAR_IMPTO) [SubTotal]
+	
+
+FROM facart 
+WHERE far_codcia=@Cia AND far_tipmov=97 AND far_fecha_compra >=@FechaIni AND far_fecha_compra <=@FechaFin AND far_cp='C'
+AND far_codart<>0 and FAR_ESTADO2 <> 'L'
+union all
+SELECT distinct 
+	CONVERT(nvarchar(100),FAR_FECHA,12) + ltrim(str(FAR_NUMOPER)) [NumOper]
+	,FAR_OC
+	,FAR_TIPO_BLOQ_ACT1
+	,FAR_NUMSER_C
+	,FAR_NUMFAC_C 
+	,CONVERT(numeric(18,4),CASE WHEN FAR_EX_IGV ='A' THEN FAR_SUBTOTAL ELSE 
+		( CONVERT(NUMERIC(13,4),FAR_BRUTO )) END) [LineTotal]
+	,convert(numeric(18,4),CASE WHEN FAR_EX_IGV ='A'  THEN 0 else
+		FAR_IMPTO END) [IGV]
+	,CONVERT(numeric(18,2),FAR_BRUTO + FAR_IMPTO) [SubTotal]
+	
+
+FROM facart 
+WHERE far_codcia=@Cia AND far_tipmov=97 AND far_fecha_compra >=@FechaIni AND far_fecha_compra <=@FechaFin AND far_cp='C'
+AND far_codart=0
+) tab
+/* ====================== */
+
+
+/*  NOTA DE DEBITO  */
+select * 	INTO #NotaDEB	from (
+SELECT
+	CONVERT(nvarchar(100),FAR_FECHA,12) + ltrim(str(FAR_NUMOPER)) [NumOper]
+	,FAR_OC
+	,FAR_TIPO_BLOQ_ACT1
+	,FAR_NUMSER_C
+	,FAR_NUMFAC_C 
+	,sum(CONVERT(numeric(18,4),	CASE WHEN FAR_EX_IGV ='A' THEN (CONVERT(NUMERIC(13,4),(FAR_CANTIDAD / FAR_EQUIV)) * FAR_PRECIO) ELSE 
+		(CONVERT(NUMERIC(13,4),(FAR_CANTIDAD / FAR_EQUIV)) * CONVERT(NUMERIC(13,4),(FAR_PRECIO / 1.18))) END)) [LineTotal]
+	,SUM(convert(numeric(18,4),CASE WHEN FAR_EX_IGV ='A' THEN 0 else
+		(FAR_PRECIO * CONVERT(NUMERIC(13,4),(FAR_CANTIDAD / FAR_EQUIV))) - (CONVERT(NUMERIC(13,4),(FAR_PRECIO / 1.18)) * CONVERT(NUMERIC(13,4),(FAR_CANTIDAD / FAR_EQUIV))) END)) [IGV]
+	,SUM(CONVERT(numeric(18,2),FAR_PRECIO * CONVERT(NUMERIC(13,4),(FAR_CANTIDAD / FAR_EQUIV)))) [SubTotal]
+	
+
+FROM facart 
+WHERE far_codcia=@Cia AND far_tipmov=98 AND far_fecha_compra >=@FechaIni AND far_fecha_compra <=@FechaFin AND far_cp='C'
+AND far_codart<>0 and FAR_ESTADO2 <> 'L'
+GROUP BY CONVERT(nvarchar(100),FAR_FECHA,12) + ltrim(str(FAR_NUMOPER))	,FAR_OC	,FAR_TIPO_BLOQ_ACT1	,FAR_NUMSER_C	,FAR_NUMFAC_C 
+union all
+SELECT
+	CONVERT(nvarchar(100),FAR_FECHA,12) + ltrim(str(FAR_NUMOPER)) [NumOper]
+	,FAR_OC
+	,FAR_TIPO_BLOQ_ACT1
+	,FAR_NUMSER_C
+	,FAR_NUMFAC_C 
+	,sum(CONVERT(numeric(18,4),	CASE WHEN FAR_EX_IGV ='A' THEN FAR_SUBTOTAL ELSE 
+		(CONVERT(NUMERIC(13,4),(FAR_SUBTOTAL / 1.18))) END)) [LineTotal]
+	,SUM(convert(numeric(18,4),CASE WHEN FAR_EX_IGV ='A' THEN 0 else
+		(FAR_SUBTOTAL - (CONVERT(NUMERIC(13,4),(FAR_SUBTOTAL / 1.18)) )) END)) [IGV]
+	,SUM(CONVERT(numeric(18,2),FAR_SUBTOTAL )) [SubTotal]
+	
+
+FROM facart 
+WHERE far_codcia=@Cia AND far_tipmov=98 AND far_fecha_compra >=@FechaIni AND far_fecha_compra <=@FechaFin AND far_cp='C'
+AND far_codart=0
+GROUP BY CONVERT(nvarchar(100),FAR_FECHA,12) + ltrim(str(FAR_NUMOPER))	,FAR_OC	,FAR_TIPO_BLOQ_ACT1	,FAR_NUMSER_C	,FAR_NUMFAC_C 
+) tab
+/* FIN NOTA DEBITO   */
+
+DECLARE @intCorrelativo INT = (SELECT COUNT(*) + 2 FROM DeclaracionDocumentoElectronico WHERE Fecha = CAST(GETDATE() AS date) AND TipoDocumento = 'RC')
+
+
+SELECT * FROM (
+/* VENTAS */
+SELECT  'INVERSIONES SAN MARTIN S.C.R.L.' AS [RazonSocialEmpresa],
+	'20450337839' AS [RUCEmpresa],
+	'INVERSIONES SAN MARTIN S.C.R.L.' AS [NombreComercial],
+	'220601' [CodigoUbigeo],
+	'' [DireccionCompleta],
+	'San Martin' [Departamento],
+	'Mariscal Cáceres' [Provincia],
+	'Juanjuí' [Distrito],
+	'PE' [Pais],
+	all_fecha_dia [FechaResumen],
+	@intCorrelativo [Correlativo],
+	CONVERT(nvarchar(100),all_fecha_dia,12) + ltrim(str(all_numoper)) [DocEntry],
+	CONVERT(nvarchar(100),all_fecha_dia,12) + ltrim(str(all_numoper)) [TRANSID],
+	--CASE WHEN all_fbg='F' THEN t3.cli_ruc_esposo ELSE t3.cli_ruc_esposa END [Numero Correlativo],
+	CONVERT(nvarchar(100),all_fecha_dia,12) + ltrim(str(all_numoper)) [Numero Correlativo],
+	all_fecha_dia [Fecha Emision],
+	all_fecha_vcto [Fecha Vencimiento],
+	CASE WHEN all_fbg='F' THEN '01' ELSE '03' END [Tipo],
+	CASE WHEN all_fbg='F' THEN 'FA' + RIGHT('000'+ ltrim(str(all_numser)),2) ELSE 'BO' + RIGHT('000'+ ltrim(str(all_numser)),2) END [Serie],
+	RIGHT('00000000' + LTRIM (CAST(all_numfac AS NVARCHAR(MAX))),8) [Numero],
+	CASE WHEN all_fbg='F' THEN '01' ELSE '03' END [Tipo Origen],
+	NULL [Serie Origen],
+	RIGHT('00000000' + LTRIM (CAST(all_numfac AS NVARCHAR(MAX))),8) [Numero Origen],
+	CASE WHEN all_fbg='F' THEN '6' ELSE '1' END [Tipo Documento],
+	CASE WHEN all_fbg='F' THEN t3.cli_ruc_esposo ELSE t3.cli_ruc_esposa END [Nro. Documento],
+	cli_nombre [CardName],
+	CASE WHEN t4.IGV <> 0 THEN t4.LineTotal ELSE CAST(0 AS DECIMAL(19,6)) END [Base Imponible Oper. Gravada],
+	CASE WHEN t4.IGV <> 0 THEN CAST(0 AS DECIMAL(19,6)) ELSE t4.LineTotal END [Exonerada],
+	CAST(0 AS DECIMAL(19,6)) [Inafecta],
+	CAST(0 AS DECIMAL(19,6)) [ISC],
+	t4.IGV [IGV],
+	CAST(0 AS DECIMAL(19,6)) [Otros],
+	'PEN' [Moneda],
+	t1.all_neto  [DocTotal],
+	'1' [Estado],
+	case when t1.all_neto =0 then CAST(t5.PrecioMin  AS DECIMAL(19,6)) else CAST(0  AS DECIMAL(19,6)) end [PrecMin]
+FROM ALLOG T1 INNER JOIN PARGEN T2 ON T1.all_CODCIA=T2.PAR_CODCIA INNER JOIN CLIENTES t3 ON t1.all_codcia=t3.cli_codcia AND t1.all_codclie=t3.cli_codclie AND t1.all_cp=t3.cli_cp
+INNER JOIN #Ventas  t4 ON CONVERT(nvarchar(100),t1.all_fecha_dia,12) + ltrim(str(t1.all_numoper))=t4.NumOper inner join #Ventas2 t5 on t4.NumOper=t5.NumOper
+WHERE all_codcia=@Cia AND all_tipmov=10 AND all_fecha_dia >=@FechaIni AND all_fecha_dia <=@FechaFin
+AND all_codtra IN (2401,2402) and ALL_DOC_ELECTRONICO='A' and isnull(t1.ALL_ESTADO_FE,0) in (0,3) and ALL_FBG ='B'
+--ORDER BY all_fecha_dia,all_fbg,all_numser,all_numfac
+/*  FIN VENTAS */
+UNION ALL
+/* NOTA CREDITO */
+SELECT 'INVERSIONES SAN MARTIN S.C.R.L.' AS [RazonSocialEmpresa],
+	'20450337839' AS [RUCEmpresa],
+	'INVERSIONES SAN MARTIN S.C.R.L.' AS [NombreComercial],
+	'220601' [CodigoUbigeo],
+	'' [DireccionCompleta],
+	'San Martin' [Departamento],
+	'Mariscal Cáceres' [Provincia],
+	'Juanjuí' [Distrito],
+	'PE' [Pais],
+	all_fecha_dia [FechaResumen],
+	@intCorrelativo [Correlativo],
+	CONVERT(nvarchar(100),all_fecha_dia,12) + ltrim(str(all_numoper)) [DocEntry],
+	CONVERT(nvarchar(100),all_fecha_dia,12) + ltrim(str(all_numoper)) [TransId],
+	CONVERT(nvarchar(100),all_fecha_dia,12) + ltrim(str(all_numoper)) [Numero Correlativo],
+	all_fecha_dia [Fecha Emision],
+	all_fecha_vcto [Fecha Vencimiento],
+	'07' [Tipo],
+	CASE WHEN t4.FAR_TIPO_BLOQ_ACT1='F' THEN 'FA' + RIGHT('000'+ ltrim(str(all_numser)),2) ELSE 'BO' + RIGHT('000'+ ltrim(str(all_numser)),2) END [Serie],
+	RIGHT('00000000' + LTRIM(CAST(all_numfac AS NVARCHAR(MAX))),8) [Numero],
+	CASE WHEN t4.FAR_TIPO_BLOQ_ACT1='F' THEN '01' ELSE '03' END [Tipo Origen],
+	case when (select top 1 ALL_DOC_ELECTRONICO from ALLOG where ALL_CODCIA=t1.ALL_CODCIA and ALL_NUMSER=t4.FAR_NUMSER_C and ALL_NUMFAC=t4.FAR_NUMFAC_C  and ALL_FBG=t4.FAR_TIPO_BLOQ_ACT1 and ALL_FLAG_EXT <> 'E' and ALL_TIPMOV=10)='A' then
+		CASE WHEN t4.FAR_TIPO_BLOQ_ACT1='F' THEN 'FA' + RIGHT('000'+ ltrim(str(t4.FAR_NUMSER_C)),2) ELSE 'BO' + RIGHT('000'+ ltrim(str(t4.FAR_NUMSER_C)),2) END  
+	else
+		RIGHT('000'+ ltrim(str(t4.FAR_NUMSER_C)),3)
+	end [Serie Origen],
+	case when (select top 1 ALL_DOC_ELECTRONICO from ALLOG where ALL_TIPMOV=10 and ALL_CODCIA=t1.ALL_CODCIA and ALL_NUMSER=t4.FAR_NUMSER_C and ALL_NUMFAC=t4.FAR_NUMFAC_C  and ALL_FBG=t4.FAR_TIPO_BLOQ_ACT1 and ALL_FLAG_EXT <> 'E')='A' then
+		RIGHT('00000000' + LTRIM(CAST(t4.FAR_NUMFAC_C AS NVARCHAR(MAX))),8) 
+	else
+		RIGHT('00000000' + LTRIM(CAST(t4.FAR_NUMFAC_C AS NVARCHAR(MAX))),7)  
+	end [Numero Origen],
+	CASE WHEN t4.FAR_TIPO_BLOQ_ACT1='F' THEN '6' ELSE '1' END [Tipo Documento],
+	LTRIM(RTRIM(CASE WHEN t4.FAR_TIPO_BLOQ_ACT1='F' THEN t3.cli_ruc_esposo ELSE t3.cli_ruc_esposa END)) [Numero Documento],
+	cli_nombre [Razon Social],
+	CASE WHEN t4.IGV <> 0 THEN t4.LineTotal ELSE 0 END [Base Imponible Oper. Gravada],
+	CAST(0 AS NUMERIC(19,6)) [Exonerada],
+	CASE WHEN t4.IGV <> 0 THEN 0 ELSE t4.LineTotal END [Inafecta],
+	CAST(0 AS NUMERIC(19,6)) [ISC],
+	t4.IGV [IGV],
+	CAST(0 AS NUMERIC(19,6)) [Otros],
+	'PEN' [Moneda],
+	t4.SubTotal [DocTotal],
+	'1' [Estado],
+	CAST(0 AS DECIMAL(19,6)) [PrecMin]
+FROM ALLOG T1 INNER JOIN PARGEN T2 ON T1.all_CODCIA=T2.PAR_CODCIA INNER JOIN CLIENTES t3 ON t1.all_codcia=t3.cli_codcia AND t1.all_codclie=t3.cli_codclie AND t1.all_cp=t3.cli_cp
+INNER JOIN #NotaCred t4 ON CONVERT(nvarchar(100),t1.all_fecha_dia,12) + ltrim(str(t1.all_numoper))=t4.NumOper
+WHERE all_codcia=@Cia AND all_tipmov=97 AND all_fecha_dia >=@FechaIni AND all_fecha_dia <=@FechaFin AND ALL_DOC_ELECTRONICO='A' and isnull(t1.ALL_ESTADO_FE,0) in (0,3)
+AND all_codtra IN (2412) AND t4.FAR_TIPO_BLOQ_ACT1='B'
+--ORDER BY all_fecha_dia,all_fbg,all_numser,all_numfac
+/*   FIN NOTA CREDITO */
+UNION ALL
+/*  NOTA DEBITO   */
+SELECT 'INVERSIONES SAN MARTIN S.C.R.L.' AS [RazonSocialEmpresa],
+	'20450337839' AS [RUCEmpresa],
+	'INVERSIONES SAN MARTIN S.C.R.L.' AS [NombreComercial],
+	'220601' [CodigoUbigeo],
+	'' [DireccionCompleta],
+	'San Martin' [Departamento],
+	'Mariscal Cáceres' [Provincia],
+	'Juanjuí' [Distrito],
+	'PE' [Pais],
+	all_fecha_dia [FechaResumen],
+	@intCorrelativo [Correlativo],
+	CONVERT(nvarchar(100),all_fecha_dia,12) + ltrim(str(all_numoper)) [DocEntry],
+	CONVERT(nvarchar(100),all_fecha_dia,12) + ltrim(str(all_numoper)) [TransId],
+	CONVERT(nvarchar(100),all_fecha_dia,12) + ltrim(str(all_numoper)) [Numero Correlativo],
+	all_fecha_dia [Fecha Emision],
+	all_fecha_vcto [Fecha Vencimiento],
+	'08' [Tipo],
+	CASE WHEN t4.FAR_TIPO_BLOQ_ACT1='F' THEN 'FA' + RIGHT('000'+ ltrim(str(all_numser)),2) ELSE 'BO' + RIGHT('000'+ ltrim(str(all_numser)),2) END [Serie],
+	right('00000000'+ltrim(CAST(all_numfac AS NVARCHAR(MAX))),8) [Numero],
+	CASE t4.FAR_TIPO_BLOQ_ACT1 WHEN 'F' THEN '01' WHEN 'B' THEN '03' ELSE '08' END [Tipo Origen],
+	case when (select top 1 ALL_DOC_ELECTRONICO from ALLOG where ALL_CODCIA=t1.ALL_CODCIA and ALL_NUMSER=t4.FAR_NUMSER_C and ALL_NUMFAC=t4.FAR_NUMFAC_C  and ALL_FBG=t4.FAR_TIPO_BLOQ_ACT1 and ALL_FLAG_EXT <> 'E')='A' then
+		CASE WHEN t4.FAR_TIPO_BLOQ_ACT1='F' THEN 'FA' + RIGHT('000'+ ltrim(str(t4.FAR_NUMSER_C)),2) ELSE 'BO' + RIGHT('000'+ ltrim(str(t4.FAR_NUMSER_C)),2) END 
+	else
+		RIGHT('000'+ ltrim(str(t4.FAR_NUMSER_C)),3)
+	end [Serie Origen],
+	case when (select top 1 ALL_DOC_ELECTRONICO from ALLOG where ALL_TIPMOV=10 and ALL_CODCIA=t1.ALL_CODCIA and ALL_NUMSER=t4.FAR_NUMSER_C and ALL_NUMFAC=t4.FAR_NUMFAC_C  and ALL_FBG=t4.FAR_TIPO_BLOQ_ACT1 and ALL_FLAG_EXT <> 'E')='A' then
+		RIGHT('00000000' + LTRIM(CAST(t4.FAR_NUMFAC_C AS NVARCHAR(MAX))),7)   
+	else
+		RIGHT('00000000' + LTRIM(CAST(t4.FAR_NUMFAC_C AS NVARCHAR(MAX))),7)  
+	end [Numero Origen],
+	CASE WHEN t4.FAR_TIPO_BLOQ_ACT1='F' THEN '6' ELSE '1' END [Tipo Documento],
+	LTRIM(RTRIM(CASE WHEN t4.FAR_TIPO_BLOQ_ACT1 ='F' THEN t3.cli_ruc_esposo ELSE t3.cli_ruc_esposa END)) [Nro. Documento],
+	cli_nombre [Razon Social],
+	CASE WHEN t4.IGV <> 0 THEN t4.LineTotal ELSE 0 END [Base Imponible Oper. Gravada],
+	cast(0 AS NUMERIC(19,6)) [Exonerada],
+	CASE WHEN t4.IGV <> 0 THEN 0 ELSE t4.LineTotal END [Inafecta],
+	cast(0 AS NUMERIC(19,6)) [ISC],
+	t4.IGV [IGV],
+	cast(0 AS NUMERIC(19,6)) [Otros],
+	'PEN' [Moneda],
+	t4.SubTotal [DocTotal],
+	'1' [Estado],
+	CAST(0 AS DECIMAL(19,6)) [PrecMin]
+FROM ALLOG T1 INNER JOIN PARGEN T2 ON T1.all_CODCIA=T2.PAR_CODCIA INNER JOIN CLIENTES t3 ON t1.all_codcia=t3.cli_codcia AND t1.all_codclie=t3.cli_codclie AND t1.all_cp=t3.cli_cp
+INNER JOIN #NotaCred t4 ON CONVERT(nvarchar(100),t1.all_fecha_dia,12) + ltrim(str(t1.all_numoper))=t4.NumOper
+WHERE all_codcia=@Cia AND all_tipmov=98 AND all_fecha_dia >=@FechaIni AND all_fecha_dia <=@FechaFin and ALL_CP='C' AND ALL_DOC_ELECTRONICO='A' and isnull(t1.ALL_ESTADO_FE,0) in (0,3) AND t4.FAR_TIPO_BLOQ_ACT1='B'
+--ORDER BY all_fecha_dia,all_fbg,all_numser,all_numfac
+/*  FIN NOTA DEBITO  */ )   TABLA
+ORDER BY [Fecha Emision],[Serie],[Numero]
+GO
+
+
+
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+GO
+
+/*
+EXEC [usp_GetResumenDocumentoBaja] 25, '19/01/2018','19/01/2018'
+*/
+CREATE PROCEDURE [dbo].[usp_GetResumenDocumentoBaja]
+	@Cia CHAR(2),
+	@FechaIni DATETIME,
+	@FechaFin DATETIME
+AS
+/* BOLETAS */
+SELECT distinct  
+	--CONVERT(nvarchar(100),FAR_FECHA,12) + ltrim(str(FAR_NUMOPER)) [NumOper]
+	CONVERT(nvarchar(100),all_fecha_dia,12) + ltrim(str(all_numoper)) [NumOper]
+	,CONVERT(numeric(18,4),CASE WHEN FAR_EX_IGV ='A' THEN FAR_BRUTO ELSE 
+		( CONVERT(NUMERIC(13,4),FAR_BRUTO )) END) [LineTotal]
+	,convert(numeric(18,4),CASE WHEN FAR_EX_IGV ='A'  THEN 0 else
+		FAR_IMPTO END) [IGV]
+	,CONVERT(numeric(18,2),FAR_BRUTO + FAR_IMPTO) [SubTotal]
+	INTO #Ventas	
+FROM facart inner join ALLOG on far_codcia = ALL_CODCIA  and ALL_TIPMOV=10 and far_numser=ALL_NUMSER  and far_fbg=ALL_FBG and far_numfac=ALL_NUMFAC and ALL_CODTRA=1111
+WHERE far_codcia=@Cia AND far_tipmov in (10) AND far_fecha_compra >=@FechaIni AND far_fecha_compra <=@FechaFin
+AND far_flag_so<>'X' and FAR_FBG ='B' and FAR_CP='C' AND FAR_ESTADO = 'E'
+
+
+SELECT distinct  
+	--CONVERT(nvarchar(100),FAR_FECHA,12) + ltrim(str(FAR_NUMOPER)) [NumOper]
+	CONVERT(nvarchar(100),all_fecha_dia,12) + ltrim(str(all_numoper)) [NumOper]
+	,sum(CONVERT(numeric(18,2),FAR_PRECIO_NETO)) [PrecioMin]
+	INTO #Ventas2
+FROM facart inner join ALLOG on far_codcia = ALL_CODCIA  and ALL_TIPMOV=10 and far_numser=ALL_NUMSER  and far_fbg=ALL_FBG and far_numfac=ALL_NUMFAC and ALL_CODTRA=1111
+WHERE far_codcia=@Cia AND far_tipmov =10 AND far_fecha_compra >=@FechaIni AND far_fecha_compra <=@FechaFin
+AND far_flag_so<>'X' and FAR_FBG='B' and FAR_CP='C' AND FAR_ESTADO = 'E'
+GROUP BY CONVERT(nvarchar(100),all_fecha_dia,12) + ltrim(str(all_numoper)) 
+/* ====================== */
+
+/* NOTA CREDITO */
+select * 	INTO #NotaCred	from (
+SELECT distinct 
+	CONVERT(nvarchar(100),FAR_FECHA,12) + ltrim(str(FAR_NUMOPER)) [NumOper]
+	,FAR_OC
+	,FAR_TIPO_BLOQ_ACT1
+	,FAR_NUMSER_C
+	,FAR_NUMFAC_C 
+	,CONVERT(numeric(18,4),CASE WHEN FAR_EX_IGV ='A' THEN FAR_BRUTO ELSE 
+		( CONVERT(NUMERIC(13,4),FAR_BRUTO )) END) [LineTotal]
+	,convert(numeric(18,4),CASE WHEN FAR_EX_IGV ='A'  THEN 0 else
+		FAR_IMPTO END) [IGV]
+	,CONVERT(numeric(18,2),FAR_BRUTO + FAR_IMPTO) [SubTotal]
+	
+
+FROM facart 
+WHERE far_codcia=@Cia AND far_tipmov=97 AND far_fecha_compra >=@FechaIni AND far_fecha_compra <=@FechaFin AND far_cp='C'
+AND far_codart<>0 and FAR_ESTADO2 <> 'L' AND FAR_ESTADO = 'E' --and FAR_SIGNO_CAR = -1
+union all
+--SELECT distinct 
+--	CONVERT(nvarchar(100),FAR_FECHA,12) + ltrim(str(FAR_NUMOPER)) [NumOper]
+--	,FAR_OC
+--	,FAR_TIPO_BLOQ_ACT1
+--	,FAR_NUMSER_C
+--	,FAR_NUMFAC_C 
+--	,CONVERT(numeric(18,4),CASE WHEN FAR_EX_IGV ='A' THEN FAR_SUBTOTAL ELSE 
+--		( CONVERT(NUMERIC(13,4),FAR_BRUTO )) END) [LineTotal]
+--	,convert(numeric(18,4),CASE WHEN FAR_EX_IGV ='A'  THEN 0 else
+--		FAR_IMPTO END) [IGV]
+--	,CONVERT(numeric(18,2),FAR_BRUTO + FAR_IMPTO) [SubTotal]
+	
+
+--FROM facart 
+--WHERE far_codcia=@Cia AND far_tipmov=97 AND far_fecha_compra >=@FechaIni AND far_fecha_compra <=@FechaFin AND far_cp='C'
+--AND far_codart=0 AND FAR_ESTADO = 'E' and FAR_SIGNO_CAR =-1
+SELECT distinct 
+	--CONVERT(nvarchar(100),FAR_FECHA,12) + ltrim(str(FAR_NUMOPER)) [NumOper]
+	(select CONVERT(nvarchar(100),all_fecha_dia,12) + ltrim(str(all_numoper)) from ALLOG where ALL_CODCIA= tx.far_codcia  and ALL_TIPMOV=97 and ALL_NUMSER = tx.far_numser and ALL_FBG=tx.far_fbg and ALL_NUMFAC=tx.far_numfac and ALL_CODTRA=1111) [NumOper]
+	,FAR_OC
+	,FAR_TIPO_BLOQ_ACT1
+	,FAR_NUMSER_C
+	,FAR_NUMFAC_C 
+	,CONVERT(numeric(18,4),CASE WHEN FAR_EX_IGV ='A' THEN FAR_SUBTOTAL ELSE 
+		( CONVERT(NUMERIC(13,4),FAR_BRUTO )) END) [LineTotal]
+	,convert(numeric(18,4),CASE WHEN FAR_EX_IGV ='A'  THEN 0 else
+		FAR_IMPTO END) [IGV]
+	,CONVERT(numeric(18,2),FAR_BRUTO + FAR_IMPTO) [SubTotal]
+	
+
+FROM facart tx
+WHERE far_codcia=@Cia AND far_tipmov=97 AND far_fecha_compra >=@FechaIni AND far_fecha_compra <=@FechaFin AND far_cp='C'
+AND far_codart=0 AND FAR_ESTADO = 'E'
+) tab
+/* ====================== */
+
+
+/*  NOTA DE DEBITO  */
+select * 	INTO #NotaDEB	from (
+SELECT
+	CONVERT(nvarchar(100),FAR_FECHA,12) + ltrim(str(FAR_NUMOPER)) [NumOper]
+	,FAR_OC
+	,FAR_TIPO_BLOQ_ACT1
+	,FAR_NUMSER_C
+	,FAR_NUMFAC_C 
+	,sum(CONVERT(numeric(18,4),	CASE WHEN FAR_EX_IGV ='A' THEN (CONVERT(NUMERIC(13,4),(FAR_CANTIDAD / FAR_EQUIV)) * FAR_PRECIO) ELSE 
+		(CONVERT(NUMERIC(13,4),(FAR_CANTIDAD / FAR_EQUIV)) * CONVERT(NUMERIC(13,4),(FAR_PRECIO / 1.18))) END)) [LineTotal]
+	,SUM(convert(numeric(18,4),CASE WHEN FAR_EX_IGV ='A' THEN 0 else
+		(FAR_PRECIO * CONVERT(NUMERIC(13,4),(FAR_CANTIDAD / FAR_EQUIV))) - (CONVERT(NUMERIC(13,4),(FAR_PRECIO / 1.18)) * CONVERT(NUMERIC(13,4),(FAR_CANTIDAD / FAR_EQUIV))) END)) [IGV]
+	,SUM(CONVERT(numeric(18,2),FAR_PRECIO * CONVERT(NUMERIC(13,4),(FAR_CANTIDAD / FAR_EQUIV)))) [SubTotal]
+	
+
+FROM facart 
+WHERE far_codcia=@Cia AND far_tipmov=98 AND far_fecha_compra >=@FechaIni AND far_fecha_compra <=@FechaFin AND far_cp='C'
+AND far_codart<>0 and FAR_ESTADO2 <> 'L' AND FAR_ESTADO = 'E'
+GROUP BY CONVERT(nvarchar(100),FAR_FECHA,12) + ltrim(str(FAR_NUMOPER))	,FAR_OC	,FAR_TIPO_BLOQ_ACT1	,FAR_NUMSER_C	,FAR_NUMFAC_C 
+union all
+SELECT
+	CONVERT(nvarchar(100),FAR_FECHA,12) + ltrim(str(FAR_NUMOPER)) [NumOper]
+	,FAR_OC
+	,FAR_TIPO_BLOQ_ACT1
+	,FAR_NUMSER_C
+	,FAR_NUMFAC_C 
+	,sum(CONVERT(numeric(18,4),	CASE WHEN FAR_EX_IGV ='A' THEN FAR_SUBTOTAL ELSE 
+		(CONVERT(NUMERIC(13,4),(FAR_SUBTOTAL / 1.18))) END)) [LineTotal]
+	,SUM(convert(numeric(18,4),CASE WHEN FAR_EX_IGV ='A' THEN 0 else
+		(FAR_SUBTOTAL - (CONVERT(NUMERIC(13,4),(FAR_SUBTOTAL / 1.18)) )) END)) [IGV]
+	,SUM(CONVERT(numeric(18,2),FAR_SUBTOTAL )) [SubTotal]
+	
+
+FROM facart 
+WHERE far_codcia=@Cia AND far_tipmov=98 AND far_fecha_compra >=@FechaIni AND far_fecha_compra <=@FechaFin AND far_cp='C'
+AND far_codart=0 AND FAR_ESTADO = 'E'
+GROUP BY CONVERT(nvarchar(100),FAR_FECHA,12) + ltrim(str(FAR_NUMOPER))	,FAR_OC	,FAR_TIPO_BLOQ_ACT1	,FAR_NUMSER_C	,FAR_NUMFAC_C 
+) tab
+/* FIN NOTA DEBITO   */
+
+DECLARE @intCorrelativo INT = (SELECT COUNT(*) + 1 FROM DeclaracionDocumentoElectronico WHERE Fecha = CAST(GETDATE() AS date) AND TipoDocumento = 'RC')
+
+
+SELECT * FROM (
+/* VENTAS */
+SELECT  'INVERSIONES SAN MARTIN S.C.R.L.' AS [RazonSocialEmpresa],
+	'20450337839' AS [RUCEmpresa],
+	'INVERSIONES SAN MARTIN S.C.R.L.' AS [NombreComercial],
+	'220601' [CodigoUbigeo],
+	'' [DireccionCompleta],
+	'San Martin' [Departamento],
+	'Mariscal Cáceres' [Provincia],
+	'Juanjuí' [Distrito],
+	'PE' [Pais],
+	all_fecha_dia [FechaResumen],
+	@intCorrelativo [Correlativo],
+	CONVERT(nvarchar(100),all_fecha_dia,12) + ltrim(str(all_numoper)) [DocEntry],
+	CONVERT(nvarchar(100),all_fecha_dia,12) + ltrim(str(all_numoper)) [TRANSID],
+	--CASE WHEN all_fbg='F' THEN t3.cli_ruc_esposo ELSE t3.cli_ruc_esposa END [Numero Correlativo],
+	CONVERT(nvarchar(100),all_fecha_dia,12) + ltrim(str(all_numoper)) [Numero Correlativo],
+	all_fecha_dia [Fecha Emision],
+	all_fecha_vcto [Fecha Vencimiento],
+	CASE WHEN all_fbg='F' THEN '01' ELSE '03' END [Tipo],
+	CASE WHEN all_fbg='F' THEN 'FA' + RIGHT('000'+ ltrim(str(all_numser)),2) ELSE 'BO' + RIGHT('000'+ ltrim(str(all_numser)),2) END [Serie],
+	RIGHT('00000000' + LTRIM (CAST(all_numfac AS NVARCHAR(MAX))),8) [Numero],
+	CASE WHEN all_fbg='F' THEN '01' ELSE '03' END [Tipo Origen],
+	NULL [Serie Origen],
+	RIGHT('00000000' + LTRIM (CAST(all_numfac AS NVARCHAR(MAX))),8) [Numero Origen],
+	CASE WHEN all_fbg='F' THEN '6' ELSE '1' END [Tipo Documento],
+	CASE WHEN all_fbg='F' THEN t3.cli_ruc_esposo ELSE t3.cli_ruc_esposa END [Nro. Documento],
+	cli_nombre [CardName],
+	CASE WHEN t4.IGV <> 0 THEN t4.LineTotal ELSE CAST(0 AS DECIMAL(19,6)) END [Base Imponible Oper. Gravada],
+	CASE WHEN t4.IGV <> 0 THEN CAST(0 AS DECIMAL(19,6)) ELSE t4.LineTotal END [Exonerada],
+	CAST(0 AS DECIMAL(19,6)) [Inafecta],
+	CAST(0 AS DECIMAL(19,6)) [ISC],
+	t4.IGV [IGV],
+	CAST(0 AS DECIMAL(19,6)) [Otros],
+	'PEN' [Moneda],
+	--t1.all_neto  [DocTotal],
+	t4.[SubTotal]  [DocTotal],
+	'3' [Estado],
+	--CAST(t5.PrecioMin AS DECIMAL(19,6)) [PrecMin]
+	case when t4.[SubTotal] =0 then CAST(t5.PrecioMin  AS DECIMAL(19,6)) else CAST(0  AS DECIMAL(19,6)) end [PrecMin]
+FROM ALLOG T1 INNER JOIN PARGEN T2 ON T1.all_CODCIA=T2.PAR_CODCIA INNER JOIN CLIENTES t3 ON t1.all_codcia=t3.cli_codcia AND t1.all_codclie=t3.cli_codclie AND t1.all_cp=t3.cli_cp
+INNER JOIN #Ventas  t4 ON CONVERT(nvarchar(100),t1.all_fecha_dia,12) + ltrim(str(t1.all_numoper))=ltrim(t4.NumOper) inner join #Ventas2 t5 on RTRIM(t4.NumOper)=RTRIM(t5.NumOper)
+WHERE all_codcia=@Cia AND all_tipmov=10 AND all_fecha_dia >=@FechaIni AND all_fecha_dia <=@FechaFin
+AND all_codtra = 1111 and ALL_DOC_ELECTRONICO='A' and isnull(t1.ALL_ESTADO_FE,0) in (0,3) and ALL_FBG ='B' 
+--ORDER BY all_fecha_dia,all_fbg,all_numser,all_numfac
+/*  FIN VENTAS */
+
+UNION ALL
+/* NOTA CREDITO */
+SELECT 'INVERSIONES SAN MARTIN S.C.R.L.' AS [RazonSocialEmpresa],
+	'20450337839' AS [RUCEmpresa],
+	'INVERSIONES SAN MARTIN S.C.R.L.' AS [NombreComercial],
+	'220601' [CodigoUbigeo],
+	'' [DireccionCompleta],
+	'San Martin' [Departamento],
+	'Mariscal Cáceres' [Provincia],
+	'Juanjuí' [Distrito],
+	'PE' [Pais],
+	all_fecha_dia [FechaResumen],
+	@intCorrelativo [Correlativo],
+	CONVERT(nvarchar(100),all_fecha_dia,12) + ltrim(str(all_numoper)) [DocEntry],
+	CONVERT(nvarchar(100),all_fecha_dia,12) + ltrim(str(all_numoper)) [TransId],
+	CONVERT(nvarchar(100),all_fecha_dia,12) + ltrim(str(all_numoper)) [Numero Correlativo],
+	all_fecha_dia [Fecha Emision],
+	all_fecha_vcto [Fecha Vencimiento],
+	'07' [Tipo],
+	CASE WHEN t4.FAR_TIPO_BLOQ_ACT1='F' THEN 'FA' + RIGHT('000'+ ltrim(str(all_numser)),2) ELSE 'BO' + RIGHT('000'+ ltrim(str(all_numser)),2) END [Serie],
+	RIGHT('00000000' + LTRIM(CAST(all_numfac AS NVARCHAR(MAX))),8) [Numero],
+	CASE WHEN t4.FAR_TIPO_BLOQ_ACT1='F' THEN '01' ELSE '03' END [Tipo Origen],
+	case when (select top 1 ALL_DOC_ELECTRONICO from ALLOG where ALL_CODCIA=t1.ALL_CODCIA and ALL_NUMSER=t4.FAR_NUMSER_C and ALL_NUMFAC=t4.FAR_NUMFAC_C  and ALL_FBG=t4.FAR_TIPO_BLOQ_ACT1 and ALL_FLAG_EXT <> 'E' and ALL_TIPMOV=10)='A' then
+		CASE WHEN t4.FAR_TIPO_BLOQ_ACT1='F' THEN 'FA' + RIGHT('000'+ ltrim(str(t4.FAR_NUMSER_C)),2) ELSE 'BO' + RIGHT('000'+ ltrim(str(t4.FAR_NUMSER_C)),2) END  
+	else
+		RIGHT('000'+ ltrim(str(t4.FAR_NUMSER_C)),3)
+	end [Serie Origen],
+	case when (select top 1 ALL_DOC_ELECTRONICO from ALLOG where ALL_TIPMOV=10 and ALL_CODCIA=t1.ALL_CODCIA and ALL_NUMSER=t4.FAR_NUMSER_C and ALL_NUMFAC=t4.FAR_NUMFAC_C  and ALL_FBG=t4.FAR_TIPO_BLOQ_ACT1 and ALL_FLAG_EXT <> 'E')='A' then
+		RIGHT('00000000' + LTRIM(CAST(t4.FAR_NUMFAC_C AS NVARCHAR(MAX))),8) 
+	else
+		RIGHT('00000000' + LTRIM(CAST(t4.FAR_NUMFAC_C AS NVARCHAR(MAX))),7)  
+	end [Numero Origen],
+	CASE WHEN t4.FAR_TIPO_BLOQ_ACT1='F' THEN '6' ELSE '1' END [Tipo Documento],
+	LTRIM(RTRIM(CASE WHEN t4.FAR_TIPO_BLOQ_ACT1='F' THEN t3.cli_ruc_esposo ELSE t3.cli_ruc_esposa END)) [Numero Documento],
+	cli_nombre [Razon Social],
+	CASE WHEN t4.IGV <> 0 THEN t4.LineTotal ELSE 0 END [Base Imponible Oper. Gravada],
+	CAST(0 AS NUMERIC(19,6)) [Exonerada],
+	CASE WHEN t4.IGV <> 0 THEN 0 ELSE t4.LineTotal END [Inafecta],
+	CAST(0 AS NUMERIC(19,6)) [ISC],
+	t4.IGV [IGV],
+	CAST(0 AS NUMERIC(19,6)) [Otros],
+	'PEN' [Moneda],
+	t4.SubTotal [DocTotal],
+	'3' [Estado],
+	CAST(0 AS DECIMAL(19,6)) [PrecMin]
+FROM ALLOG T1 INNER JOIN PARGEN T2 ON T1.all_CODCIA=T2.PAR_CODCIA INNER JOIN CLIENTES t3 ON t1.all_codcia=t3.cli_codcia AND t1.all_codclie=t3.cli_codclie AND t1.all_cp=t3.cli_cp
+INNER JOIN #NotaCred t4 ON CONVERT(nvarchar(100),t1.all_fecha_dia,12) + ltrim(str(t1.all_numoper))=t4.NumOper
+WHERE all_codcia=@Cia AND all_tipmov=97 AND all_fecha_dia >=@FechaIni AND all_fecha_dia <=@FechaFin AND ALL_DOC_ELECTRONICO='A' and isnull(t1.ALL_ESTADO_FE,0) in (0,3)
+AND all_codtra IN (2412) AND t4.FAR_TIPO_BLOQ_ACT1='B' and ALL_FLAG_EXT='E'
+--ORDER BY all_fecha_dia,all_fbg,all_numser,all_numfac
+/*   FIN NOTA CREDITO */
+UNION ALL
+/*  NOTA DEBITO   */
+SELECT 'INVERSIONES SAN MARTIN S.C.R.L.' AS [RazonSocialEmpresa],
+	'20450337839' AS [RUCEmpresa],
+	'INVERSIONES SAN MARTIN S.C.R.L.' AS [NombreComercial],
+	'220601' [CodigoUbigeo],
+	'' [DireccionCompleta],
+	'San Martin' [Departamento],
+	'Mariscal Cáceres' [Provincia],
+	'Juanjuí' [Distrito],
+	'PE' [Pais],
+	all_fecha_dia [FechaResumen],
+	@intCorrelativo [Correlativo],
+	CONVERT(nvarchar(100),all_fecha_dia,12) + ltrim(str(all_numoper)) [DocEntry],
+	CONVERT(nvarchar(100),all_fecha_dia,12) + ltrim(str(all_numoper)) [TransId],
+	CONVERT(nvarchar(100),all_fecha_dia,12) + ltrim(str(all_numoper)) [Numero Correlativo],
+	all_fecha_dia [Fecha Emision],
+	all_fecha_vcto [Fecha Vencimiento],
+	'08' [Tipo],
+	CASE WHEN t4.FAR_TIPO_BLOQ_ACT1='F' THEN 'FA' + RIGHT('000'+ ltrim(str(all_numser)),2) ELSE 'BO' + RIGHT('000'+ ltrim(str(all_numser)),2) END [Serie],
+	right('00000000'+ltrim(CAST(all_numfac AS NVARCHAR(MAX))),8) [Numero],
+	CASE t4.FAR_TIPO_BLOQ_ACT1 WHEN 'F' THEN '01' WHEN 'B' THEN '03' ELSE '08' END [Tipo Origen],
+	case when (select top 1 ALL_DOC_ELECTRONICO from ALLOG where ALL_CODCIA=t1.ALL_CODCIA and ALL_NUMSER=t4.FAR_NUMSER_C and ALL_NUMFAC=t4.FAR_NUMFAC_C  and ALL_FBG=t4.FAR_TIPO_BLOQ_ACT1 and ALL_FLAG_EXT <> 'E')='A' then
+		CASE WHEN t4.FAR_TIPO_BLOQ_ACT1='F' THEN 'FA' + RIGHT('000'+ ltrim(str(t4.FAR_NUMSER_C)),2) ELSE 'BO' + RIGHT('000'+ ltrim(str(t4.FAR_NUMSER_C)),2) END 
+	else
+		RIGHT('000'+ ltrim(str(t4.FAR_NUMSER_C)),3)
+	end [Serie Origen],
+	case when (select top 1 ALL_DOC_ELECTRONICO from ALLOG where ALL_TIPMOV=10 and ALL_CODCIA=t1.ALL_CODCIA and ALL_NUMSER=t4.FAR_NUMSER_C and ALL_NUMFAC=t4.FAR_NUMFAC_C  and ALL_FBG=t4.FAR_TIPO_BLOQ_ACT1 and ALL_FLAG_EXT <> 'E')='A' then
+		RIGHT('00000000' + LTRIM(CAST(t4.FAR_NUMFAC_C AS NVARCHAR(MAX))),7)   
+	else
+		RIGHT('00000000' + LTRIM(CAST(t4.FAR_NUMFAC_C AS NVARCHAR(MAX))),7)  
+	end [Numero Origen],
+	CASE WHEN t4.FAR_TIPO_BLOQ_ACT1='F' THEN '6' ELSE '1' END [Tipo Documento],
+	LTRIM(RTRIM(CASE WHEN t4.FAR_TIPO_BLOQ_ACT1 ='F' THEN t3.cli_ruc_esposo ELSE t3.cli_ruc_esposa END)) [Numero Documento],
+	cli_nombre [Razon Social],
+	CASE WHEN t4.IGV <> 0 THEN t4.LineTotal ELSE 0 END [Base Imponible Oper. Gravada],
+	cast(0 AS NUMERIC(19,6)) [Exonerada],
+	CASE WHEN t4.IGV <> 0 THEN 0 ELSE t4.LineTotal END [Inafecta],
+	cast(0 AS NUMERIC(19,6)) [ISC],
+	t4.IGV [IGV],
+	cast(0 AS NUMERIC(19,6)) [Otros],
+	'PEN' [Moneda],
+	t4.SubTotal [DocTotal],
+	'3' [Estado],
+	CAST(0 AS DECIMAL(19,6)) [PrecMin]
+FROM ALLOG T1 INNER JOIN PARGEN T2 ON T1.all_CODCIA=T2.PAR_CODCIA INNER JOIN CLIENTES t3 ON t1.all_codcia=t3.cli_codcia AND t1.all_codclie=t3.cli_codclie AND t1.all_cp=t3.cli_cp
+INNER JOIN #NotaDEB t4 ON CONVERT(nvarchar(100),t1.all_fecha_dia,12) + ltrim(str(t1.all_numoper))=t4.NumOper
+WHERE all_codcia=@Cia AND all_tipmov=98 AND all_fecha_dia >=@FechaIni AND all_fecha_dia <=@FechaFin and ALL_CP='C' AND ALL_DOC_ELECTRONICO='A' and isnull(t1.ALL_ESTADO_FE,0) in (0,3) AND t4.FAR_TIPO_BLOQ_ACT1='B' and ALL_CODTRA=1111
+--ORDER BY all_fecha_dia,all_fbg,all_numser,all_numfac
+/*  FIN NOTA DEBITO  */ 
+)   TABLA
+ORDER BY [Fecha Emision],[Serie],[Numero]
+GO
+
+
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[usp_InsertDeclaracionDocumentoElectronico] 
+	(
+		 @intId INT OUT
+		,@chrTipoDocumento CHAR(2) = NULL
+		,@vchNroOficial VARCHAR(15)
+		,@vchTicket VARCHAR(20)
+		,@intCodigoEstado INT 
+		,@vchObservacion VARCHAR(MAX)
+	)
+AS
+BEGIN
+	INSERT INTO DeclaracionDocumentoElectronico
+	(
+		TipoDocumento,
+		NroOficial,
+		Ticket,
+		CodigoEstado,
+		Observacion,
+		Fecha
+	)
+	VALUES
+	(
+		isnull(@chrTipoDocumento,CASE WHEN @vchObservacion LIKE '%FACTURA%' THEN '01' WHEN @vchObservacion LIKE '%BOLETA%' THEN '03' WHEN @vchObservacion LIKE '%CREDITO%' THEN '07' WHEN @vchObservacion LIKE '%DEBITO%' THEN '08' WHEN @vchObservacion LIKE '%BAJA%' THEN 'RA' ELSE '' END), 
+		@vchNroOficial, 
+		@vchTicket, 
+		@intCodigoEstado,
+		@vchObservacion, 
+		CONVERT(date,GETDATE())
+	)
+	
+	SET @intId = @@identity
+	
+END
+
+
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[usp_InsertDetalleDeclaracionResponse]
+	(
+		 @intDeclaracionId INT
+		,@chrTipoDocumentoOrigen CHAR(2)
+		,@vchSerieDocumentoOrigen VARCHAR(5)
+		,@vchCorrelativoDocumentoOrigen VARCHAR(10)
+	)
+AS
+BEGIN
+	INSERT INTO DetalleDeclaracionBajaDocumentos
+	(
+		DeclaracionId,
+		TipoDocumentoOrigen,
+		SerieDocumentoOrigen,
+		CorrelativoDocumentoOrigen
+	)
+	VALUES
+	(
+		@intDeclaracionId, 
+		@chrTipoDocumentoOrigen, 
+		@vchSerieDocumentoOrigen,
+		@vchCorrelativoDocumentoOrigen
+	)
+END
+GO
