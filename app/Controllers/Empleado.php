@@ -66,7 +66,7 @@ class Empleado extends BaseController {
             }
 
             $rent = number_format((float)($comi['TOTAL']-$comi['TOTALCOST']), 2, '.', '');
-            $porc = number_format((float)(100*($comi['TOTAL']-$comi['TOTALCOST']) /$comi['TOTAL']), 2, '.', '');
+            $porc = (float)$comi['TOTAL'] != 0 ? number_format((float)(100 * ($comi['TOTAL'] - $comi['TOTALCOST']) / $comi['TOTAL']), 2, '.', '') : 0;
 
             $comi['RENTABILIDAD'] = $rent;
             $comi['PORCENTAJE'] = "<span class='badge bg-success'>$porc%</span>";

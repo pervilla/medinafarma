@@ -85,31 +85,56 @@ class CajaMovimientosModel extends Model {
         }       
     }
 
-    public function get_creditos($mes, $anio) {
-        $sql = 'SELECT CMV_CODVEN,VEM_NOMBRE,SUM(CMV_MONTO) AS DEUDA ';
-        $sql .= ' FROM DBO.CAJAS AS CAJ ';
-        $sql .= ' INNER JOIN DBO.CAJA_MOVIMIENTOS AS MOV ON CAJ.CAJ_NRO = MOV.CMV_CAJA ';
-        $sql .= ' INNER JOIN dbo.VEMAEST AS VEN ON (CMV_CODVEN=VEM_CODVEN AND VEM_CODCIA=25) ';
-        $sql .= ' WHERE CMV_TIPO IN(6,7) ';
-        $sql .= ' AND MONTH(CAJ_FECHA) = ' . $mes;
-        $sql .= ' AND YEAR(CAJ_FECHA) = ' . $anio;
-        $sql .= ' GROUP BY CMV_CODVEN,VEM_NOMBRE ';
-        $sql .= ' ORDER BY CMV_CODVEN,VEM_NOMBRE ';
-//echo $sql;
-        $query = $this->db->query($sql);
+    public function get_creditos($fechaInicio, $fechaFin) {
+        // Ensure dates are in YYYYMMDD format for SQL Server
+        $fechaInicio = date('Ymd', strtotime($fechaInicio));
+        $fechaFin = date('Ymd', strtotime($fechaFin));
+
+        $buildQuery = function($serverPrefix = '') use ($fechaInicio, $fechaFin) {
+            $dbName = $serverPrefix ? $serverPrefix . '.[BDATOS].[dbo].' : '';
+            
+            $sql = 'SELECT CMV_CODVEN, VEM_NOMBRE, SUM(CMV_MONTO) AS DEUDA ';
+            $sql .= ' FROM ' . $dbName . 'CAJAS AS CAJ ';
+            $sql .= ' INNER JOIN ' . $dbName . 'CAJA_MOVIMIENTOS AS MOV ON CAJ.CAJ_NRO = MOV.CMV_CAJA ';
+            $sql .= ' INNER JOIN ' . $dbName . 'VEMAEST AS VEN ON (CMV_CODVEN=VEM_CODVEN AND VEM_CODCIA=25) ';
+            $sql .= ' WHERE CMV_TIPO IN(6,7) ';
+            $sql .= " AND CAJ_FECHA BETWEEN '$fechaInicio' AND '$fechaFin' ";
+            $sql .= ' GROUP BY CMV_CODVEN, VEM_NOMBRE ';
+            return $sql;
+        };
+
+        // We need to sum the results of the UNION, because an employee might have credits in multiple servers.
+        // So we wrap the UNION in an outer SELECT SUM
+        
+        $sqlLocal = $buildQuery('');
+        $sqlSrv2 = $buildQuery('[SERVER02]');
+        $sqlSrv3 = $buildQuery('[SERVER03]');
+
+        $unionSql = "($sqlLocal) UNION ALL ($sqlSrv2) UNION ALL ($sqlSrv3)";
+
+        $finalSql = "SELECT CMV_CODVEN, VEM_NOMBRE, SUM(DEUDA) AS DEUDA FROM ($unionSql) AS T GROUP BY CMV_CODVEN, VEM_NOMBRE ORDER BY CMV_CODVEN, VEM_NOMBRE";
+
+        $query = $this->db->query($finalSql);
         return $query->getResult();
     }
 
     public function get_creditos_empleado($mes, $anio, $empleado) {
-        $sql = 'SELECT CAJ_FECHA,CMV_TIPO,RTRIM(TAB_NOMLARGO) TAB_NOMLARGO,CMV_DESCRIPCION,CMV_MONTO ';
-        $sql .= ' FROM DBO.CAJAS AS CAJ ';
-        $sql .= ' INNER JOIN DBO.CAJA_MOVIMIENTOS AS MOV ON CAJ.CAJ_NRO = MOV.CMV_CAJA ';
-        $sql .= ' INNER JOIN dbo.TABLAS AS TAB ON(CMV_TIPO=TAB_NUMTAB AND TAB_TIPREG=100) ';
-        $sql .= ' WHERE CMV_TIPO IN(6,7) ';
-        $sql .= ' AND MONTH(CAJ_FECHA) = ' . $mes;
-        $sql .= ' AND YEAR(CAJ_FECHA) = ' . $anio;
-        $sql .= ' AND CMV_CODVEN = ' . $empleado;
-//echo $sql;
+        $buildQuery = function($serverPrefix = '') use ($mes, $anio, $empleado) {
+            $dbName = $serverPrefix ? $serverPrefix . '.[BDATOS].[dbo].' : '';
+
+            $sql = 'SELECT CAJ_FECHA,CMV_TIPO,RTRIM(TAB_NOMLARGO) TAB_NOMLARGO,CMV_DESCRIPCION,CMV_MONTO ';
+            $sql .= ' FROM ' . $dbName . 'CAJAS AS CAJ ';
+            $sql .= ' INNER JOIN ' . $dbName . 'CAJA_MOVIMIENTOS AS MOV ON CAJ.CAJ_NRO = MOV.CMV_CAJA ';
+            $sql .= ' INNER JOIN ' . $dbName . 'TABLAS AS TAB ON(CMV_TIPO=TAB_NUMTAB AND TAB_TIPREG=100) ';
+            $sql .= ' WHERE CMV_TIPO IN(6,7) ';
+            $sql .= ' AND MONTH(CAJ_FECHA) = ' . $mes;
+            $sql .= ' AND YEAR(CAJ_FECHA) = ' . $anio;
+            $sql .= ' AND CMV_CODVEN = ' . $empleado;
+            return $sql;
+        };
+
+        $sql = $buildQuery('') . ' UNION ALL ' . $buildQuery('[SERVER02]') . ' UNION ALL ' . $buildQuery('[SERVER03]');
+        
         $query = $this->db->query($sql);
         return $query->getResult();
     }

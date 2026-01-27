@@ -263,9 +263,27 @@
                                 </a>
                                 <ul class="nav nav-treeview">
                                     <li class="nav-item">
+                                        <a href="<?= site_url('planilla/reglas') ?>" class="nav-link <?=$menu['i']==21?'active':''?>">
+                                        <i class="fa fa-list-alt nav-icon"></i>
+                                            <p>Reglas de Comisiones</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="<?= site_url('planilla/descuentos') ?>" class="nav-link <?= strpos(current_url(), 'descuentos') !== false ? 'active' : '' ?>">
+                                            <i class="fa fa-minus-circle nav-icon"></i>
+                                            <p>Descuentos Personal</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="<?= site_url('planilla/extras') ?>" class="nav-link <?= strpos(current_url(), 'extras') !== false ? 'active' : '' ?>">
+                                            <i class="fa fa-plus-circle nav-icon"></i>
+                                            <p>Horas Extras / Feriados</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
                                         <a href="<?= site_url('comisiones') ?>" class="nav-link <?=$menu['i']==21?'active':''?>">
                                         <i class="fa fa-male nav-icon"></i><i class="fa fa-bar-chart nav-icon"></i>
-                                            <p>Comisiones</p>
+                                            <p>Comisiones (Old)</p>
                                         </a>
                                     </li>                                    
                                     <li class="nav-item">
@@ -278,6 +296,12 @@
                                         <a href="<?= site_url('empleado/creditos_adelantos') ?>" class="nav-link <?=$menu['i']==22?'active':''?>">
                                             <i class="far fa-circle nav-icon"></i>
                                             <p>Creditos y Adelantos</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="<?= site_url('planilla') ?>" class="nav-link <?=$menu['i']==24?'active':''?>">
+                                            <i class="fas fa-file-invoice-dollar nav-icon"></i>
+                                            <p>Planillas de Pago</p>
                                         </a>
                                     </li>
                                 </ul>

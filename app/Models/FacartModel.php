@@ -374,4 +374,60 @@ class FacartModel extends Model
         $query = $this->db->query($sql);
         return $query->getResult();
     }
+
+    /**
+     * Get detailed sales data for payroll calculation.
+     * Returns individual invoice lines to apply rule-based commissions.
+     */
+    /**
+     * Get detailed sales data for payroll calculation.
+     * Returns individual invoice lines to apply rule-based commissions.
+     * Updated to include Family Information for rules.
+     */
+    public function get_ventas_detalle_empleado($fechaInicio, $fechaFin)
+    {
+        // Ensure dates are in YYYYMMDD format for SQL Server
+        $fechaInicio = date('Ymd', strtotime($fechaInicio));
+        $fechaFin = date('Ymd', strtotime($fechaFin));
+
+        // Helper to build Query for a specific server (empty for local)
+        $buildQuery = function($serverPrefix = '') use ($fechaInicio, $fechaFin) {
+            $sql = 'SELECT T1.FAR_CODVEN, T2.VEM_NOMBRE, T1.FAR_CODART, T1.FAR_DESCRI, ';
+            $sql .= 'T1.FAR_CANTIDAD, T1.FAR_PRECIO, T1.FAR_EQUIV, ';
+            $sql .= 'T3.ART_FAMILIA, T4.TAB_NOMLARGO as FAMILIA_NOMBRE, ';
+            // Calc Net Sale Amount Per Item
+            // Removed 0.847457.. (IGV factor) as user handles it via Global Rule
+            $sql .= '(T1.FAR_CANTIDAD/T1.FAR_EQUIV*T1.FAR_PRECIO) as VENTA_NETA '; 
+            
+            $dbName = $serverPrefix ? $serverPrefix . '.[BDATOS].[dbo].' : '';
+            
+            $sql .= 'FROM ' . $dbName . 'FACART T1 ';
+            $sql .= 'INNER JOIN ' . $dbName . 'VEMAEST T2 ON (T1.FAR_CODVEN = T2.VEM_CODVEN AND T1.FAR_CODCIA = T2.VEM_CODCIA) ';
+            $sql .= 'LEFT JOIN ' . $dbName . 'ARTI T3 ON (T1.FAR_CODART = T3.ART_KEY AND T1.FAR_CODCIA = T3.ART_CODCIA) ';
+            $sql .= 'LEFT JOIN ' . $dbName . 'TABLAS T4 ON (T3.ART_CODCIA = T4.TAB_CODCIA AND T3.ART_FAMILIA = T4.TAB_NUMTAB AND T4.TAB_TIPREG = 122) ';
+            // JOIN CLIENTES for validation
+            $sql .= 'INNER JOIN ' . $dbName . 'CLIENTES T5 ON (T1.FAR_CODCLIE = T5.CLI_CODCLIE AND T1.FAR_CODCIA = T5.CLI_CODCIA AND T1.FAR_CP = T5.CLI_CP) ';
+            
+            $sql .= "WHERE T1.FAR_FECHA BETWEEN '$fechaInicio' AND '$fechaFin' AND ";
+            $sql .= "T1.FAR_ESTADO <> 'E' AND ";
+            $sql .= "T1.FAR_ESTADO2 <> 'L' AND ";
+            $sql .= "T5.CLI_LETRA <> '1' AND "; // Exclude this client type as per reference query
+            $sql .= 'T1.FAR_TIPMOV = 10 ';
+            return $sql;
+        };
+
+        // Local Query
+        $sql = $buildQuery('');
+        
+        // Server 02
+        $sql .= ' UNION ALL ' . $buildQuery('[SERVER02]');
+        
+        // Server 03 (Optional)
+        $sql .= ' UNION ALL ' . $buildQuery('[SERVER03]');
+
+        $sql .= ' ORDER BY FAR_CODVEN, FAR_CODART';
+        
+        $query =  $this->db->query($sql);
+        return $query->getResult();
+    }
 }

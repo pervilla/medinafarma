@@ -706,8 +706,29 @@
                             }, function(response) {
                                 // Cerrar mensaje de "Procesando..."
                                 $('.jconfirm').remove();
+if (response.status === 200) {
+    // Usar SweetAlert2 como toast
+    const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+            toast.addEventListener('mouseenter', Swal.stopTimer);
+            toast.addEventListener('mouseleave', Swal.resumeTimer);
+        }
+    });
 
-                                if (response.status === 200) {
+    Toast.fire({
+        icon: 'success',
+        title: response.message
+    }).then(() => {
+        // Recargar la tabla
+        tablePrinFact.ajax.reload(null, false);
+    });
+}
+                                /*if (response.status === 200) {
                                     $.alert({
                                         title: 'Éxito',
                                         content: response.message,
@@ -720,7 +741,8 @@
                                             }
                                         }
                                     });
-                                } else {
+                                } */
+								else {
                                     $.alert({
                                         title: 'Error',
                                         content: response.message || 'Ocurrió un error al importar el comprobante.',
