@@ -24,8 +24,20 @@ class CajaMovimientosModel extends Model {
     public function __construct() {
         parent::__construct();
         $this->db = \Config\Database::connect();
-        $this->dbpm = \Config\Database::connect('pmeza');
-        $this->dbjj = \Config\Database::connect('juanjuicillo');
+    }
+
+    private function get_dbjj() {
+        if (!$this->dbjj) {
+            $this->dbjj = \Config\Database::connect('juanjuicillo');
+        }
+        return $this->dbjj;
+    }
+
+    private function get_dbpm() {
+        if (!$this->dbpm) {
+            $this->dbpm = \Config\Database::connect('pmeza');
+        }
+        return $this->dbpm;
     }
 
     public function get_movimientos($idcaja,$server) {
@@ -34,9 +46,9 @@ class CajaMovimientosModel extends Model {
         $sql .= 'LEFT JOIN dbo.VEMAEST AS VEM ON (CM.CMV_CODVEN = VEM.VEM_CODVEN AND VEM.VEM_CODCIA = 25) ';
         $sql .= 'WHERE CM.CMV_CAJA = ' . $idcaja;
         if($server==2){
-            $query =  $this->dbjj->query($sql);
+            $query =  $this->get_dbjj()->query($sql);
         }elseif($server==3){
-            $query =  $this->dbpm->query($sql);
+            $query =  $this->get_dbpm()->query($sql);
         }else{
             $query =  $this->db->query($sql);
         }
@@ -44,16 +56,15 @@ class CajaMovimientosModel extends Model {
     }
 
     public function get_movimiento($idmovimiento,$server) {
-        $sql = 'SELECT * ';
+        $sql = 'SELECT CM.*, CA.CAJ_FECHA ';
         $sql .= 'FROM dbo.CAJA_MOVIMIENTOS AS CM ';
         $sql .= 'INNER JOIN dbo.CAJAS AS CA ON(CA.CAJ_NRO=CM.CMV_CAJA)  ';
-        $sql .= 'INNER JOIN dbo.VEMAEST AS VEN ON (CA.CAJ_CODVEN=VEN.VEM_CODVEN AND VEN.VEM_CODCIA=25) ';
         $sql .= 'WHERE ';
         $sql .= 'CMV_NRO = ' . $idmovimiento;
         if($server==2){
-            $query =  $this->dbjj->query($sql);
+            $query =  $this->get_dbjj()->query($sql);
         }elseif($server==3){
-            $query =  $this->dbpm->query($sql);
+            $query =  $this->get_dbpm()->query($sql);
         }else{
             $query =  $this->db->query($sql);
         }
@@ -67,9 +78,9 @@ class CajaMovimientosModel extends Model {
         $sql .= 'CA.CAJ_NRO = ' . $idcaja;
         
         if($server==2){
-            $query =  $this->dbjj->query($sql);
+            $query =  $this->get_dbjj()->query($sql);
         }elseif($server==3){
-            $query =  $this->dbpm->query($sql);
+            $query =  $this->get_dbpm()->query($sql);
         }else{
             $query =  $this->db->query($sql);
         }
@@ -77,9 +88,9 @@ class CajaMovimientosModel extends Model {
     }
     public function crear_movimiento($data,$server) {
         if($server==2){
-            return $query =  $this->dbjj->table('CAJA_MOVIMIENTOS')->insert($data);
+            return $query =  $this->get_dbjj()->table('CAJA_MOVIMIENTOS')->insert($data);
         }elseif($server==3){
-            return $query =  $this->dbpm->table('CAJA_MOVIMIENTOS')->insert($data);
+            return $query =  $this->get_dbpm()->table('CAJA_MOVIMIENTOS')->insert($data);
         }else{
             return $query =  $this->db->table('CAJA_MOVIMIENTOS')->insert($data);
         }       
@@ -140,12 +151,76 @@ class CajaMovimientosModel extends Model {
     }
 public function delete_movimiento($id,$server){
     if($server==2){
-        $builder =  $this->dbjj->table('CAJA_MOVIMIENTOS');
+        $builder =  $this->get_dbjj()->table('CAJA_MOVIMIENTOS');
     }elseif($server==3){
-        $builder =  $this->dbpm->table('CAJA_MOVIMIENTOS');
+        $builder =  $this->get_dbpm()->table('CAJA_MOVIMIENTOS');
     }else{
         $builder =  $this->db->table('CAJA_MOVIMIENTOS');
     } 
 return $builder->delete(['CMV_NRO' => $id]);
+}
+
+public function update_movimiento($id, $data, $server) {
+    if($server==2){
+        $builder =  $this->get_dbjj()->table('CAJA_MOVIMIENTOS');
+    }elseif($server==3){
+        $builder =  $this->get_dbpm()->table('CAJA_MOVIMIENTOS');
+    }else{
+        $builder =  $this->db->table('CAJA_MOVIMIENTOS');
+    } 
+    return $builder->where('CMV_NRO', $id)->update($data);
+}
+
+/**
+ * Registrar movimiento en caja con formato estandarizado
+ * @param array $data Datos del movimiento con claves: CM_FECHA, CM_CAJA_ID, CM_MOTIVO, CM_MONTO, CM_DESCRIPCION, CM_USUARIO, CM_REFERENCIA, CM_ESTADO
+ * @param int $server Servidor (1=local, 2=juanjuicillo, 3=pmeza)
+ * @return int ID del movimiento registrado (CMV_NRO)
+ */
+public function registrarMovimiento($data, $server = 1)
+{
+    // Mapear motivo a tipo numérico
+    $motivoToTipo = [
+        'INTERES_MORA' => 11, // GASTOS BOTICA
+        'NORMAL' => 11, // GASTOS BOTICA para egresos normales
+        'LETRA' => 11, // GASTOS BOTICA para pagos de letras
+    ];
+    
+    $tipo = $motivoToTipo[$data['CM_MOTIVO']] ?? 11;
+    
+    // Construir datos para inserción
+    $insertData = [
+        'CMV_CAJA' => $data['CM_CAJA_ID'],
+        'CMV_TIPO' => $tipo,
+        'CMV_MONTO' => $data['CM_MONTO'],
+        'CMV_DESCRIPCION' => $data['CM_DESCRIPCION']
+    ];
+    
+    // Incluir campos opcionales si existen en la tabla
+    if (isset($data['CM_USUARIO']) && is_numeric($data['CM_USUARIO'])) {
+        $insertData['CMV_CODVEN'] = $data['CM_USUARIO'];
+    }
+    
+    if (isset($data['CM_REFERENCIA'])) {
+        $insertData['CMV_DESCRIPCION'] .= ' - Ref: ' . $data['CM_REFERENCIA'];
+    }
+    
+    // Seleccionar conexión según servidor
+    if ($server == 2) {
+        $db = $this->get_dbjj();
+    } elseif ($server == 3) {
+        $db = $this->get_dbpm();
+    } else {
+        $db = $this->db;
+    }
+    
+    // Insertar y obtener ID
+    $builder = $db->table('CAJA_MOVIMIENTOS');
+    $builder->insert($insertData);
+    
+    // Obtener el ID insertado (CMV_NRO)
+    $movimientoId = $db->insertID();
+    
+    return $movimientoId;
 }
 }

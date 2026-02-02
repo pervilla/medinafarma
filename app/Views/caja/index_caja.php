@@ -174,6 +174,7 @@
                 </button>
             </div>
             <div class="modal-body">
+                <input type="hidden" id="CMV_NRO" value="0">
                 <div class="card-body">
                     <div class="form-group row">
                         <label for="cmvtipo" class="col-sm-2 col-form-label">Motivo</label>
@@ -377,7 +378,7 @@
                     if (row.CMV_TIPO==10) {
                         var rpt = '<a href="<?=site_url('comprobante/deposito')?>/'+<?=$session->get('caja')?>+'/'+row.CMV_NRO+'" class="btn btn-outline-primary btn-sm"> <i class="fas fa-print"></i></a>';   
                     }
-                    rpta= '<div class="btn-group" role="group" aria-label="Basic example">'+"<button type='button' id='delmov' class='btn btn-outline-danger btn-block'><i class='fa fa-trash'></i></button>"+rpt+"</div>";
+                    rpta= '<div class="btn-group" role="group" aria-label="Basic example">'+"<button type='button' id='editMovim' class='btn btn-outline-warning'><i class='fa fa-edit'></i></button>"+"<button type='button' id='delmov' class='btn btn-outline-danger'><i class='fa fa-trash'></i></button>"+rpt+"</div>";
                     return rpta;
                 }
             },
@@ -553,6 +554,7 @@
         clearInterval(running_time);
     });
     $("#movimientos").click(function () {
+        var nro = $("#CMV_NRO").val();
         var tipo = $("#CMV_TIPO").val();
         var monto = $("#CMV_MONTO").val();
         var descripcion = $("#CMV_DESCRI").val();
@@ -585,17 +587,29 @@
             });
             return;
         }
+
+        var url = nro > 0 ? "<?= site_url('caja/actualizar_movimiento') ?>" : "agregar_movimiento";
         
-        $.post("agregar_movimiento", {
+        $.post(url, {
+            cmv_nro: nro,
             cmv_tipo: tipo,
             cmv_caja: $("input#CAJ_NRO").val(),
             cmv_codven: empleado,
             cmv_descri: descripcion,
             cvm_monto: monto
-        }, function (htmlexterno) {
-            dtableMovimiento.ajax.reload();
-            $('#modal-movimiento').modal('hide');
-        });
+        }, function (response) {
+            if (nro > 0) {
+                if (response.success) {
+                    dtableMovimiento.ajax.reload();
+                    $('#modal-movimiento').modal('hide');
+                } else {
+                    alert(response.message || 'Error al actualizar');
+                }
+            } else {
+                dtableMovimiento.ajax.reload();
+                $('#modal-movimiento').modal('hide');
+            }
+        }, nro > 0 ? 'json' : '');
     });
     $("#CMV_TIPO" ).change(function() {
         var opt = $(this).find("option:selected").attr('value'); 
@@ -653,14 +667,30 @@
         });
     }
     $('#modal-movimiento').on('shown.bs.modal', function(e) {
-        // Reset form
-        $('#CMV_TIPO').val('1').trigger('change');
-        $('#CMV_MONTO').val('');
-        $('#CMV_DESCRI').val('');
-        $('#CMV_CODVEN').val('');
-        $('#CMV_COMPROBANTE').empty().append('<option value="">Seleccionar comprobante...</option>');
+        if ($("#CMV_NRO").val() == 0) {
+            // Reset form for NEW movement
+            $('#CMV_TIPO').val('1').trigger('change');
+            $('#CMV_MONTO').val('');
+            $('#CMV_DESCRI').val('');
+            $('#CMV_CODVEN').val('');
+            $('#CMV_COMPROBANTE').empty().append('<option value="">Seleccionar comprobante...</option>');
+        }
         // Focus en el primer campo
         $('#CMV_TIPO').focus();
+    });
+
+    $('#modal-movimiento').on('hidden.bs.modal', function(e) {
+        $("#CMV_NRO").val(0);
+    });
+
+    $('#table_movimientos tbody').on('click', '#editMovim', function(event) {
+        var data = dtableMovimiento.row($(this).parents('tr')).data();
+        $("#CMV_NRO").val(data.CMV_NRO);
+        $("#CMV_TIPO").val(data.CMV_TIPO).trigger('change');
+        $("#CMV_CODVEN").val(data.CMV_CODVEN);
+        $("#CMV_DESCRI").val(data.CMV_DESCRIPCION);
+        $("#CMV_MONTO").val(data.CMV_MONTO);
+        $("#modal-movimiento").modal('show');
     });
     $('#table_movimientos tbody').on('click', '#delmov', function(event) {
         var data = dtableMovimiento.row($(this).parents('tr')).data();
@@ -672,7 +702,7 @@
                 },
                 function(htmlexterno) {
                     var datos = eval(htmlexterno);
-                    dtable.ajax.reload();
+                    dtableMovimiento.ajax.reload();
                 }
             );
         }

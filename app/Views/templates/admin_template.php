@@ -348,6 +348,24 @@
                                             <p>Cuentas por Pagar</p>
                                         </a>
                                     </li>                              
+                                    <li class="nav-item">
+                                        <a href="<?= site_url('pagosproveedores') ?>" class="nav-link <?=$menu['i']==36?'active':''?>">
+                                            <i class="fas fa-money-bill-wave nav-icon text-danger"></i>
+                                            <p>Pagos a Proveedores</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="<?= site_url('egresos') ?>" class="nav-link <?=$menu['i']==37?'active':''?>">
+                                            <i class="fas fa-file-invoice-dollar nav-icon text-success"></i>
+                                            <p>Gastos y Egresos</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="<?= site_url('flujocaja') ?>" class="nav-link <?=$menu['i']==38?'active':''?>">
+                                            <i class="fas fa-chart-line nav-icon text-info"></i>
+                                            <p>Flujo de Caja</p>
+                                        </a>
+                                    </li>
                                 </ul>
                             </li>
                             <?php } ?>

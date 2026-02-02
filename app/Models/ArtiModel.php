@@ -25,6 +25,31 @@ class ArtiModel extends Model {
         $this->dbpm = \Config\Database::connect('pmeza');
         $this->dbjj = \Config\Database::connect('juanjuicillo');
     }
+    private function toSqlServerDate($dateString)
+    {
+        if (empty($dateString)) {
+            return '';
+        }
+        // Intentar detectar formato d/m/Y
+        if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $dateString, $matches)) {
+            return sprintf('%02d/%02d/%04d', $matches[1], $matches[2], $matches[3]);
+        }
+        // Intentar detectar formato Y-m-d
+        if (preg_match('/^(\d{4})-(\d{1,2})-(\d{1,2})$/', $dateString, $matches)) {
+            return sprintf('%02d/%02d/%04d', $matches[3], $matches[2], $matches[1]);
+        }
+        // Intentar detectar formato YYYYMMDD (8 dígitos)
+        if (preg_match('/^(\d{4})(\d{2})(\d{2})$/', $dateString, $matches)) {
+            return sprintf('%02d/%02d/%04d', $matches[3], $matches[2], $matches[1]);
+        }
+        // Usar strtotime como fallback
+        $timestamp = strtotime($dateString);
+        if ($timestamp !== false) {
+            return date('d/m/Y', $timestamp);
+        }
+        return $dateString; // Devolver original si no se puede parsear
+    }
+
     public function get_operacion($mov,$tipo,$ser,$fac,$fecha,$server) {
        $sql = 'SELECT ';
         $sql.= 'FAR_CODART,FAR_TIPMOV,';
@@ -38,12 +63,13 @@ class ArtiModel extends Model {
         $sql.= "FROM FACART AS T1 ";
         $sql.= "INNER JOIN ARTI AS T2 ON(T1.FAR_CODART=T2.ART_KEY) ";
         $sql.= "INNER JOIN PRECIOS AS T3 ON(T1.FAR_CODART=T3.PRE_CODART AND T1.FAR_EQUIV=T3.PRE_EQUIV) ";
+        $fechaSql = $this->toSqlServerDate($fecha);
         $sql.= "WHERE ";
         $sql.= "FAR_TIPMOV = $mov AND ";
         $sql.= "FAR_CODCIA = 25 AND ";
         $sql.= "FAR_NUMSER = $ser AND ";
         $sql.= "FAR_NUMFAC =$fac AND ";
-        $sql.= "FAR_FECHA = '$fecha' ";
+        $sql.= "FAR_FECHA = '$fechaSql' ";
         $sql.= 'ORDER BY FAR_NUMSEC ';
         //echo $sql;
         if($server==2){

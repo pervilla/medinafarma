@@ -31,7 +31,9 @@ class Login extends BaseController{
                 'user_id'       => $user,
                 'user_name'     => $usuario,
                 'user_email'    => "",
-                'logged_in'     => TRUE
+                'logged_in'     => TRUE,
+                'rol'           => 'ADMIN',
+                'tienePermiso'  => TRUE
             ];
             $session->set($ses_data);
             echo $usuario;

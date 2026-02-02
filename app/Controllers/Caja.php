@@ -12,6 +12,8 @@ use App\Models\AllogModel;
 use App\Models\CajaModel;
 use App\Models\CajaMovimientosModel;
 use App\Models\VemaestModel;
+use App\Models\EgresoModel;
+use App\Models\PlanCuentaModel;
 use CodeIgniter\I18n\Time;
 use Mike42\Escpos\PrintConnectors\WindowsPrintConnector;
 use Mike42\Escpos\Printer;
@@ -40,6 +42,117 @@ class Caja extends BaseController {
         '14' => 'FALTO DIGITAR COMPRA',
         '15' => 'DESCUENTO POR FALTANTES',
     ];
+    
+    private $cuentaEgresosMap = [
+        11 => 1, // GASTOS BOTICA - cuenta por defecto
+        12 => 1, // DELIVERY - cuenta por defecto
+        13 => 1  // PAGO A MEDICO - cuenta por defecto
+    ];
+    
+    /**
+     * Convierte fecha de SQL Server a formato YYYY-mm-dd
+     */
+    private function convertirFechaSqlServer($fechaRaw)
+    {
+        $fecha = null;
+        log_message('error', 'DEBUG convertirFechaSqlServer: raw=' . var_export($fechaRaw, true));
+        
+        if (empty($fechaRaw)) {
+             $fecha = date('d-m-Y');
+        }
+        
+        // Si es objeto DateTime
+        elseif (is_object($fechaRaw) && method_exists($fechaRaw, 'format')) {
+             $fecha = $fechaRaw->format('d-m-Y');
+        }
+        
+        // Si es string
+        elseif (is_string($fechaRaw)) {
+            $fechaRaw = trim($fechaRaw);
+            
+            // SQL Server a veces devuelve fechas con milisegundos: '2026-01-30 00:00:00.000'
+            // Eliminar milisegundos
+            $fechaRaw = preg_replace('/\.\d+/', '', $fechaRaw);
+            log_message('error', 'DEBUG convertirFechaSqlServer: after millis removal=' . $fechaRaw);
+            
+            // Intentar con strtotime primero
+            $timestamp = strtotime($fechaRaw);
+            log_message('error', 'DEBUG convertirFechaSqlServer: strtotime result=' . var_export($timestamp, true));
+            if ($timestamp !== false) {
+                $fecha = date('d-m-Y', $timestamp);
+                log_message('error', 'DEBUG convertirFechaSqlServer: strtotime success, fecha=' . $fecha);
+            } else {
+                // Intentar formatos específicos - priorizar formatos SQL Server comunes
+                $formats = [
+                    'Ymd',           // 20260130 (SQL Server char común)
+                    'Y-m-d H:i:s',   // 2026-01-30 00:00:00
+                    'Y-m-d',         // 2026-01-30
+                    'd/m/Y',         // 30/01/2026
+                    'd-m-Y',         // 30-01-2026
+                    'm/d/Y',         // 01/30/2026
+                    'Y-m-d\TH:i:s',  // Formato ISO con T
+                    'Y-m-d H:i:s.u', // Con microsegundos
+                    'd/m/Y H:i:s',   // 30/01/2026 00:00:00
+                    'd-m-Y H:i:s',   // 30-01-2026 00:00:00
+                    'm/d/Y H:i:s',   // 01/30/2026 00:00:00
+                ];
+                
+                foreach ($formats as $format) {
+                    $dateTime = \DateTime::createFromFormat($format, $fechaRaw);
+                    log_message('error', 'DEBUG convertirFechaSqlServer: trying format ' . $format . ' with "' . $fechaRaw . '" result=' . var_export($dateTime, true));
+                    if ($dateTime !== false) {
+                         $fecha = $dateTime->format('d-m-Y');
+                        log_message('error', 'DEBUG convertirFechaSqlServer: format ' . $format . ' success, fecha=' . $fecha);
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // Validar que la fecha sea válida
+        if ($fecha) {
+             $dateTime = \DateTime::createFromFormat('d-m-Y', $fecha);
+            if ($dateTime !== false) {
+                // Verificar que los componentes coincidan (evitar fechas como 2026-02-31)
+                 if ($dateTime->format('d-m-Y') === $fecha) {
+                    return $fecha;
+                }
+            }
+        }
+        
+        // Si todo falla, usar fecha actual
+        log_message('error', 'DEBUG convertirFechaSqlServer: No se pudo convertir fecha, usando fecha actual. Raw: ' . var_export($fechaRaw, true));
+         return date('d-m-Y');
+    }
+
+
+    
+    /**
+     * Actualiza referencia CMV_EGRESO_ID en tabla CAJA_MOVIMIENTOS
+     */
+    private function actualizarReferenciaEgreso($cmv_nro, $egreso_id, $local)
+    {
+        try {
+            $db = \Config\Database::connect();
+            if ($local == 2) {
+                $db = \Config\Database::connect('juanjuicillo');
+            } elseif ($local == 3) {
+                $db = \Config\Database::connect('pmeza');
+            }
+            
+            $tableName = 'CAJA_MOVIMIENTOS';
+            $columns = $db->getFieldNames($tableName);
+            
+            if (in_array('CMV_EGRESO_ID', $columns)) {
+                $builder = $db->table($tableName);
+                $builder->where('CMV_NRO', $cmv_nro);
+                $builder->update(['CMV_EGRESO_ID' => $egreso_id]);
+                log_message('debug', 'Referencia actualizada: CMV_NRO=' . $cmv_nro . ' -> EGR_ID=' . $egreso_id);
+            }
+        } catch (\Exception $e) {
+            log_message('error', 'Error actualizando referencia: ' . $e->getMessage());
+        }
+    }
 
     public function index() {  
         $session = session();
@@ -518,6 +631,26 @@ public function get_cajas_dia(){
             echo $tr;
         }
     }
+
+    public function actualizar_movimiento() {
+        $session = session();        
+        $caja = $session->get('caja');
+        $request = service('request');
+        $CajaMov = new CajaMovimientosModel();
+        
+        $nro = $request->getPost('cmv_nro');
+        if($nro > 0){
+            $data = array(
+                'CMV_TIPO' => $request->getPost('cmv_tipo'),
+                'CMV_CODVEN' => $request->getPost('cmv_codven'),
+                'CMV_DESCRIPCION' => strtoupper($request->getPost('cmv_descri')),
+                'CMV_MONTO' => $request->getPost('cvm_monto')
+            );
+            $CajaMov->update_movimiento($nro, $data, $caja);
+            return $this->response->setJSON(['success' => true, 'message' => 'Movimiento actualizado correctamente']);
+        }
+        return $this->response->setJSON(['success' => false, 'message' => 'ID de movimiento no válido']);
+    }
     public function listar_movimientos(){
         $session = session();        
         $caja = $session->get('caja');
@@ -592,4 +725,222 @@ public function get_cajas_dia(){
             return view('pdf/ticket_caja');
         
     }
+
+    /**
+     * Exportar movimiento de caja a egresos
+     */
+    public function exportarAEgresos()
+    {
+        ini_set('memory_limit', '256M'); // Aumentar memoria para evitar error
+        $session = session();
+        // Para pruebas, si no hay usuario, usar ID 1
+        if (!$session->get('user_id')) {
+            $session->set('user_id', 1);
+        }
+        $cmv_nro = $this->request->getPost('cmv_nro');
+        $local = $this->request->getPost('local') ?? $session->get('caja'); // local actual (1,2,3)
+        if (!$local) {
+            $local = 1; // default centro
+        }
+        
+        if (!$cmv_nro) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'ID de movimiento no proporcionado'
+            ]);
+        }
+        
+        // Obtener datos del movimiento
+        $cajaMovModel = new CajaMovimientosModel();
+        $movimiento = $cajaMovModel->get_movimiento($cmv_nro, $local);
+        log_message('error', 'DEBUG exportarAEgresos: movimiento objeto keys: ' . json_encode(array_keys(get_object_vars($movimiento))));
+        log_message('error', 'DEBUG exportarAEgresos: CAJ_FECHA value: ' . (isset($movimiento->CAJ_FECHA) ? var_export($movimiento->CAJ_FECHA, true) : 'NO EXISTE'));
+        
+        if (!$movimiento) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Movimiento no encontrado'
+            ]);
+        }
+        
+        // Verificar si ya fue exportado (por CMV_EGRESO_ID)
+        if (isset($movimiento->CMV_EGRESO_ID) && $movimiento->CMV_EGRESO_ID > 0) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Este movimiento ya fue exportado a egresos (ID: ' . $movimiento->CMV_EGRESO_ID . ')'
+            ]);
+        }
+        
+        // Verificar adicionalmente en la tabla EGRESOS por si acaso
+        $egresoModel = new EgresoModel();
+        $egresoExistente = $egresoModel->where('EGR_CAJA_MOV_ID', $cmv_nro)->get()->getRowArray();
+        if ($egresoExistente) {
+            // Actualizar referencia en CAJA_MOVIMIENTOS si no existe
+            if (!isset($movimiento->CMV_EGRESO_ID) || $movimiento->CMV_EGRESO_ID <= 0) {
+                $this->actualizarReferenciaEgreso($cmv_nro, $egresoExistente['EGR_ID'], $local);
+            }
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Este movimiento ya fue exportado a egresos (EGR_ID: ' . $egresoExistente['EGR_ID'] . ')'
+            ]);
+        }
+        
+        // Verificar si es exportable (tipos definidos en el mapa)
+        if (!in_array($movimiento->CMV_TIPO, array_keys($this->cuentaEgresosMap))) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Este tipo de movimiento no puede exportarse a egresos'
+            ]);
+        }
+        
+        // Mapear tipo de movimiento a cuenta de egreso
+        $cuenta_id = $this->cuentaEgresosMap[$movimiento->CMV_TIPO] ?? 1;
+        
+        // Obtener fecha de la caja y convertir a formato SQL Server compatible
+        $fechaRaw = isset($movimiento->CAJ_FECHA) ? $movimiento->CAJ_FECHA : date('Y-m-d');
+        $fecha = $this->convertirFechaSqlServer($fechaRaw);
+        
+        // Usar la fecha convertida
+        $fechaIso = $fecha;
+        
+        // Log para debugging - información detallada
+        log_message('error', 'DEBUG exportarAEgresos: Fecha raw: ' . var_export($fechaRaw, true));
+        log_message('error', 'DEBUG exportarAEgresos: Fecha raw tipo: ' . gettype($fechaRaw));
+        log_message('error', 'DEBUG exportarAEgresos: Fecha usada: ' . $fecha);
+        
+        try {
+            $egresoModel = new EgresoModel();
+            $planCuentaModel = new PlanCuentaModel();
+            
+            // Verificar si la cuenta existe, si no usar cuenta por defecto
+            $cuenta = $planCuentaModel->find($cuenta_id);
+            if (!$cuenta) {
+                // Buscar primera cuenta de egreso activa
+                $cuentas = $planCuentaModel->getCuentasActivas('E');
+                if (!empty($cuentas)) {
+                    $cuenta_id = $cuentas[0]['PC_ID'];
+                } else {
+                    $cuenta_id = 1; // fallback
+                }
+            }
+            
+            // Preparar datos para el egreso
+            $egresoData = [
+                'fecha' => $fechaIso, // formato ISO 8601 para SQL Server datetime
+                'local' => $local,
+                'cuenta_id' => $cuenta_id,
+                'descripcion' => 'CAJA: ' . $movimiento->CMV_DESCRIPCION,
+                'monto' => $movimiento->CMV_MONTO,
+                'forma_pago' => 'EFECTIVO',
+                'estado' => 'pagado',
+                'usuario' => $session->get('user_id'),
+                'observaciones' => 'Exportado desde caja movimiento ID: ' . $cmv_nro,
+                'caja_mov_id' => $cmv_nro, // Referencia al movimiento de caja
+                'registrar_caja' => false // Ya existe el movimiento en caja
+            ];
+            
+            // Log detallado de datos
+            log_message('error', 'Datos del egreso a crear: ' . json_encode($egresoData));
+            
+            // Los egresos se centralizan en la base de datos del servidor por defecto (local 1)
+            // pero conservan el local de origen en el campo EGR_LOCAL para trazabilidad
+            $egresoId = $egresoModel->registrarEgresoNormal($egresoData);
+            
+            // Actualizar movimiento con referencia al egreso
+            // Necesitamos actualizar la tabla CAJA_MOVIMIENTOS.CMV_EGRESO_ID
+            // Primero verificar si la columna existe, si no, no actualizar
+            $db = \Config\Database::connect();
+            if ($local == 2) {
+                $db = \Config\Database::connect('juanjuicillo');
+            } elseif ($local == 3) {
+                $db = \Config\Database::connect('pmeza');
+            }
+            
+            // Verificar si existe la columna CMV_EGRESO_ID
+            $tableName = 'CAJA_MOVIMIENTOS';
+            $columns = $db->getFieldNames($tableName);
+            
+            if (in_array('CMV_EGRESO_ID', $columns)) {
+                $builder = $db->table($tableName);
+                $builder->where('CMV_NRO', $cmv_nro);
+                $builder->update(['CMV_EGRESO_ID' => $egresoId]);
+            }
+            
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => 'Movimiento exportado exitosamente a egresos (ID: ' . $egresoId . ')',
+                'egreso_id' => $egresoId
+            ]);
+            
+        } catch (\Exception $e) {
+            log_message('error', 'Error en exportarAEgresos: ' . $e->getMessage() . ' - CMV_NRO: ' . $cmv_nro . ' - Local: ' . $local);
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Error al exportar a egresos: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+
+
+    /**
+     * Método de depuración para ver formato de fecha (sin autenticación requerida)
+     */
+    public function debugFecha($cmv_nro = null, $local = null)
+    {
+        // No requerir autenticación para depuración
+        if (!$cmv_nro) {
+            return 'Falta cmv_nro. Uso: /caja/debugFecha/<cmv_nro>/<local opcional>';
+        }
+        if (!$local) {
+            $local = 1; // default
+        }
+        
+        $cajaMovModel = new CajaMovimientosModel();
+        $movimiento = $cajaMovModel->get_movimiento($cmv_nro, $local);
+        
+        if (!$movimiento) {
+            return 'Movimiento no encontrado (cmv_nro: ' . $cmv_nro . ', local: ' . $local . ')';
+        }
+        
+        echo '<pre>';
+        echo 'CMV_NRO: ' . $cmv_nro . "\n";
+        echo 'Local: ' . $local . "\n";
+        echo 'CAJ_FECHA: ' . (isset($movimiento->CAJ_FECHA) ? var_export($movimiento->CAJ_FECHA, true) : 'NO EXISTE') . "\n";
+        echo 'Tipo CAJ_FECHA: ' . (isset($movimiento->CAJ_FECHA) ? gettype($movimiento->CAJ_FECHA) : 'N/A') . "\n";
+        
+        // Probar conversión
+        $fechaRaw = isset($movimiento->CAJ_FECHA) ? $movimiento->CAJ_FECHA : date('Y-m-d');
+        $fechaConvertida = $this->convertirFechaSqlServer($fechaRaw);
+        
+        echo 'Fecha raw: ' . var_export($fechaRaw, true) . "\n";
+        echo 'Fecha convertida: ' . $fechaConvertida . "\n";
+        
+        // Mostrar campos relevantes
+        echo "\nCampos relevantes:\n";
+        $relevantKeys = ['CAJ_FECHA', 'CMV_TIPO', 'CMV_MONTO', 'CMV_DESCRIPCION', 'CMV_EGRESO_ID'];
+        foreach ($relevantKeys as $key) {
+            if (isset($movimiento->$key)) {
+                echo $key . ': ' . var_export($movimiento->$key, true) . "\n";
+            }
+        }
+        
+        echo "\n¿Exportable? (tipos 11,12,13): " . (in_array($movimiento->CMV_TIPO ?? 0, [11,12,13]) ? 'Sí' : 'No') . "\n";
+        
+        echo '</pre>';
+        return '';
+    }
+
+    public function debugSchema()
+    {
+        $db = \Config\Database::connect();
+        $fields = $db->getFieldData('EGRESOS');
+        echo '<pre>';
+        foreach ($fields as $field) {
+            echo $field->name . ' - ' . $field->type . ' - ' . $field->max_length . ' - ' . ($field->nullable ? 'NULL' : 'NOT NULL') . "\n";
+        }
+        echo '</pre>';
+        return '';
+    }
+
 }

@@ -135,3 +135,38 @@ $routes->post('calendario/cerrar', 'Calendario::cerrar');
  * -------------------------
  */
 $routes->get('facturacion/monitor', 'FacturacionMonitor::index');
+
+/*
+ * -------------------------
+ * RUTAS PAGOS A PROVEEDORES Y FLUJO DE CAJA
+ * -------------------------
+ */
+$routes->get('pagosproveedores', 'PagosProveedores::index');
+$routes->get('pagosproveedores/pagar/(:num)', 'PagosProveedores::pagar/$1');
+$routes->post('pagosproveedores/procesarpago', 'PagosProveedores::procesarPago');
+$routes->get('pagosproveedores/calcularinteres', 'PagosProveedores::calcularInteres');
+$routes->get('pagosproveedores/reporteintereses', 'PagosProveedores::reporteIntereses');
+$routes->get('pagosproveedores/exportarexcel', 'PagosProveedores::exportarExcel');
+
+/*
+ * -------------------------
+ * RUTAS GASTOS Y EGRESOS
+ * -------------------------
+ */
+$routes->get('egresos', 'Egresos::index');
+$routes->get('egresos/crear', 'Egresos::crear');
+$routes->post('egresos/guardar', 'Egresos::guardar');
+$routes->get('egresos/editar/(:num)', 'Egresos::editar/$1');
+$routes->post('egresos/actualizar/(:num)', 'Egresos::actualizar/$1');
+$routes->get('egresos/eliminar/(:num)', 'Egresos::eliminar/$1');
+$routes->post('egresos/actualizarCuentasMasivo', 'Egresos::actualizarCuentasMasivo');
+
+/*
+ * -------------------------
+ * RUTAS FLUJO DE CAJA
+ * -------------------------
+ */
+$routes->get('flujocaja', 'FlujoCaja::index');
+$routes->get('flujocaja/reporte', 'FlujoCaja::reporte');
+$routes->get('flujocaja/obtenerdatos', 'FlujoCaja::obtenerDatos');
+$routes->get('flujocaja/exportarexcel', 'FlujoCaja::exportarExcel');

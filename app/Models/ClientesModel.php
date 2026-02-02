@@ -18,7 +18,11 @@ use CodeIgniter\Model;
 class ClientesModel extends Model
 {
 
-    var $table = 'clientes';
+    protected $table = 'CLIENTES';
+    protected $primaryKey = 'CLI_CODCLIE';
+    protected $returnType = 'array';
+    protected $allowedFields = []; // We'll define this if needed, but custom queries are used
+    protected $useAutoIncrement = false;
     protected $db;
     protected $dbpm;
     protected $dbjj;
@@ -202,5 +206,20 @@ class ClientesModel extends Model
             $builder =  $this->db->table('CLIENTES');
         }
         return $builder->delete(['CLI_CODCLIE' => $id]);
+    }
+    
+    /**
+     * Obtiene lista de proveedores activos para dropdown
+     */
+    public function getProveedoresActivos()
+    {
+        $builder = $this->db->table('CLIENTES');
+        $builder->select('CLI_CODCLIE as cli_codclie, CLI_NOMBRE as cli_nombre');
+        $builder->where('CLI_CP', 'P'); // Proveedores
+        $builder->where('CLI_ESTADO', 'A'); // Activos (asumiendo que 'A' es activo)
+        $builder->orderBy('CLI_NOMBRE', 'ASC');
+        
+        $query = $builder->get();
+        return $query->getResultArray();
     }
 }

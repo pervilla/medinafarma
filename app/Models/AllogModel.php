@@ -27,14 +27,16 @@ class AllogModel  extends Model {
     }
  
     public function get_operaciones($dia,$mes,$anio,$fecha1,$fecha2,$mov,$numero) {
-       $sql = 'SELECT CONVERT(VARCHAR(10),ALL_FECHA_PRO, 103) ALL_FECHA_PRO,T1.ALL_NUMSER,ALL_NUMFAC,LTRIM(RTRIM(CLI_NOMBRE)) CLI_NOMBRE,ALL_IMPORTE_AMORT ';
+        $fecha1Sql = $this->toSqlServerDate($fecha1);
+        $fecha2Sql = $this->toSqlServerDate($fecha2);
+        $sql = 'SELECT CONVERT(VARCHAR(10),ALL_FECHA_PRO, 103) ALL_FECHA_PRO,T1.ALL_NUMSER,ALL_NUMFAC,LTRIM(RTRIM(CLI_NOMBRE)) CLI_NOMBRE,ALL_IMPORTE_AMORT ';
         $sql.= 'FROM ALLOG T1 ';
         $sql.= 'INNER JOIN CLIENTES T2 ON (T1.ALL_CODCLIE= T2.CLI_CODCLIE AND T1.ALL_CODCIA = T2.CLI_CODCIA) ';
         $sql.= 'WHERE ALL_CODCIA in (\'25\') AND  ';
         $sql.= 'ALL_TIPMOV = '.$mov.' AND ';
-        $sql.= 'ALL_FECHA_PRO >= \''.$fecha1.'\'  AND ';
-        $sql.= 'ALL_FECHA_PRO <= \''.$fecha2.'\'  AND ';
-        $sql.= $numero?'ALL_NUMFAC = \''.$numero.'\'  AND ':'';        
+        $sql.= 'ALL_FECHA_PRO >= \''.$fecha1Sql.'\'  AND ';
+        $sql.= 'ALL_FECHA_PRO <= \''.$fecha2Sql.'\'  AND ';
+        $sql.= $numero?'ALL_NUMFAC = \''.$numero.'\'  AND ':'';
         $sql.= "ALL_FLAG_EXT  <> 'E' AND ";
         $sql.= "T2.CLI_CP = 'P' AND ";
         $sql.= "T1.ALL_CODCLIE <> 0 ";
@@ -44,40 +46,44 @@ class AllogModel  extends Model {
         return $query->getResult();
     }
     public function get_operaciones2($fecha1,$fecha2,$mov,$numero) {
-       $sql = "SELECT CONVERT(VARCHAR(26),ALL_FECHA_PRO,23) ALL_FECHA_PRO,T1.ALL_NUMOPER,T1.ALL_NUMSER,ALL_NUMFAC,RTRIM(ALL_CONCEPTO) ALL_CONCEPTO,ALL_IMPORTE_AMORT,rtrim(ALL_CTAG1) ALL_CTAG1 ";
+        $fecha1Sql = $this->toSqlServerDate($fecha1);
+        $fecha2Sql = $this->toSqlServerDate($fecha2);
+        $sql = "SELECT CONVERT(VARCHAR(26),ALL_FECHA_PRO,23) ALL_FECHA_PRO,T1.ALL_NUMOPER,T1.ALL_NUMSER,ALL_NUMFAC,RTRIM(ALL_CONCEPTO) ALL_CONCEPTO,ALL_IMPORTE_AMORT,rtrim(ALL_CTAG1) ALL_CTAG1 ";
         $sql.= 'FROM ALLOG T1 ';
         $sql.= 'WHERE ALL_CODCIA in (\'25\') AND  ';
         $sql.= 'ALL_TIPMOV = '.$mov.' AND ';
-        $sql.= 'ALL_FECHA_PRO >= \''.$fecha1.'\'  AND ';
-        $sql.= 'ALL_FECHA_PRO <= \''.$fecha2.'\'  AND ';
-        $sql.= $numero?'ALL_NUMFAC = \''.$numero.'\'  AND ':'';  
-        $sql.= "ALL_FLAG_EXT  <> 'E' ";        
+        $sql.= 'ALL_FECHA_PRO >= \''.$fecha1Sql.'\'  AND ';
+        $sql.= 'ALL_FECHA_PRO <= \''.$fecha2Sql.'\'  AND ';
+        $sql.= $numero?'ALL_NUMFAC = \''.$numero.'\'  AND ':'';
+        $sql.= "ALL_FLAG_EXT  <> 'E' ";
         $sql.= 'ORDER BY ALL_FECHA_PRO,ALL_NUMOPER,ALL_NUMSER,ALL_NUMFAC ';
         //echo $sql;
         $query =  $this->db->query($sql);
-     
+      
         return $query->getResult();
     }
     public function get_lista_ventas($fecha1,$fecha2,$mov,$numero,$server) {
+        $fecha1Sql = $this->toSqlServerDate($fecha1);
+        $fecha2Sql = $this->toSqlServerDate($fecha2);
         $sql = "SELECT CONVERT(VARCHAR(26),ALL_FECHA_PRO,23) ALL_FECHA_PRO,ALL_HORA,T1.ALL_NUMOPER,RTRIM(T1.ALL_NUMSER) ALL_NUMSER,";
         $sql.= "ALL_NUMFAC,ALL_FBG,ALL_CODVEN, ";
         $sql.= "RTRIM(ALL_CONCEPTO) ALL_CONCEPTO,ALL_IMPORTE_AMORT,rtrim(ALL_CTAG1) ALL_CTAG1 ";
          $sql.= 'FROM ALLOG T1 ';
          $sql.= 'WHERE ALL_CODCIA in (\'25\') AND  ';
          $sql.= 'ALL_TIPMOV = '.$mov.' AND ';
-         $sql.= 'ALL_FECHA_PRO >= \''.$fecha1.'\'  AND ';
-         $sql.= 'ALL_FECHA_PRO <= \''.$fecha2.'\'  AND ';
-         $sql.= $numero?'ALL_NUMFAC = \''.$numero.'\'  AND ':'';  
-         $sql.= "ALL_FLAG_EXT  <> 'E' ";        
+         $sql.= 'ALL_FECHA_PRO >= \''.$fecha1Sql.'\'  AND ';
+         $sql.= 'ALL_FECHA_PRO <= \''.$fecha2Sql.'\'  AND ';
+         $sql.= $numero?'ALL_NUMFAC = \''.$numero.'\'  AND ':'';
+         $sql.= "ALL_FLAG_EXT  <> 'E' ";
          $sql.= 'ORDER BY ALL_FECHA_PRO,ALL_NUMOPER,ALL_NUMSER,ALL_NUMFAC ';
         //echo $sql;
          if($server==2){
-            $query =  $this->dbjj->query($sql);
-        }elseif($server==3){
-            $query =  $this->dbpm->query($sql);
-        }else{
-            $query =  $this->db->query($sql);
-        }
+             $query =  $this->dbjj->query($sql);
+         }elseif($server==3){
+             $query =  $this->dbpm->query($sql);
+         }else{
+             $query =  $this->db->query($sql);
+         }
          return $query->getResult();
      }
     public function get_ventas($dia,$mes,$anio){
@@ -113,7 +119,8 @@ class AllogModel  extends Model {
         return $query->getResult();
     }
     public function get_nro_oper($fecha,$docum,$server){
-        $sql = "SELECT ALL_NUMOPER FROM DBO.ALLOG WHERE ALL_FECHA_DIA = '$fecha' AND ALL_NUMFAC = '$docum' and ALL_CODTRA <> 1111";
+        $fechaSql = $this->toSqlServerDate($fecha);
+        $sql = "SELECT ALL_NUMOPER FROM DBO.ALLOG WHERE ALL_FECHA_DIA = '$fechaSql' AND ALL_NUMFAC = '$docum' and ALL_CODTRA <> 1111";
         if($server==2){
             $query =  $this->dbjj->query($sql);
         }elseif($server==3){
@@ -124,8 +131,9 @@ class AllogModel  extends Model {
         return $query->getRow();
     }
     public function get_nro_doc($fecha,$server){
+        $fechaSql = $this->toSqlServerDate($fecha);
         $sql = "SELECT TOP 1 rtrim(ALL_NUMSER) ALL_NUMSER,ALL_NUMFAC FROM DBO.ALLOG "; 
-        $sql.= "WHERE ALL_TIPMOV = 10 AND ALL_FECHA_DIA = '$fecha' ";
+        $sql.= "WHERE ALL_TIPMOV = 10 AND ALL_FECHA_DIA = '$fechaSql' ";
         $sql.= "AND ALL_FLAG_EXT <> 'E' ";
         $sql.= "AND ALL_CODCLIE <> 0 ";
         $sql.= "ORDER BY ALL_NUMOPER DESC ";
@@ -139,8 +147,9 @@ class AllogModel  extends Model {
         return $query->getRow();
     }
     public function set_cierre_caja($fecha,$oper2,$oper,$caja,$server){
+        $fechaSql = $this->toSqlServerDate($fecha);
         $sql = 'UPDATE DBO.ALLOG SET ALL_CAJA_NRO = '.$caja;
-        $sql.= ' WHERE ALL_FECHA_DIA = \''.$fecha.'\' ' ;
+        $sql.= ' WHERE ALL_FECHA_DIA = \''.$fechaSql.'\' ' ;
         $sql.= ' AND ALL_NUMOPER >= '.$oper;
         $sql.= " AND ALL_NUMOPER <= ".$oper2;
         $sql.= ' AND ALL_TIPMOV = 10 AND ';
@@ -159,8 +168,9 @@ class AllogModel  extends Model {
     }
     
     public function set_guia_migrada($fecha,$numser,$numfac,$value){
+        $fechaSql = $this->toSqlServerDate($fecha);
         $sql = 'UPDATE DBO.ALLOG SET ALL_CTAG1 = '.$value;
-        $sql.= ' WHERE ALL_FECHA_PRO = \''.$fecha.'\' ' ;
+        $sql.= ' WHERE ALL_FECHA_PRO = \''.$fechaSql.'\' ' ;
         $sql.= " AND ALL_NUMSER = ".$numser;
         $sql.= ' AND ALL_NUMFAC = '.$numfac;
 
@@ -169,6 +179,8 @@ class AllogModel  extends Model {
     }
 
     public function get_pagos_consulta($server,$fecha01,$fecha02){
+        $fecha01Sql = $this->toSqlServerDate($fecha01);
+        $fecha02Sql = $this->toSqlServerDate($fecha02);
         switch($server){case 1:$local='CTO'; break; case 2:$local='JCL'; break;case 3:$local='PMZ'; break;}
         $sql = "SELECT ";
         $sql.= "CONVERT(VARCHAR(26),ALL_FECHA_PRO,23) ALL_FECHA_PRO, ";
@@ -185,8 +197,8 @@ class AllogModel  extends Model {
         $sql.= "INNER JOIN TABLAS TB ON(TB.TAB_TIPREG=121 AND TB.TAB_NUMTAB=ART.ART_GRUPOP AND TB.TAB_CODCIA='25') ";
         $sql.= "WHERE ALL_CODCIA in ('25') AND  ";
         $sql.= "ALL_TIPMOV = 10 AND  ";
-        $sql.= "ALL_FECHA_PRO >= '".$fecha01."'  AND ";
-        $sql.= "ALL_FECHA_PRO <= '".$fecha02."'  AND ";
+        $sql.= "ALL_FECHA_PRO >= '".$fecha01Sql."'  AND ";
+        $sql.= "ALL_FECHA_PRO <= '".$fecha02Sql."'  AND ";
         $sql.= "TB.TAB_NUMTAB=566 AND ";
         $sql.= "ALL_FLAG_EXT  <> 'E'  ";
         $sql.= "ORDER BY ALL_FECHA_PRO,ALL_NUMOPER,ALL_NUMSER,ALL_NUMFAC ";
@@ -210,6 +222,7 @@ class AllogModel  extends Model {
     }
 
     public function get_comprobantes_dia($fecha, $server){
+        $fechaSql = $this->toSqlServerDate($fecha);
         $sql = "SELECT TOP 10 ";
         $sql.= "CASE ";
         $sql.= "WHEN ALL_FBG = 'B' THEN 'BO' + RTRIM(ALL_NUMSER) + '-' + CONVERT(VARCHAR, ALL_NUMFAC) ";
@@ -221,7 +234,7 @@ class AllogModel  extends Model {
         $sql.= "FROM dbo.ALLOG ";
         $sql.= "WHERE ALL_CODCIA = 25 ";
         $sql.= "AND ALL_TIPMOV = 10 ";
-        $sql.= "AND ALL_FECHA_DIA = '$fecha' ";
+        $sql.= "AND ALL_FECHA_DIA = '$fechaSql' ";
         $sql.= "AND ALL_FLAG_EXT <> 'E' ";
         $sql.= "AND ALL_CODCLIE <> 0 ";
         $sql.= "ORDER BY ALL_NUMOPER DESC";
@@ -234,5 +247,142 @@ class AllogModel  extends Model {
             $query = $this->db->query($sql);
         }
         return $query->getResult();
+    }
+    
+    /**
+     * Obtener nuevo número de operación para una fecha
+     */
+    public function obtenerNuevoNumOperacion($fecha, $server = 1)
+    {
+        // Convertir fecha a formato YYYYMMDD seguro para SQL Server
+        $fechaSql = $this->toSqlServerDate($fecha);
+
+        
+        $sql = "SELECT ISNULL(MAX(ALL_NUMOPER), 0) + 1 as nuevo_numoper ";
+        $sql .= "FROM dbo.ALLOG ";
+        $sql .= "WHERE ALL_FECHA_DIA = '$fechaSql' ";
+        $sql .= "AND ALL_CODCIA = 25 ";
+        
+        if ($server == 2) {
+            $db = $this->dbjj;
+        } elseif ($server == 3) {
+            $db = $this->dbpm;
+        } else {
+            $db = $this->db;
+        }
+        
+        try {
+            $query = $db->query($sql);
+            if ($query) {
+                $result = $query->getRow();
+                return $result ? $result->nuevo_numoper : 1;
+            } else {
+                log_message('error', 'Query failed in obtenerNuevoNumOperacion: ' . $db->error());
+                return 1;
+            }
+        } catch (\Exception $e) {
+            log_message('error', 'Exception in obtenerNuevoNumOperacion: ' . $e->getMessage());
+            return 1;
+        }
+    }
+    
+    /**
+     * Convertir fecha a formato seguro para SQL Server (dd/mm/YYYY HH:MM:SS)
+     * Mantiene parte de tiempo si está presente
+     */
+    private function toSqlServerDate($dateString)
+    {
+        if (empty($dateString)) {
+            return '';
+        }
+        
+        // Si ya está en formato dd/mm/yyyy o dd/mm/yyyy HH:MM:SS, devolver tal cual
+        if (preg_match('/^\d{1,2}\/\d{1,2}\/\d{4}/', $dateString)) {
+            return $dateString;
+        }
+        
+        // Intentar parsear con DateTime
+        $datetime = null;
+        $formats = [
+            'Y-m-d H:i:s',
+            'Y-m-d H:i',
+            'Y-m-d',
+            'Ymd His',
+            'Ymd',
+            'd/m/Y H:i:s',
+            'd/m/Y H:i',
+            'd/m/Y'
+        ];
+        
+        foreach ($formats as $format) {
+            $datetime = \DateTime::createFromFormat($format, $dateString);
+            if ($datetime !== false) {
+                break;
+            }
+        }
+        
+        if ($datetime === false) {
+            // Fallback a strtotime
+            $timestamp = strtotime($dateString);
+            if ($timestamp !== false) {
+                $datetime = new \DateTime();
+                $datetime->setTimestamp($timestamp);
+            }
+        }
+        
+        if ($datetime !== false) {
+            // Determinar si la entrada tenía componente de tiempo
+            $hasTime = preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?/', $dateString);
+            if ($hasTime) {
+                return $datetime->format('d/m/Y H:i:s');
+            } else {
+                return $datetime->format('d/m/Y');
+            }
+        }
+        
+        return $dateString; // Devolver original si no se puede parsear
+    }
+    
+    /**
+     * Registrar movimiento en ALLOG (auditoría)
+     */
+    public function registrarMovimiento($data)
+    {
+        // Asignar valores por defecto (basado en datos VB6)
+        $defaults = [
+            'ALL_HORA' => date('H:i:s'),
+            'ALL_FECHA_PRO' => date('d/m/Y'),
+            'ALL_TIPMOV' => 0, // VB usa 0 para pagos
+            'ALL_FBG' => ' ',
+            'ALL_NUMSER' => ' ',
+            'ALL_CONCEPTO' => 'Pago de Facturas Pen',
+            'ALL_CTAG1' => ' ',
+            'ALL_CTAG2' => ' ',
+            'ALL_SIGNO_CAJA' => -1,
+            'ALL_CAJA_NRO' => 0,
+            'ALL_CODVEN' => 0,
+            'ALL_FLAG_EXT' => ' ' // VB usa espacio, no 'N'
+        ];
+        
+        $insertData = array_merge($defaults, $data);
+        
+        // Determinar servidor basado en CP o local
+        $server = 1; // Por defecto local
+        if (isset($data['ALL_CP']) && $data['ALL_CP'] == '2') {
+            $server = 2;
+        } elseif (isset($data['ALL_CP']) && $data['ALL_CP'] == '3') {
+            $server = 3;
+        }
+        
+        if ($server == 2) {
+            $db = $this->dbjj;
+        } elseif ($server == 3) {
+            $db = $this->dbpm;
+        } else {
+            $db = $this->db;
+        }
+        
+        $builder = $db->table('ALLOG');
+        return $builder->insert($insertData);
     }
 }

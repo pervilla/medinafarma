@@ -140,15 +140,46 @@ $mes_ar=array("01"=>"ENE","02"=>"FEB","03"=>"MAR","04"=>"ABR","05"=>"MAY","06"=>
                                             <th>DESCRIPCION</th>
                                             <th>MONTO</th>     
                                             <th style="width: 10px"></th> 
+                                            <th style="width: 10px"></th> 
                                         </tr>
                                         </thead>
                                         <tbody></tbody>
-                                        <tr>
-                                            <th><button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modal-movimiento">Agregar</button></th>
-                                            <th></th>
-                                            <th></th>     
-                                            <th></th> 
-                                        </tr>
+                                         <tr>
+                                             <th><button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modal-movimiento">Agregar</button></th>
+                                             <th></th>
+                                             <th></th>     
+                                             <th></th> 
+                                             <th></th> 
+                                         </tr>
+                                    </table>
+                                    
+                                </div>
+                                <!-- /.card-body -->
+                            </div>
+                        </div>
+                        <div id="cerrar_caja"  style="display: true">
+                            <div class="col-sm-12 row">
+                                <div class="input-group mb-3">
+                                    <div class="input-group-prepend"><span class="input-group-text"> Serie:</span></div>
+                                    <input type="text" class="form-control" id="CAJ_NUMSER" readonly>                            
+                                    <input type="text" class="form-control" value="Nro Fac/Bol/Guia:" readonly>
+                                    <input type="number" class="form-control" id="CAJ_NUMFAC" readonly>
+                                    <input type="text" class="form-control" value="Monto Efectivo:" readonly>
+                                    <span class="input-group-append"><input type="number" min="0" step=".01" class="form-control" id="CAJ_EFECTIVO"></span>
+                                </div>
+
+                                
+                            </div>
+                        </div>
+                        <!-- /.card-body -->
+                        <div class="card-footer">
+                        <button type="button" id="btn_cancelar" class="btn btn-danger">Cancelar</button>
+                            <button type="button" id="btn_cerrar" class="btn btn-<?=$color;?>">Guardar</button>
+                        </div>
+                    </div>
+                        
+                </div>
+            </div>
                                     </table>
                                     
                                 </div>
@@ -187,18 +218,19 @@ $mes_ar=array("01"=>"ENE","02"=>"FEB","03"=>"MAR","04"=>"ABR","05"=>"MAY","06"=>
 <!-- Modal -->
 <div class="modal fade" id="modal-movimiento">
     <div class="modal-dialog">
-        <div class="modal-content bg-primary">
+        <div class="modal-content bg-<?=$color;?>">
             <div class="modal-header">
-                <h4 class="modal-title">Movimiento de Caja</h4>
+                <h4 class="modal-title"><i class="fas fa-cash-register"></i> Movimiento de Caja</h4>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
+                <input type="hidden" id="CMV_NRO" value="0">
                 <div class="card-body">
                     <div class="form-group row">
-                        <label for="cmvtipo" class="col-sm-2 col-form-label">Motivo</label>
-                        <div class="col-sm-10">
+                        <label for="CMV_TIPO" class="col-sm-3 col-form-label">Motivo</label>
+                        <div class="col-sm-9">
                             <select class="form-control" id="CMV_TIPO">
                                 <?php foreach ($motivo_gasto as $clave => $valor) { ?>
                                     <option value="<?= $clave; ?>"><?= $valor; ?></option>
@@ -206,27 +238,40 @@ $mes_ar=array("01"=>"ENE","02"=>"FEB","03"=>"MAR","04"=>"ABR","05"=>"MAY","06"=>
                             </select>
                         </div>
                     </div>
-                    <div class="form-group row" id="DV_CMV_CODVEN">
-                        <label for="cmvvend" class="col-sm-2 col-form-label">Trabaj</label>
-                        <div class="col-sm-10">
+                    <div class="form-group row" id="DV_CMV_CODVEN" style="display:none;">
+                        <label for="CMV_CODVEN" class="col-sm-3 col-form-label"><i class="fas fa-user"></i> Empleado</label>
+                        <div class="col-sm-9">
                             <select class="form-control" id="CMV_CODVEN" name="CMV_CODVEN">
-                                <?php foreach ($empleados as $empleado) { 
-                                     ?>
-                                    <option value="<?= $empleado->VEM_CODVEN; ?>" ><?= $empleado->VEM_CODVEN . ' - ' . trim($empleado->VEM_NOMBRE); ?></option>
+                                <option value="">Seleccionar empleado...</option>
+                                <?php foreach ($empleados as $empleado) { ?>
+                                    <option value="<?= $empleado->VEM_CODVEN; ?>"><?= $empleado->VEM_CODVEN . ' - ' . trim($empleado->VEM_NOMBRE); ?></option>
                                 <?php } ?>
                             </select>
                         </div>
                     </div>
+                    <div class="form-group row" id="DV_CMV_COMPROBANTE" style="display:none;">
+                        <label for="CMV_COMPROBANTE" class="col-sm-3 col-form-label"><i class="fas fa-receipt"></i> Comproban.</label>
+                        <div class="col-sm-9">
+                            <select class="form-control" id="CMV_COMPROBANTE">
+                                <option value="">Seleccionar comprobante...</option>
+                            </select>
+                        </div>
+                    </div>
                     <div class="form-group row">
-                        <label for="cvmmotivo3" class="col-sm-2 col-form-label">Motivo</label>
-                        <div class="col-sm-10">
+                        <label for="CMV_DESCRI" class="col-sm-3 col-form-label" id="LBL_MOTIVO">Descripción</label>
+                        <div class="col-sm-9">
                             <input type="text" class="form-control" id="CMV_DESCRI" placeholder="Motivo" style="text-transform:uppercase">
                         </div>
                     </div>
                     <div class="form-group row">
-                        <label for="cvmmonto3" class="col-sm-2 col-form-label">Monto</label>
-                        <div class="col-sm-10">
-                            <input type="number" class="form-control" id="CMV_MONTO" placeholder="0.00">
+                        <label for="CMV_MONTO" class="col-sm-3 col-form-label">Monto</label>
+                        <div class="col-sm-9">
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">S/.</span>
+                                </div>
+                                <input type="number" class="form-control" id="CMV_MONTO" placeholder="0.00" step="0.01">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -240,6 +285,7 @@ $mes_ar=array("01"=>"ENE","02"=>"FEB","03"=>"MAR","04"=>"ABR","05"=>"MAY","06"=>
     </div>
     <!-- /.modal-dialog -->
 </div>
+
 <!-- /.modal -->
 <!-- Modal cAJA -->
 <div class="modal fade" id="myCaja" role="dialog">
@@ -273,41 +319,63 @@ $mes_ar=array("01"=>"ENE","02"=>"FEB","03"=>"MAR","04"=>"ABR","05"=>"MAY","06"=>
     $(document).ready(function() { 
         var nro_caja = 0;
         var motivos = <?php echo json_encode($motivo_gasto); ?>;
+        var exportables = [11, 12, 13]; // Tipos de gastos exportables a egresos
+        
         var dtable = $('#cajas_diario_movimientos').DataTable({
             ajax: {
-            url: "<?= site_url('caja/listar_movimientos') ?>",
-            type: "POST",
-            dataSrc: "",
-            data: {
-                nro_caja: function() {
-                    return nro_caja;
-                },
-                local:'<?=$ncaja?>'
-            },
-        },
-        columns: [
-            { data: 'CMV_TIPO',
-                render: function(data, type, row, meta) {  
-                    var rpt = motivos[row.CMV_TIPO];                             
-                    return rpt
+                url: "<?= site_url('caja/listar_movimientos') ?>",
+                type: "POST",
+                dataSrc: "",
+                data: function(d) {
+                    d.nro_caja = nro_caja;
+                    d.local = '<?=$ncaja?>';
                 }
             },
-            { data: 'CMV_DESCRIPCION' },
-            { data: 'CMV_MONTO' },
-            { data: 'CMV_MONTO',
-                render: function(data, type, row, meta) {        
-                    var rpt = "<button id='eliminaMovim' class='btn btn-block bg-primary btn-sm'><i class='fas fa-trash'></i></button>";                             
-                    return rpt
-                }},
-        ],
-        paging: false,
-        ordering: false,
-        info: false,
-        bFilter: false,
-        searching: false,
-    });
+            columns: [
+                { data: 'CMV_TIPO',
+                    render: function(data, type, row, meta) {  
+                        return motivos[row.CMV_TIPO] || row.CMV_TIPO;
+                    }
+                },
+                { data: 'CMV_DESCRIPCION',
+                    render: function(data, type, row, meta) {
+                        if((row.CMV_TIPO == 6 || row.CMV_TIPO == 7) && row.VEM_NOMBRE){
+                            return '<strong>' + row.VEM_NOMBRE + '</strong><br>' + data;
+                        }
+                        return data;
+                    }
+                },
+                { data: 'CMV_MONTO' },
+                { data: 'CMV_MONTO',
+                    render: function(data, type, row, meta) {        
+                        var rpt = "<div class='btn-group'>";
+                        rpt += "<button id='editMovim' class='btn btn-sm bg-warning' title='Editar'><i class='fas fa-edit'></i></button>";
+                        rpt += "<button id='eliminaMovim' class='btn btn-sm bg-primary' title='Eliminar'><i class='fas fa-trash'></i></button>";
+                        rpt += "</div>";
+                        return rpt;
+                    }
+                },
+                { data: 'CMV_NRO',
+                    render: function(data, type, row, meta) {
+                        if (exportables.includes(parseInt(row.CMV_TIPO))) {
+                            var yaExportado = row.CMV_EGRESO_ID && row.CMV_EGRESO_ID > 0;
+                            if (yaExportado) {
+                                return '<button class="btn btn-block bg-success btn-sm" disabled title="Ya exportado"><i class="fas fa-check"></i></button>';
+                            } else {
+                                return '<button class="btn btn-block bg-info btn-sm exportar-btn" data-cmv-nro="' + row.CMV_NRO + '" title="Exportar a Egresos"><i class="fas fa-external-link-alt"></i></button>';
+                            }
+                        }
+                        return '';
+                    }
+                },
+            ],
+            paging: false,
+            ordering: false,
+            info: false,
+            searching: false,
+        });
 
-    var btable = $("#cajas_diario").DataTable({
+        var btable = $("#cajas_diario").DataTable({
             responsive: true,
             autoWidth: false,
             order: [[1, "desc"]],
@@ -316,174 +384,226 @@ $mes_ar=array("01"=>"ENE","02"=>"FEB","03"=>"MAR","04"=>"ABR","05"=>"MAY","06"=>
             info: false,
             bFilter: false,            
         });
-    $("#btn_cerrar").click(function () {
-        $.post("editar_caja3", {
-            local: $("#LOCAL").val(),
-            caja: $("#CAJ_NRO").val(),
-            efec: $("#CAJ_EFECTIVO").val()
-        }, function (htmlexterno) {
-            dtable.clear().draw();
-            $(document).Toasts('create', {
+
+        // Eventos de Caja
+        $("#btn_cerrar").click(function () {
+            $.post("editar_caja3", {
+                local: $("#LOCAL").val(),
+                caja: $("#CAJ_NRO").val(),
+                efec: $("#CAJ_EFECTIVO").val()
+            }, function (htmlexterno) {
+                dtable.clear().draw();
+                $(document).Toasts('create', {
                     class: 'bg-success',
                     title: 'Caja',
-                    body: 'Se guardo correctamente',
+                    body: 'Se guardó correctamente',
                     position: 'bottomRight',
                     icon: 'far fa-check-circle fa-lg',
-                    animation:	true,
                     autohide: true,
-                    delay:	2500
+                    delay: 2500
                 });
+            });
         });
-    });
-    $("#btn_cancelar").click(function () {
-        dtable.clear().draw();
-        $('#CAJ_NRO').val('');
-           $('#CAJ_NUMSER').val('');
-           $('#CAJ_NUMFAC').val('');
-           $('#CAJ_EFECTIVO').val('');
-           $('#CAJ_FECHA').val('');
-    });
-    
-    $("#movimientos").click(function () {
-        $.post("agregar_movimiento", {
-            cmv_tipo: $( "select#CMV_TIPO option:checked" ).val(),
-            cmv_caja: $("input#CAJ_NRO").val(),
-            cmv_codven: $( "select#CMV_CODVEN option:checked" ).val(),
-            cmv_descri: $("#CMV_DESCRI").val(),
-            cvm_monto:$("#CMV_MONTO").val()
-        }, function (htmlexterno) {
+
+        $("#btn_cancelar").click(function () {
+            dtable.clear().draw();
+            $('#CAJ_NRO').val('');
+            $('#CAJ_NUMSER').val('');
+            $('#CAJ_NUMFAC').val('');
+            $('#CAJ_EFECTIVO').val('');
+            $('#CAJ_FECHA').val('');
+        });
+
+        // Lógica de Movimientos (Agregar / Editar)
+        $("#movimientos").click(function () {
+            var nro = $("#CMV_NRO").val();
+            var url = nro > 0 ? "<?= site_url('caja/actualizar_movimiento') ?>" : "agregar_movimiento";
+            
+            var postData = {
+                cmv_nro: nro,
+                cmv_tipo: $("#CMV_TIPO").val(),
+                cmv_caja: $("#CAJ_NRO").val(),
+                cmv_codven: $("#CMV_CODVEN").val(),
+                cmv_descri: $("#CMV_DESCRI").val(),
+                cvm_monto: $("#CMV_MONTO").val()
+            };
+
+            $.post(url, postData, function (response) {
+                if (nro > 0) {
+                    if (response.success) {
+                        $('#modal-movimiento').modal('hide');
+                        dtable.ajax.reload();
+                    } else {
+                        alert(response.message || 'Error al actualizar');
+                    }
+                } else {
+                    // Legacy agregar_movimiento returns HTML, we just reload
+                    dtable.ajax.reload();
+                    $('#modal-movimiento').modal('hide');
+                }
+            }, nro > 0 ? 'json' : '');
+        });
+
+        $('#cajas_diario_movimientos tbody').on('click', '#editMovim', function() {
+            var data = dtable.row($(this).parents('tr')).data();
+            $("#CMV_NRO").val(data.CMV_NRO);
+            $("#CMV_TIPO").val(data.CMV_TIPO).trigger('change');
+            $("#CMV_CODVEN").val(data.CMV_CODVEN);
+            $("#CMV_DESCRI").val(data.CMV_DESCRIPCION);
+            $("#CMV_MONTO").val(data.CMV_MONTO);
+            $("#modal-movimiento").modal('show');
+        });
+
+        $('#cajas_diario_movimientos tbody').on('click', '#eliminaMovim', function() {
+            var data = dtable.row($(this).parents('tr')).data();
+            if (confirm('¿Eliminar Movimiento?')) {            
+                $.post("<?= site_url('caja/eliminar_movimiento') ?>", {
+                    local: $("#LOCAL").val(),
+                    cmv_nro: data.CMV_NRO
+                }, function() {
+                    dtable.ajax.reload();
+                });
+            }
+        });
+
+        $('#cajas_diario_movimientos tbody').on('click', '.exportar-btn', function() {
+            var cmv_nro = $(this).data('cmv-nro');
+            var $btn = $(this);
+            if (confirm('¿Exportar este movimiento a egresos?')) {
+                $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+                $.post("<?= site_url('caja/exportarAEgresos') ?>", { cmv_nro: cmv_nro }, function(response) {
+                    if (response.success) {
+                        $(document).Toasts('create', {
+                            class: 'bg-success',
+                            title: 'Éxito',
+                            body: response.message,
+                            position: 'bottomRight',
+                            autohide: true,
+                            delay: 3000
+                        });
+                        dtable.ajax.reload();
+                    } else {
+                        alert(response.message);
+                        $btn.prop('disabled', false).html('<i class="fas fa-external-link-alt"></i>');
+                    }
+                }, 'json');
+            }
+        });
+
+        // Lógica de Tipo y Campos Dinámicos
+        $("#CMV_TIPO").change(function() {
+            var opt = $(this).val(); 
+            $('#DV_CMV_CODVEN').hide();
+            $('#DV_CMV_COMPROBANTE').hide();
+            $('#CMV_MONTO').removeAttr('readonly');
+            $('#CMV_DESCRI').removeAttr('readonly');
+            $('#LBL_MOTIVO').text('Descripción');
+            
+            if(opt == 6) { // ADELANTO
+                $('#DV_CMV_CODVEN').show();
+            } else if(opt == 7) { // CREDITO
+                $('#DV_CMV_CODVEN').show();
+                $('#DV_CMV_COMPROBANTE').show();
+                $('#LBL_MOTIVO').text('Comprobante');
+                $('#CMV_DESCRI').attr('readonly', true);
+                cargarComprobantes();
+            }
+        });
+
+        $("#CMV_COMPROBANTE").change(function() {
+            var selectedOption = $(this).find('option:selected');
+            var comprobante = selectedOption.text();
+            var monto = selectedOption.data('monto');
+            if(comprobante && !comprobante.includes('Seleccionar')) {
+                $('#CMV_DESCRI').val(comprobante);
+                $('#CMV_MONTO').val(monto);
+            }
+        });
+
+        function cargarComprobantes() {
+            var select = $('#CMV_COMPROBANTE');
+            select.empty().append('<option value="">Cargando...</option>').prop('disabled', true);
+            $.post("<?= site_url('caja/get_comprobantes') ?>", {}, function(data) {
+                select.empty().append('<option value="">Seleccionar comprobante...</option>').prop('disabled', false);
+                if(data && data.length > 0) {
+                    $.each(data, function(index, item) {
+                        select.append('<option value="' + item.COMPROBANTE + '" data-monto="' + item.ALL_NETO + '">' + 
+                                     item.COMPROBANTE + ' - S/. ' + parseFloat(item.ALL_NETO).toFixed(2) + '</option>');
+                    });
+                }
+            }, 'json');
+        }
+
+        $('#modal-movimiento').on('shown.bs.modal', function() {
+            if ($("#CMV_NRO").val() == 0) {
+                $('#CMV_MONTO').val('');
+                $('#CMV_DESCRI').val('');
+                $('#CMV_TIPO').trigger('change');
+            }
+        });
+
+        $('#modal-movimiento').on('hidden.bs.modal', function() {
+            $("#CMV_NRO").val(0);
+        });
+
+        // Otros Modales y Scripts
+        $('.openPopup').on('click', function() {
+            var dataURL = $(this).attr('data-href');
+            $('#myCaja').find('.modal-body').load(dataURL, function() {
+                $('#myCaja').modal('show');
+            });
+        });
+
+        $('.eliminarcaja').on('click', function() {
+            var dataURL = $(this).attr('data-href');
+            if (confirm('¿Está seguro de eliminar esta caja?')) {    
+                $.get(dataURL, function(data) { alert("Respuesta: " + data); });
+            }
+        });
+
+        $('.editarcaja').on('click', function() {
+            var dataURL = $(this).attr('data-href');
+            var strx = dataURL.split('/');
+            nro_caja = strx[0];
+            dtable.clear().draw();
+            $.post("get_cajas_dia", {
+                anio:'', mes:'', dia:'', loc:strx[1], caj:strx[0]
+            }, function (rpta) {
+                $('#CAJ_NRO').val(rpta[0].CAJ_NRO);
+                $('#CAJ_NUMSER').val(rpta[0].CAJ_NUMSER);
+                $('#CAJ_NUMFAC').val(rpta[0].CAJ_NUMFAC);
+                $('#CAJ_EFECTIVO').val(rpta[0].CAJ_EFECTIVO);
+                $('#CAJ_FECHA').val(rpta[0].CAJ_FECHA);
+            }, "json");     
             dtable.ajax.reload();
         });
-    });
 
-    $('#cajas_diario_movimientos tbody').on('click', '#eliminaMovim', function(event) {
-        var data = dtable.row($(this).parents('tr')).data();
-        if (confirm('Eliminar Movimiento!')) {            
-            $.post("<?= site_url('caja/eliminar_movimiento') ?>", {
-                local: $("#LOCAL").val(),
-                cmv_nro: data.CMV_NRO
-                },
-                function(htmlexterno) {
-                    dtable.ajax.reload();
-                }
-            );
-        }
-    });
+        $("#caja_cnt").click(function(e) { set_caja(e,1); });
+        $("#caja_pmz").click(function(e) { set_caja(e,3); });
+        $("#caja_jjc").click(function(e) { set_caja(e,2); });
+        
+        function set_caja(e,x) {
+            e.preventDefault();
+            $.post("<?= site_url('caja/set_caja') ?>", { caja:x ,opci: 'caja' }, function() {
+                location.reload();
+            });
+        }   
 
-    $("#CMV_TIPO" ).change(function() {
-        var opt = $(this).find("option:selected").attr('value'); 
-        if(opt == 6 || opt == 7){
-            $('#DV_CMV_CODVEN').show();
-        }else{
-            $('#DV_CMV_CODVEN').hide();
-            var selId = document.getElementById("CMV_CODVEN");
-            selId.value = 0; 
-        }
-        $('#CMV_MONTO').removeAttr('value');
-    });
-    $('#modal-movimiento').on('shown.bs.modal', function(e) {
-        var tipo = $("#CMV_TIPO" ).find("option:selected").attr('value');
-        $('#CMV_MONTO').val('');
-        $('#CMV_DESCRI').val('');
-
-    });
-$('.openPopup').on('click', function() {
-    var dataURL = $(this).attr('data-href');
-    $('#myCaja').find('.modal-body').load(dataURL, function() {
-        $('#myCaja').modal({
-            show: true
+        $("#mes").change(function() {
+            $.post("<?= site_url('caja/set_mes') ?>", { 
+                mes:this.value, anio:$(this).find(':selected').data('anio') 
+            }, function() { location.reload(); });
         });
     });
-});
-$('.eliminarcaja').on('click', function() {
-    var dataURL = $(this).attr('data-href');
-    //SI TIENE DATOS NECESARIOS CONFIRMAMOS CITA
-    if (confirm('¿Esta seguro de eliminar esta caja?')) {    
-        $.get( dataURL, function( data ) {
-            alert( "Data Loaded: " + data );
+
+    <?php if($session->get('item')){ ?>
+        $(document).Toasts('create', {
+            class: 'bg-danger',
+            title: 'Atención',
+            body: '<?=$session->get('item')?>',
+            autohide: true,
+            delay: 5500
         });
-    }
-});
-$('.editarcaja').on('click', function() {
-    var dataURL = $(this).attr('data-href');
-    var strx   = dataURL.split('/');
-    nro_caja = strx[0];
-    dtable.clear().draw();
-    $.post("get_cajas_dia", {
-        anio:'',
-        mes:'',
-        dia:'',
-        loc:strx[1],
-        caj:strx[0]
-        }, function (rpta) {
-           $('#CAJ_NRO').val(rpta[0].CAJ_NRO);
-           $('#CAJ_NUMSER').val(rpta[0].CAJ_NUMSER);
-           $('#CAJ_NUMFAC').val(rpta[0].CAJ_NUMFAC);
-           $('#CAJ_EFECTIVO').val(rpta[0].CAJ_EFECTIVO);
-           $('#CAJ_FECHA').val(rpta[0].CAJ_FECHA);
-        }, "json");     
-        dtable.ajax.reload();
-    });
-
-$("#caja_cnt").click(function(e) {
-    set_caja(e,1);
-});
-$("#caja_pmz").click(function(e) {
-    set_caja(e,3);
-});
-$("#caja_jjc").click(function(e) {
-    set_caja(e,2);
-});
- 
-function set_caja(e,x) {
-    e.preventDefault();
-    $.ajax({
-        type: "POST",
-        url: "<?= site_url('caja/set_caja') ?>",
-        data: { 
-			caja:x ,opci: 'caja'
-        },
-        success: function(result) {
-            location.reload();
-    		return false;
-        },
-        error: function(result) {
-            alert('error');
-        }
-    });
-}   
-
-$("#mes").change(function() {
-    $.ajax({
-        type: "POST",
-        url: "<?= site_url('caja/set_mes') ?>",
-        data: { 
-			mes:this.value,
-            anio:$("#mes").find(':selected').data('anio')
-        },
-        success: function(result) {
-            location.reload();
-    		return false;
-        },
-        error: function(result) {
-            alert('error');
-        }
-    });
-});
-
-});
-<?php 
-if($session->get('item')){ ?>
-
-    $(document).Toasts('create', {
-        class: 'bg-danger',
-        title: 'Atención',
-        body: '<?=$session->get('item')?>',
-        animation:	true,
-        autohide: true,
-        delay:	5500
-      })
-<?php } ?>
+    <?php } ?>
 </script>
 <?= $this->endSection(); ?>
-
