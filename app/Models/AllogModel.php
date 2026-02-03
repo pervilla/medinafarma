@@ -66,7 +66,7 @@ class AllogModel  extends Model {
         $fecha1Sql = $this->toSqlServerDate($fecha1);
         $fecha2Sql = $this->toSqlServerDate($fecha2);
         $sql = "SELECT CONVERT(VARCHAR(26),ALL_FECHA_PRO,23) ALL_FECHA_PRO,ALL_HORA,T1.ALL_NUMOPER,RTRIM(T1.ALL_NUMSER) ALL_NUMSER,";
-        $sql.= "ALL_NUMFAC,ALL_FBG,ALL_CODVEN, ";
+        $sql.= "ALL_NUMFAC,ALL_FBG,ALL_CODVEN,ALL_FLAG_EXT,ALL_CODTRA, ";
         $sql.= "RTRIM(ALL_CONCEPTO) ALL_CONCEPTO,ALL_IMPORTE_AMORT,rtrim(ALL_CTAG1) ALL_CTAG1 ";
          $sql.= 'FROM ALLOG T1 ';
          $sql.= 'WHERE ALL_CODCIA in (\'25\') AND  ';
@@ -74,7 +74,7 @@ class AllogModel  extends Model {
          $sql.= 'ALL_FECHA_PRO >= \''.$fecha1Sql.'\'  AND ';
          $sql.= 'ALL_FECHA_PRO <= \''.$fecha2Sql.'\'  AND ';
          $sql.= $numero?'ALL_NUMFAC = \''.$numero.'\'  AND ':'';
-         $sql.= "ALL_FLAG_EXT  <> 'E' ";
+         $sql.= " (ALL_FLAG_EXT <> 'E' OR ALL_CODTRA = 1111) ";
          $sql.= 'ORDER BY ALL_FECHA_PRO,ALL_NUMOPER,ALL_NUMSER,ALL_NUMFAC ';
         //echo $sql;
          if($server==2){

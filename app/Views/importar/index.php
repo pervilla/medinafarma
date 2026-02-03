@@ -647,7 +647,7 @@
                         rpt = rpt + '<button type="button" class="btn ' + (row.ESTADO === 10 ? 'btn-primary btn-imp-comp' : 'btn-secondary') + '"><i class="nav-icon fas fa-arrow-circle-down"></i> Importar</button>';
                         rpt = rpt + '<button type="button" class="btn ' + (row.TOTAL === null ? 'btn-secondary' : 'btn-info btn-ver-comp') + '"><i class="nav-icon fas fa-eye"></i> Ver</button>';
                         rpt = rpt + '<button type="button" class="btn btn-warning btn-visor-comp"><i class="nav-icon fas fa-file-alt"></i> Visor</button>';
-                        rpt = rpt + '<button type="button" class="btn ' + (row.NRO_GUIA === null ? 'btn-secondary' : 'btn-danger btn-del-comp') + '"><i class="nav-icon fas fa-trash"></i> Eliminar</button>';
+                        rpt = rpt + '<button type="button" class="btn ' + (row.ESTADO === 10 ? 'btn-secondary' : 'btn-danger btn-del-comp') + '"><i class="nav-icon fas fa-trash"></i> Eliminar</button>';
                         rpt = rpt + "</div>";
                         return rpt
                     }
@@ -728,20 +728,7 @@ if (response.status === 200) {
         tablePrinFact.ajax.reload(null, false);
     });
 }
-                                /*if (response.status === 200) {
-                                    $.alert({
-                                        title: 'Éxito',
-                                        content: response.message,
-                                        type: 'green',
-                                        icon: 'fa fa-check',
-                                        buttons: {
-                                            ok: function() {
-                                                // Recargar la tabla después de la importación
-                                                tablePrinFact.ajax.reload(null, false);
-                                            }
-                                        }
-                                    });
-                                } */
+                               
 								else {
                                     $.alert({
                                         title: 'Error',
@@ -763,6 +750,47 @@ if (response.status === 200) {
                         }
                     },
                     cancel: function() {}
+                }
+            });
+        });
+
+        $('#table_documentos tbody').on('click', '.btn-del-comp', function(event) {
+            var data = tablePrinFact.row($(this).parents('tr')).data();
+            var id = data['ID'];
+
+            $.confirm({
+                title: 'Eliminar Importación',
+                icon: 'fa fa-trash',
+                content: '¿Estás seguro de eliminar el detalle importado? El estado volverá a pendiente.',
+                type: 'red',
+                buttons: {
+                    confirmar: {
+                        text: 'Sí, eliminar',
+                        btnClass: 'btn-danger',
+                        action: function() {
+                            $.post('importar/eliminar_compra', { id: id }, function(response) {
+                                if (response.status === 200) {
+                                    Swal.fire("Éxito", response.message, "success");
+                                    tablePrinFact.ajax.reload(null, false);
+                                } else if (response.status === 300) {
+                                    Swal.fire({
+                                        title: "Comprobante Ingresado",
+                                        text: response.message,
+                                        icon: "warning",
+                                        showCancelButton: true,
+                                        confirmButtonText: "Ir a anular"
+                                    }).then((result) => {
+                                        if (result.isConfirmed) {
+                                            // Lógica para ir al módulo de anulaciones o activarlo
+                                        }
+                                    });
+                                } else {
+                                    Swal.fire("Error", response.message, "error");
+                                }
+                            });
+                        }
+                    },
+                    cancelar: function() {}
                 }
             });
         });
@@ -1302,7 +1330,7 @@ if (response.status === 200) {
         $("#btn_crear_compra").click(function() {
             if (idfact > 0) {
                 $.confirm({
-                    title: 'Cerrar Caja',
+                    title: 'Hacer Compra',
                     icon: 'fa fa-warning',
                     content: '<b>¿Vas a ingresar una compra.?</b></br><blockquote class="quote-success"><h5>Atención! Revisa bien antes de hacerlo</h5><p></b></br>Gracias.</p></blockquote>',
                     type: 'green',
@@ -1315,8 +1343,15 @@ if (response.status === 200) {
                                 $.post('importar/crea_compra', {
                                     idfact: idfact,
                                     codclie: $("#fac_cod").val()
-                                }, function(htmlexterno) {
-                                    tablePrinFact.ajax.reload(null, false);
+                                }, function(response) {
+                                    if (response.status === 200) {
+                                        Swal.fire("Éxito", response.message, "success");
+                                        tablePrinFact.ajax.reload(null, false);
+                                        // También recargar detalle o limpiar si es necesario
+                                        if (typeof dtablefac !== 'undefined') dtablefac.ajax.reload(null, false);
+                                    } else {
+                                        Swal.fire("Error", response.message, "error");
+                                    }
                                 });
                             }
                         },

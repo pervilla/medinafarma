@@ -179,8 +179,12 @@
                         rpt = rpt + '<a id="vercomp" class="btn bg-warning btn-sm" data-href="<?= site_url('comprobante/verdoc') ?>/' + <?= $local ?> + '/10/' + row.ALL_NUMSER + '/' + row.ALL_NUMFAC + '/' + row.ALL_FECHA_PRO + '" data-comprobante="COMP_' + row.ALL_NUMSER + '-' + row.ALL_NUMFAC + '"><i class="fas fa-eye"></i> Ver</a>';
                         if (row.ALL_NUMFAC == row.FAR_NUMFAC) {
                             rpt = rpt + '<a href="<?= site_url('operaciones/receta') ?>/' + <?= $local ?> + '/10/' + row.ALL_NUMSER + '/' + row.ALL_NUMFAC + '/' + row.ALL_FECHA_PRO + '" class="btn bg-success btn-sm"> <i class="fas fa-photo-video"></i> Receta</a>';
-
                         }
+                        <?php if ($session->get('user_id') == 'ADMIN') : ?>
+                        if (row.ALL_FLAG_EXT !== 'E' && row.ALL_CODTRA != 1111) {
+                            rpt = rpt + '<button type="button" class="btn btn-dark btn-sm btn-anular" data-numoper="' + row.ALL_NUMOPER + '"><i class="fas fa-ban"></i> Anular</button>';
+                        }
+                        <?php endif; ?>
                         rpt = rpt + "</div>";
                         return rpt
                     }
@@ -188,14 +192,19 @@
 
             ],
             fnRowCallback: function(nRow, aData, iDisplayIndex, iDisplayIndexFull) {
-                switch (aData.ALL_FBG) {
-                    case "G":
-                        $(nRow).addClass('bg-secondary');
-                        break;
-                    case "F":
-                        $(nRow).addClass('bg-success');
-                        break;
-                    default:
+                if (aData.ALL_FLAG_EXT === 'E' || aData.ALL_CODTRA == 1111) {
+                    $(nRow).addClass('bg-danger');
+                    $(nRow).css('text-decoration', 'line-through');
+                } else {
+                    switch (aData.ALL_FBG) {
+                        case "G":
+                            $(nRow).addClass('bg-secondary');
+                            break;
+                        case "F":
+                            $(nRow).addClass('bg-success');
+                            break;
+                        default:
+                    }
                 }
                 return nRow;
             },

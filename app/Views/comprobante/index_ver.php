@@ -59,6 +59,11 @@
     ?>
 
 <div id="invoice-POS">
+    <?php if (isset($anulado) && $anulado) : ?>
+    <div style="background-color: #ff0000; color: white; text-align: center; font-weight: bold; padding: 10px; font-size: 1.5em; margin-bottom: 10px;">
+        DOCUMENTO ANULADO
+    </div>
+    <?php endif; ?>
 
     <center id="top">
       <img src="<?=site_url('../../dist/img/medinafarma-black.jpg')?>" style="height: 58px; width: 231px;">

@@ -220,6 +220,22 @@ $data = $data->data; // Verificar si 'registros' existe y es un array
 }
     public function crear_factura($data)
     {
+        // Calcular VENCIMIENTO basado en CLI_AUTO1 del cliente
+        $cliente = $this->db->table('clientes')
+            ->select('CLI_AUTO1')
+            ->where('CLI_RUC_ESPOSO', $data['RUC'])
+            ->where('cli_cp', 'P')
+            ->get()
+            ->getRow();
+
+        $diasCredito = ($cliente && is_numeric($cliente->CLI_AUTO1)) ? (int)$cliente->CLI_AUTO1 : 0;
+        
+        if (!empty($data['FECHA'])) {
+            $fechaEmision = new \DateTime($data['FECHA']);
+            $fechaEmision->modify("+$diasCredito days");
+            $data['VENCIMIENTO'] = $fechaEmision->format('Y-m-d');
+        }
+
         // Buscar el registro existente
         $registroExistente = $this->db->table('IMPORT_FACT')
             ->where('RUC', $data['RUC'])
@@ -366,6 +382,67 @@ $data = $data->data; // Verificar si 'registros' existe y es un array
                 SELECT @COSPRO ";
         $params = [$id1, $id2, $idfact, $cant];
         $query = $this->db->query($sp, $params);
-        return $query->getResult();
+    }
+
+    public function eliminar_items_import($id)
+    {
+        $this->db->transStart();
+        
+        // 1. Eliminar contenido en IMPORT_FACT_DET
+        $this->db->table('IMPORT_FACT_DET')->where('IDFACT', $id)->delete();
+        
+        // 2. Cambiar ESTADO=10 si es que su ESTADO=0
+        $this->db->table('IMPORT_FACT')
+            ->where('ID', $id)
+            ->where('ESTADO', 0)
+            ->update(['ESTADO' => 10]);
+            
+        $this->db->transComplete();
+        return $this->db->transStatus();
+    }
+
+    public function check_comprobante_existente($ruc, $nro_factura)
+    {
+        $parts = explode('-', $nro_factura);
+        if (count($parts) < 2) return false;
+        
+        // Extraer solo la parte numérica de la serie (ej: F001 -> 1)
+        $serie = trim($parts[0]);
+        $serie_num = intval(preg_replace('/[^0-9]/', '', $serie));
+        
+        // Número de factura (ej: 270313 -> 270313)
+        $numero = intval($parts[1]);
+
+        return $this->db->table('allog')
+            ->where('ALL_NUMSER_C', (string)$serie_num)
+            ->where('ALL_NUMFAC_C', $numero)
+            ->where('ALL_RUC', (string)$ruc)
+            ->where('ALL_TIPMOV', 20) // Compras
+            ->where('ALL_FLAG_EXT <>', 'E')
+            ->countAllResults() > 0;
+    }
+
+    public function verificar_productos_inactivos($idfact)
+    {
+        return $this->db->table('IMPORT_FACT_DET as FD')
+            ->select('FD.DES_PROD')
+            ->join('ARTI as A', 'FD.ART_KEY = A.ART_KEY')
+            ->where('FD.IDFACT', $idfact)
+            ->where('A.ART_SITUACION', 1)
+            ->get()
+            ->getResult();
+    }
+
+    public function verificar_unidades_validas($idfact)
+    {
+        $sql = "SELECT FD.DES_PROD 
+                FROM IMPORT_FACT_DET FD
+                WHERE FD.IDFACT = ? 
+                AND NOT EXISTS (
+                    SELECT 1 FROM PRECIOS P 
+                    WHERE P.PRE_CODART = FD.ART_KEY 
+                    AND P.PRE_EQUIV = FD.FAR_EQUIV
+                )";
+        return $this->db->query($sql, [$idfact])->getResult();
     }
 }

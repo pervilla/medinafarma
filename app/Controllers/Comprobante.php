@@ -26,6 +26,8 @@ class Comprobante extends BaseController
         $Facart = new FacartModel();
         $data['locales'] = array(1 => "CENTRO", 2 => "JUANJUICILLO", 3 => "PEÑAMEZA");
         $data['facart'] = $Facart->get_comprobante($numser, $numfac, $tipmov, date('d/m/Y', strtotime($fecha)), $local);
+        
+        $data['anulado'] = (!empty($data['facart']) && (($data['facart'][0]->FAR_ESTADO_RAW ?? '') == 'E' || ($data['facart'][0]->FAR_ESTADO2 ?? '') == 'E'));
 
         $formatter = new NumeroALetras();
 

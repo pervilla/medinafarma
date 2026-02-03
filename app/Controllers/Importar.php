@@ -193,8 +193,46 @@ class Importar extends BaseController
         $codclie = $this->request->getVar('codclie');
         $idfact = $this->request->getVar('idfact');
         $ImportFactModel = new ImportFactModel();
-        $crearcompra = $ImportFactModel->crea_compra($idfact, $codclie);
-        return $this->response->setJSON($crearcompra);
+
+        // 1. Obtener datos del comprobante para validación de duplicados
+        $db = \Config\Database::connect();
+        $comp = $db->table('IMPORT_FACT')->where('ID', $idfact)->get()->getRow();
+        if (!$comp) {
+            return $this->response->setJSON(['status' => 400, 'message' => 'Comprobante no encontrado']);
+        }
+
+        // VALIDACIÓN 1: No ingresar si ya existe el comprobante
+        if ($ImportFactModel->check_comprobante_existente($comp->RUC, $comp->NRO_FACTURA)) {
+            return $this->response->setJSON(['status' => 400, 'message' => 'El comprobante ' . $comp->NRO_FACTURA . ' ya ha sido ingresado previamente al sistema.']);
+        }
+
+        // VALIDACIÓN 2: No ingresar si existe productos con ART_SITUACION=1
+        $inactivos = $ImportFactModel->verificar_productos_inactivos($idfact);
+        if (!empty($inactivos)) {
+            $nombres = array_column($inactivos, 'DES_PROD');
+            return $this->response->setJSON([
+                'status' => 400, 
+                'message' => 'No se puede ingresar la compra porque contiene productos desactivados: ' . implode(', ', $nombres)
+            ]);
+        }
+
+        // VALIDACIÓN 3: No ingresar si la unidad del producto ya no existe (en PRECIOS)
+        $unidadesInvalidas = $ImportFactModel->verificar_unidades_validas($idfact);
+        if (!empty($unidadesInvalidas)) {
+            $nombres = array_column($unidadesInvalidas, 'DES_PROD');
+            return $this->response->setJSON([
+                'status' => 400, 
+                'message' => 'No se puede ingresar la compra porque hay productos con unidades/equivalencias no válidas en el sistema: ' . implode(', ', $nombres)
+            ]);
+        }
+
+        $result = $ImportFactModel->crea_compra($idfact, $codclie);
+        if ($result && isset($result[0])) {
+            $msgResult = (array)$result[0];
+            $mensaje = reset($msgResult); // Obtener el primer valor de la primera fila
+            return $this->response->setJSON(['status' => 200, 'message' => $mensaje]);
+        }
+        return $this->response->setJSON(['status' => 500, 'message' => 'Error inesperado al procesar la compra']);
     }
     public function cambiar_monto()
     {
@@ -228,6 +266,33 @@ class Importar extends BaseController
         $ImportFactModel = new ImportFactModel();
         $actualizaProduc = $ImportFactModel->eliminar_items($idfact, $idscmb);
         return $actualizaProduc;
+    }
+
+    public function eliminar_compra()
+    {
+        $id = $this->request->getVar('id');
+        $ImportFactModel = new ImportFactModel();
+        
+        // Obtener el comprobante para ver su estado
+        $db = \Config\Database::connect();
+        $comp = $db->table('IMPORT_FACT')->where('ID', $id)->get()->getRow();
+        
+        if (!$comp) {
+            return $this->response->setJSON(['status' => 400, 'message' => 'Comprobante no encontrado']);
+        }
+
+        if ($comp->ESTADO == 1) {
+            // Caso complejo: Anulaciones (Punto 3)
+            return $this->response->setJSON(['status' => 300, 'message' => 'El comprobante ya fue ingresado (ESTADO=1). Se requiere anular el ingreso.']);
+        }
+
+        $result = $ImportFactModel->eliminar_items_import($id);
+        
+        if ($result) {
+            return $this->response->setJSON(['status' => 200, 'message' => 'Comprobante restablecido correctamente']);
+        } else {
+            return $this->response->setJSON(['status' => 500, 'message' => 'Error al eliminar el contenido']);
+        }
     }
 
 
