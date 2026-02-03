@@ -56,11 +56,12 @@ class CajaMovimientosModel extends Model {
     }
 
     public function get_movimiento($idmovimiento,$server) {
-        $sql = 'SELECT CM.*, CA.CAJ_FECHA ';
+        $sql = 'SELECT CM.*, CA.CAJ_FECHA, RTRIM(VEM.VEM_NOMBRE) AS VEM_NOMBRE ';
         $sql .= 'FROM dbo.CAJA_MOVIMIENTOS AS CM ';
         $sql .= 'INNER JOIN dbo.CAJAS AS CA ON(CA.CAJ_NRO=CM.CMV_CAJA)  ';
+        $sql .= 'LEFT JOIN dbo.VEMAEST AS VEM ON (CM.CMV_CODVEN = VEM.VEM_CODVEN AND VEM.VEM_CODCIA = 25) ';
         $sql .= 'WHERE ';
-        $sql .= 'CMV_NRO = ' . $idmovimiento;
+        $sql .= 'CM.CMV_NRO = ' . $idmovimiento;
         if($server==2){
             $query =  $this->get_dbjj()->query($sql);
         }elseif($server==3){

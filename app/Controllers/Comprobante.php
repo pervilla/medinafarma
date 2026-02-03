@@ -171,17 +171,22 @@ class Comprobante extends BaseController
         }
         return $this->response->redirect(site_url('operaciones/ventas'));
     }
-    public function deposito()
+    public function deposito($local = null, $nromov = null)
     {
         $session = session();
         $uri = $this->request->getUri();
-        $local = $uri->getSegment(3);
-        $nromov = $uri->getSegment(4);
+        // Fallback to segments if parameters not provided (for auto-routing)
+        $local = $local ?? $uri->getSegment(3);
+        $nromov = $nromov ?? $uri->getSegment(4);
 
         $CajaMov = new CajaMovimientosModel();
         $movimientos = $CajaMov->get_movimiento($nromov,$local);   
 
         $locales = array(1 => "CENTRO", 2 => "JUANJUICILLO", 3 => "PEÑAMEZA");
+        
+        // Ensure $local is a valid key in $locales
+        $nombreLocal = $locales[$local] ?? "LOCAL DESCONOCIDO ($local)";
+
         if ($movimientos) {
 
             if ($local == 1 || $session->get('user_id') == 'ADMIN') {
@@ -190,6 +195,9 @@ class Comprobante extends BaseController
                 $connector = new WindowsPrintConnector("smb://asesor:159357@server02/6-EPSON TM-T20II Receipt");
             } elseif ($local == 3) {
                 $connector = new WindowsPrintConnector("smb://asesor:159357@medinaimpresora/6-EPSON TM-T20II Receipt5");
+            } else {
+                // Return error if no connector for this local
+                return $this->response->setJSON(['status' => 'error', 'message' => 'No hay impresora configurada para el local: ' . $nombreLocal]);
             }
 
             $printer = new Printer($connector);
@@ -197,15 +205,15 @@ class Comprobante extends BaseController
             $printer->setJustification(Printer::JUSTIFY_CENTER);
             $printer -> text("█████▓▒░░ DEPOSITO DE DINERO ░░▒▓█████ \n");
             $printer -> setTextSize(4, 4);
-            $printer -> text($locales[$local]."\n");
+            $printer -> text($nombreLocal."\n");
             $printer -> setTextSize(1,1);
             $printer->setJustification(Printer::JUSTIFY_LEFT);
             $printer->text("Fecha: ");
             $printer->text(date('d-m-Y', strtotime($movimientos->CAJ_FECHA)) . "\n");
             $printer->text("Responsable: ");
-            $printer->text($movimientos->VEM_NOMBRE . "\n");
+            $printer->text(($movimientos->VEM_NOMBRE ?? 'N/A') . "\n");
             $printer->text("Caja Nro: ");
-            $printer->text($movimientos->CAJ_NRO . "\n");
+            $printer->text($movimientos->CMV_CAJA . "\n");
             $printer->text("----------------------------------------------------------------" . "\n");
             $printer->text("CONCEPTO : ".$movimientos->CMV_DESCRIPCION."\n");            
             $printer->text("IMPORTE TOTAL : S/. ");
