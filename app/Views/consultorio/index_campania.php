@@ -30,6 +30,7 @@
                                     <th>Médico</th>
                                     <th>Fecha Inicio</th>
                                     <th>Fecha Fin</th>
+                                    <th>Editar</th>
                                     <th>Ver Campaña</th>
                                 </tr>
                             </thead>
@@ -60,6 +61,7 @@
                                         <td><?= $campania->CLI_NOMBRE ?></td>
                                         <td><?= $date ?></td>
                                         <td><?= $date2 ?></td>
+                                        <td><button type="button" class="btn btn-warning btn-sm btn-block btn-editar" data-id="<?= $campania->CAM_CODCAMP ?>" data-toggle="modal" data-target="#modal-primary"><i class="fas fa-edit"></i> Editar</button></td>
                                         <td><a class='btn btn-block bg-gradient-primary btn-sm cs_pointer' href='<?= site_url('consultorio/confirmados') . "/" . $campania->CAM_CODCAMP ?>' target='_blank'><i class='fas fa-eye'></i> Ver</a></td>
                                     </tr>
                                 <?php } ?>
@@ -93,6 +95,7 @@
                 <div class="modal-body">
 
                     <div class="card-body">
+                        <input type="hidden" id="idcampania_hidden" name="idcampania_hidden">
                         <div class="form-group row">
                             <label for="cmvtipo" class="col-sm-3 col-form-label">Campaña</label>
                             <div class="col-sm-9">
@@ -186,17 +189,29 @@
 
 
 <script>
+
     $(document).ready(function() {
+        $("#table_citas").DataTable({
+            "responsive": true,
+            "autoWidth": false,
+            "ordering": true,
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.21/i18n/Spanish.json"
+            }
+        });
+
         //Date and time picker
         $('#reservationdatetime').datetimepicker({
             icons: {
                 time: 'far fa-clock'
-            }
+            },
+            format: 'DD/MM/YYYY hh:mm A'
         });
         $('#reservationdatetimeend').datetimepicker({
             icons: {
                 time: 'far fa-clock'
-            }
+            },
+            format: 'DD/MM/YYYY hh:mm A'
         });
 
         $("input[data-bootstrap-switch]").each(function() {
@@ -211,9 +226,56 @@
                 $("#reservationdatetimeendval").attr('disabled', 'disabled')
             }
         });
+
+        // Reset modal when opened gracefully
+        $('#modal-primary').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget) 
+            if (!button.hasClass('btn-editar')) {
+               // Is new
+               $(".modal-title").text("Nueva Campaña");
+               $("#idcampania_hidden").val('');
+               $("#idcliente").val('').trigger('change');
+               $("#idcampania").val('').trigger('change');
+               $("#reservationdatetimeval").val('');
+               $("#reservationdatetimeendval").val('');
+               // Default to Checked (CON FECHA)
+               $('#my-checkbox').bootstrapSwitch('state', true);
+            }
+        })
+
+        // Edit button click handler
+        $(document).on('click', '.btn-editar', function() {
+            var id = $(this).data('id');
+            $(".modal-title").text("Editar Campaña");
+            $("#idcampania_hidden").val(id);
+
+            $.ajax({
+                url: "<?= site_url('consultorio/get_campania_json') ?>",
+                type: "POST",
+                data: { id: id },
+                dataType: "json",
+                success: function(data) {
+                    if (data) {
+                        $("#idcliente").val(data.CAM_CODMED).trigger('change');
+                        // Ideally we would map the description back to ID if possible or just select by text if inconsistent
+                         $("#idcampania").val(data.CAM_ID).trigger('change'); // Assuming CAM_ID maps to the select value
+                        
+                        // Check dates
+                        if (data.CAM_FEC_INI_FORMAT && data.CAM_FEC_INI_FORMAT.indexOf('1969') === -1) {
+                             $("#reservationdatetimeval").val(data.CAM_FEC_INI_FORMAT);
+                             $("#reservationdatetimeendval").val(data.CAM_FEC_FIN_FORMAT);
+                             $('#my-checkbox').bootstrapSwitch('state', true);
+                        } else {
+                            $('#my-checkbox').bootstrapSwitch('state', false);
+                        }
+                    }
+                }
+            });
+        });
+
         $("#set_campania2").click(function() {
-            var check = $('.bootstrap-switch-on');
-            if (check.length > 0) {
+            var check = $('#my-checkbox').bootstrapSwitch('state'); // Use the API to get state
+            if (check) {
                 calend = 1
             } else {
                 calend = 0
@@ -222,7 +284,8 @@
                 type: "POST",
                 url: "<?= site_url('consultorio/set_campania') ?>",
                 data: {
-                    idcampania:$("select#idcampania option:checked").val(),
+                    idcampania_hidden: $("#idcampania_hidden").val(),
+                    idcampania: $("select#idcampania option:checked").val(),
                     descrip: $("select#idcampania option:checked").text(),
                     fechaini: $("#reservationdatetimeval").val(),
                     fechafin: $("#reservationdatetimeendval").val(),

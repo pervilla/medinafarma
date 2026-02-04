@@ -57,4 +57,13 @@ class CampaniaModel extends Model
         $query =  $this->db->query($sql);
         return $query->getResult();
     }
+    public function update_campania($id, $data)
+    {
+        return $this->db->table('CAMPANIA')->where('CAM_CODCAMP', $id)->update($data);
+    }
+
+    public function get_campania_by_id($id)
+    {
+        return $this->db->table('CAMPANIA')->where('CAM_CODCAMP', $id)->get()->getRow();
+    }
 }

@@ -438,8 +438,32 @@ class Consultorio extends BaseController {
             'CAM_ID'=>$this->request->getVar('idcampania')
         ); 
         $Caja = new CampaniaModel();
-        $data = $Caja->crear_campania($data);
-        return $data;
+        $campaniaId = $this->request->getVar('idcampania_hidden'); // Use a different name for the hidden ID field to avoid conflict with the select
+
+        if (!empty($campaniaId)) {
+            $Caja->update_campania($campaniaId, $data);
+            return $campaniaId;
+        } else {
+            $data = $Caja->crear_campania($data);
+            return $data;
+        }
+    }
+
+    public function get_campania_json()
+    {
+        $id = $this->request->getVar('id');
+        $CampaniaModel = new CampaniaModel();
+        $data = $CampaniaModel->get_campania_by_id($id);
+        
+        // Format dates for the form
+        if ($data->CAM_FEC_INI) {
+            $data->CAM_FEC_INI_FORMAT = date('d/m/Y h:i A', strtotime($data->CAM_FEC_INI . ' ' . $data->CAM_HOR_INI));
+        }
+        if ($data->CAM_FEC_FIN) {
+            $data->CAM_FEC_FIN_FORMAT = date('d/m/Y h:i A', strtotime($data->CAM_FEC_FIN . ' ' . $data->CAM_HOR_FIN));
+        }
+
+        return $this->response->setJSON($data);
     }
     public function save_cita(){
         $data = array(
