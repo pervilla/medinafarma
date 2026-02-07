@@ -29,19 +29,64 @@ class CampaniaModel extends Model
     }
     public function get_campanias($camp = null, $all = null)
     {
-        $sql = 'SELECT T1.CAM_CODCAMP,T1.CAM_CODMED,T2.CLI_NOMBRE,T1.CAM_DESCRIP,T1.CAM_FEC_INI,T1.CAM_FEC_FIN,T1.CAM_HOR_INI,T1.CAM_HOR_FIN, ';
-        $sql .= 'SUM(CASE WHEN T3.CIT_ESTADO >= 0 THEN 1 ELSE 0 END) AS INSCRITOS, ';
-        $sql .= 'SUM(CASE WHEN T3.CIT_ESTADO = 1 THEN 1 ELSE 0 END) AS CONFIRMADOS, ';
-        $sql .= 'SUM(CASE WHEN T3.CIT_ESTADO = 2 THEN 1 ELSE 0 END) AS ATENDIDOS ';
-        $sql .= 'FROM dbo.CAMPANIA AS T1 ';
-        $sql .= "INNER JOIN dbo.CLIENTES AS T2 ON(T1.CAM_CODMED=T2.CLI_CODCLIE AND CLI_CP='M') ";
-        $sql .= 'LEFT JOIN dbo.CITAS AS T3 ON(T3.CIT_CODCAMP=T1.CAM_CODCAMP) ';
-        $sql .= 'WHERE ';
-        $sql .= is_null($all) ? '(CAM_FEC_FIN >= \'' . date('d/m/Y') . '\' or ' . "CAM_FEC_FIN = '31/12/1969') " : ' 1=1 ';
-        $sql .= is_null($camp) ? ' ' : 'and T1.CAM_CODCAMP =' . $camp . ' ';
-        $sql .= 'GROUP BY T1.CAM_CODCAMP,T1.CAM_CODMED,T2.CLI_NOMBRE,T1.CAM_DESCRIP,T1.CAM_FEC_INI,T1.CAM_FEC_FIN,T1.CAM_HOR_INI,T1.CAM_HOR_FIN ';
-        $sql .= 'ORDER BY T1.CAM_FEC_INI desc, T1.CAM_CODCAMP ,T1.CAM_CODMED,T2.CLI_NOMBRE,T1.CAM_DESCRIP,T1.CAM_FEC_FIN,T1.CAM_HOR_INI,T1.CAM_HOR_FIN ';
-        //echo $sql; die();
+        $sql = "SELECT 
+                    T1.CAM_CODCAMP,
+                    T1.CAM_CODMED,
+                    T2.CLI_NOMBRE,
+                    T1.CAM_DESCRIP,
+                    T1.CAM_FEC_INI,
+                    T1.CAM_FEC_FIN,
+                    T1.CAM_HOR_INI,
+                    T1.CAM_HOR_FIN,
+                    SUM(CASE WHEN T3.CIT_ESTADO >= 0 THEN 1 ELSE 0 END) AS INSCRITOS,
+                    SUM(CASE WHEN T3.CIT_ESTADO = 1 THEN 1 ELSE 0 END) AS CONFIRMADOS,
+                    SUM(CASE WHEN T3.CIT_ESTADO = 2 THEN 1 ELSE 0 END) AS ATENDIDOS
+                FROM dbo.CAMPANIA AS T1 
+                INNER JOIN dbo.CLIENTES AS T2 ON (T1.CAM_CODMED = T2.CLI_CODCLIE AND T2.CLI_CP = 'M')
+                LEFT JOIN dbo.CITAS AS T3 ON (T3.CIT_CODCAMP = T1.CAM_CODCAMP)
+                WHERE 1 = 1 ";
+
+        if (is_null($camp)) {
+             $sql .= is_null($all) ? " AND (T1.CAM_FEC_FIN >= GETDATE() or T1.CAM_FEC_FIN = '1969-12-31') " : ' ';
+        } else {
+            $sql .= " AND T1.CAM_CODCAMP = " . $this->db->escape($camp);
+        }
+
+        $sql .= " GROUP BY 
+                    T1.CAM_CODCAMP,
+                    T1.CAM_CODMED,
+                    T2.CLI_NOMBRE,
+                    T1.CAM_DESCRIP,
+                    T1.CAM_FEC_INI,
+                    T1.CAM_FEC_FIN,
+                    T1.CAM_HOR_INI,
+                    T1.CAM_HOR_FIN
+                ORDER BY 
+                    -- Primero, mostrar las campañas activas (fecha actual entre inicio y fin)
+                    CASE 
+                        WHEN T1.CAM_FEC_INI <= GETDATE() AND T1.CAM_FEC_FIN >= GETDATE() 
+                        THEN 1 
+                        WHEN T1.CAM_FEC_INI = '1969-12-31'  -- Campañas sin fecha definida
+                        THEN 3
+                        WHEN T1.CAM_FEC_INI > GETDATE()     -- Campañas futuras
+                        THEN 2
+                        ELSE 4                              -- Campañas pasadas
+                    END,
+                    -- Para campañas activas, ordenar por fecha de inicio más reciente
+                    CASE 
+                        WHEN T1.CAM_FEC_INI <= GETDATE() AND T1.CAM_FEC_FIN >= GETDATE() 
+                        THEN T1.CAM_FEC_INI 
+                        ELSE NULL 
+                    END DESC,
+                    -- Para campañas sin fecha, ordenar por código
+                    CASE 
+                        WHEN T1.CAM_FEC_INI = '1969-12-31' 
+                        THEN T1.CAM_CODCAMP 
+                        ELSE NULL 
+                    END DESC,
+                    T1.CAM_FEC_INI DESC,
+                    T1.CAM_CODCAMP";
+
         $query =  $this->db->query($sql);
         return $query->getResult();
     }

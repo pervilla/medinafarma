@@ -1,84 +1,122 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8">
-    <title>CodeInsect | Admin System Log in</title>
-    <meta content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no' name='viewport'>
-    <link href="<?php echo base_url(); ?>assets/bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
-    <link href="<?php echo base_url(); ?>assets/bower_components/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
-    <link href="<?php echo base_url(); ?>assets/dist/css/AdminLTE.min.css" rel="stylesheet" type="text/css" />
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MEDINAFARMA | Log in</title>
 
-    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
-    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-    <!--[if lt IE 9]>
-        <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
-        <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-    <![endif]-->
-    <!-- Google Font -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,300italic,400italic,600italic">
-  </head>
-  <body class="hold-transition login-page">
-    <div class="login-box">
-      <div class="login-logo">
-        <a href="#"><b>CodeInsect</b><br>Admin System</a>
-      </div><!-- /.login-logo -->
-      <div class="login-box-body">
-        <p class="login-box-msg">Sign In</p>
-        <?php $this->load->helper('form'); ?>
-        <div class="row">
-            <div class="col-md-12">
-                <?php echo validation_errors('<div class="alert alert-danger alert-dismissable">', ' <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button></div>'); ?>
-            </div>
+  <!-- Google Font: Source Sans Pro -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="<?= base_url('plugins/fontawesome-free/css/all.min.css') ?>">
+  <!-- icheck bootstrap -->
+  <link rel="stylesheet" href="<?= base_url('plugins/icheck-bootstrap/icheck-bootstrap.min.css') ?>">
+  <!-- Theme style -->
+  <link rel="stylesheet" href="<?= base_url('dist/css/adminlte.min.css') ?>">
+</head>
+<body class="hold-transition login-page">
+<div class="login-box">
+  <div class="login-logo">
+    <a href="#"><b>MEDINA</b>FARMA</a>
+  </div>
+  <!-- /.login-logo -->
+  <div class="card">
+    <div class="card-body login-card-body">
+      <p class="login-box-msg">Identifíquese, para iniciar sesión</p>
+
+      <?php $error = session()->getFlashdata('error'); ?>
+      <?php if($error): ?>
+        <div class="alert alert-danger alert-dismissible">
+          <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+          <?= $error ?>
         </div>
-        <?php
-        $this->load->helper('form');
-        $error = $this->session->flashdata('error');
-        if($error)
-        {
-            ?>
-            <div class="alert alert-danger alert-dismissable">
-                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-                <?php echo $error; ?>                    
-            </div>
-        <?php }
-        $success = $this->session->flashdata('success');
-        if($success)
-        {
-            ?>
-            <div class="alert alert-success alert-dismissable">
-                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-                <?php echo $success; ?>                    
-            </div>
-        <?php } ?>
-        <form action="<?php echo base_url(); ?>loginMe" method="post">
-          <div class="form-group has-feedback">
-            <input type="email" class="form-control" placeholder="Email" name="email" required />
-            <span class="glyphicon glyphicon-envelope form-control-feedback"></span>
-          </div>
-          <div class="form-group has-feedback">
-            <input type="password" class="form-control" placeholder="Password" name="password" required />
-            <span class="glyphicon glyphicon-lock form-control-feedback"></span>
-          </div>
-          <div class="row">
-            <div class="col-xs-8">    
-              <!-- <div class="checkbox icheck">
-                <label>
-                  <input type="checkbox"> Remember Me
-                </label>
-              </div>  -->                       
-            </div><!-- /.col -->
-            <div class="col-xs-4">
-              <input type="submit" class="btn btn-primary btn-block btn-flat" value="Sign In" />
-            </div><!-- /.col -->
-          </div>
-        </form>
+      <?php endif; ?>
 
-        <a href="<?php echo base_url() ?>forgotPassword">Forgot Password</a><br>
-        
-      </div><!-- /.login-box-body -->
-    </div><!-- /.login-box -->
+      <form action="<?= base_url('login/auth') ?>" method="post" id="loginForm">
+        <div class="input-group mb-3">
+          <input type="text" class="form-control" id="usuario" name="user" placeholder="Usuario" required autofocus>
+          <div class="input-group-append">
+            <div class="input-group-text">
+              <span class="fas fa-users"></span>
+            </div>
+          </div>
+        </div>
+        <div class="input-group mb-3">
+          <input type="text" class="form-control" id="desc_usuario" placeholder="Descripción" readonly>
+          <div class="input-group-append">
+            <div class="input-group-text">
+              <span class="fas fa-user"></span>
+            </div>
+          </div>
+        </div>
+        <div class="input-group mb-3">
+          <input type="password" class="form-control" id="password" name="pwd" placeholder="Password" required>
+          <div class="input-group-append">
+            <div class="input-group-text">
+              <span class="fas fa-lock"></span>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-8">
+            <div class="form-check px-4">
+              <input type="checkbox" class="form-check-input" id="remember" name="remember" value="1">
+              <label class="form-check-label" for="remember">
+                PC de Confianza
+              </label>
+            </div>
+          </div>
+          <!-- /.col -->
+          <div class="col-4">
+            <button type="submit" class="btn btn-primary btn-block">Iniciar</button>
+          </div>
+          <!-- /.col -->
+        </div>
+      </form>
+      
+    </div>
+    <!-- /.card-body -->
+  </div>
+</div>
+<!-- /.login-box -->
 
-    <script src="<?php echo base_url(); ?>assets/bower_components/jquery/dist/jquery.min.js"></script>
-    <script src="<?php echo base_url(); ?>assets/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
-  </body>
+<!-- jQuery -->
+<script src="<?= base_url('plugins/jquery/jquery.min.js') ?>"></script>
+<!-- Bootstrap 4 -->
+<script src="<?= base_url('plugins/bootstrap/js/bootstrap.bundle.min.js') ?>"></script>
+<!-- AdminLTE App -->
+<script src="<?= base_url('dist/js/adminlte.min.js') ?>"></script>
+
+<script>
+    $('#usuario').on('blur keypress', function(event){
+        var keycode = (event.keyCode ? event.keyCode : event.which);
+        if(event.type === 'blur' || keycode == '13'){
+            var usuario = $("#usuario").val();
+            if(usuario.length > 0) {
+                $.post("<?= site_url('login/user') ?>", {user: usuario}, function (result) {
+                    if(result){
+                        $("#desc_usuario").val(result);
+                        if(keycode == '13') {
+                            $("#password").focus();
+                        }
+                    }else{
+                        // Don't clear if user just tabbed out potentially, but here maybe safer not to interfere too much
+                        if(keycode == '13') $("#usuario").focus();
+                    }
+                });
+            }
+        }
+        if(keycode == '13') {
+            event.preventDefault(); // Prevent form submit on enter in user field
+        }
+    });
+
+    $('#password').keypress(function(event){
+        var keycode = (event.keyCode ? event.keyCode : event.which);
+        if(keycode == '13'){
+            $('#loginForm').submit();
+        }
+    });
+</script>
+</body>
 </html>

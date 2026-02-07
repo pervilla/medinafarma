@@ -16,16 +16,34 @@ use App\Models\UsuariosModel;
 class Login extends BaseController{
     //put your code here
     public function index() {
+        $session = session();
+        if($session->get('logged_in')){
+            return redirect()->to(base_url('dashboard'));
+        }
         $data = array();
          return view('login/index',$data);
     }
     public function auth()
     {
         $session = session();
-        $user = strtoupper($this->request->getVar('user'));
-        $password = $this->request->getVar('pwd');
+        $user = strtoupper($this->request->getVar('user') ?? $_POST['email'] ?? ''); // Handle both form and ajax inputs
+        $password = $this->request->getVar('pwd') ?? $_POST['password'] ?? '';
+        $remember = $this->request->getVar('remember');
+        
         $Usuarios = new UsuariosModel();
+        
+        // Basic validation
+        if(empty($user) || empty($password)) {
+             $session->setFlashdata('error', 'Usuario y contraseña son requeridos');
+             if(! $this->request->isAJAX()) {
+                 return redirect()->to(base_url());
+             }
+             echo "Faltan datos";
+             return;
+        }
+
         $usuario = trim($Usuarios->get_usuario($user,$password));
+        
         if($usuario){
             $ses_data = [
                 'user_id'       => $user,
@@ -36,13 +54,35 @@ class Login extends BaseController{
                 'tienePermiso'  => TRUE
             ];
             $session->set($ses_data);
-            echo $usuario;
+            
+            // "Remember Me" Logic (Trusted PC)
+            if ($remember) {
+                $encrypter = \Config\Services::encrypter();
+                $tokenData = json_encode([
+                    'user_id' => $user,
+                    'expiry' => time() + (30 * 24 * 3600) // 30 days
+                ]);
+                $encryptedToken = bin2hex($encrypter->encrypt($tokenData));
+                
+                setcookie('remember_token', $encryptedToken, time() + (30 * 24 * 3600), '/', '', false, true);
+            }
+
+            if($this->request->isAJAX()){
+                echo $usuario;
+            } else {
+                return redirect()->to(base_url('dashboard')); // Redirect to dashboard or home
+            }
+            
         }else{
-            $session->setFlashdata('msg', 'Password Incorrecto');
+            $session->setFlashdata('error', 'Usuario o contraseña incorrectos');
+            if($this->request->isAJAX()){
+                 echo ""; // AJAX expects truthy value for success
+            } else {
+                 return redirect()->to(base_url());
+            }
         }
     }
     public function user(){
-        //echo "userrrr"; die();
         $user = $this->request->getVar('user');
         $Usuarios = new UsuariosModel();
         $usuario = $Usuarios->get_usuario($user,'');
@@ -51,6 +91,10 @@ class Login extends BaseController{
     public function close(){        
         $session = session();
         $session->destroy();
+        // Clear Remember Me cookie
+        if (isset($_COOKIE['remember_token'])) {
+            setcookie('remember_token', '', time() - 3600, '/', '', false, true);
+        }
         echo "Sesion cerrada";
     }
 }

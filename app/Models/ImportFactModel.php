@@ -359,15 +359,47 @@ $data = $data->data; // Verificar si 'registros' existe y es un array
 
     public function crea_compra($idfact, $codclie)
     {
-        $sp = " DECLARE @mensaje varchar(255)
-                EXEC @mensaje = [dbo].[sp_crea_compra] 
-                @ID_FACT = ?,
-                @FAR_CODCLIE = ?,
-                @mensaje =  ''
-                SELECT @mensaje ";
-        $params = [$idfact, $codclie];
-        $query = $this->db->query($sp, $params);
-        return $query->getResult();
+        try {
+            // Usar una tabla temporal para capturar el OUTPUT
+            $sql = "DECLARE @mensaje_out varchar(255);
+                    
+                    EXEC [dbo].[sp_crea_compra] 
+                        @ID_FACT = ?,
+                        @FAR_CODCLIE = ?,
+                        @mensaje = @mensaje_out OUTPUT;
+                    
+                    SELECT @mensaje_out as mensaje;";
+            
+            $query = $this->db->query($sql, [$idfact, $codclie]);
+            
+            if (!$query) {
+                $error = $this->db->error();
+                log_message('critical', 'Error DB en crea_compra: ' . print_r($error, true));
+                return [(object)['mensaje' => 'Error de base de datos']];
+            }
+            
+            // Intentar obtener el resultado
+            $result = $query->getRow();
+            log_message('info', 'Resultado SP crea_compra: ' . print_r($result, true));
+            
+            if ($result && isset($result->mensaje)) {
+                log_message('info', 'Compra creada exitosamente: ' . $result->mensaje);
+                return [(object)['mensaje' => $result->mensaje]];
+            }
+            
+            // Fallback: intentar como array
+            $resultArray = $query->getResultArray();
+            if (!empty($resultArray) && isset($resultArray[0]['mensaje'])) {
+                return [(object)['mensaje' => $resultArray[0]['mensaje']]];
+            }
+            
+            log_message('warning', 'SP ejecutado pero sin mensaje de retorno');
+            return [(object)['mensaje' => 'Compra procesada sin confirmación']];
+            
+        } catch (\Exception $e) {
+            log_message('critical', 'Excepción en crea_compra: ' . $e->getMessage());
+            return [(object)['mensaje' => 'Error: ' . $e->getMessage()]];
+        }
     }
     public function desc_promocion($idfact, $id1, $id2, $cant)
     {

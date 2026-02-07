@@ -13,37 +13,44 @@
             <div class="col-lg-12">
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title">Reporte</h3>
+                        <h3 class="card-title"><i class="fas fa-boxes"></i> Reportes y Stock de Inventario</h3>
                         <div class="card-tools">
-                            <div class="btn-group">
-                                <button type="button" class="btn btn-sm btn-default">Reportes</button>
-                                <button type="button" class="btn btn-sm btn-default dropdown-toggle dropdown-icon" data-toggle="dropdown" aria-expanded="false">
-                                    <span class="sr-only">Ver Reportes</span>
-                                </button>
-                                <div class="dropdown-menu" role="menu">
-                                    <a class="dropdown-item" href="<?= site_url('productos/createpdf') ?>"><i class='fas fa-file-pdf'></i> Inventario C/Stock</a>
-                                    <a class="dropdown-item" href="<?= site_url('productos/createpdfsv') ?>"><i class='fas fa-file-pdf'></i> Inventario S/Stock</a>
-                                    <a class="dropdown-item" href="<?= site_url('productos/createlistaprecios') ?>"><i class='fas fa-file-pdf'></i> Lista de Precios</a>
-                                    <div class="dropdown-divider"></div>
-                                    <a class="dropdown-item" href="#" data-toggle="modal" data-target="#modal-mas-vendidos"><i class='fas fa-star'></i> Inventario Mas Vendidos</a>
+                            <div class="btn-toolbar" role="toolbar" aria-label="Toolbar with button groups">
+                                <!-- Filtro Cajas -->
+                                <div class="btn-group mr-2" role="group" aria-label="Filtro Cajas">
+                                    <button type="button" id="caja_cnt" class="btn btn-<?= $color == 'success' ? $color : 'default'; ?> btn-sm" title="Caja Centro"><i class="fas fa-store"></i> Centro</button>
+                                    <button type="button" id="caja_pmz" class="btn btn-<?= $color == 'info' ? $color : 'default'; ?> btn-sm" title="Caja PMeza"><i class="fas fa-store"></i> PMeza</button>
+                                    <button type="button" id="caja_jjc" class="btn btn-<?= $color == 'danger' ? $color : 'default'; ?> btn-sm" title="Caja Juanjuicillo"><i class="fas fa-store"></i> Juanjuicillo</button>
+                                </div>
+                                
+                                <!-- Filtro Stock -->
+                                <div class="btn-group btn-group-toggle mr-2" data-toggle="buttons">
+                                    <label class="btn bg-olive btn-sm active">
+                                        <input type="radio" name="options" id="option_b1" value='2' autocomplete="off"> Todos
+                                    </label>
+                                    <label class="btn bg-olive btn-sm">
+                                        <input type="radio" name="options" id="option_b2" value='1' autocomplete="off" checked=""> Con Stock
+                                    </label>
+                                </div>
+
+                                <!-- Reportes -->
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-file-alt"></i> Reportes
+                                    </button>
+                                    <div class="dropdown-menu dropdown-menu-right" role="menu">
+                                        <a class="dropdown-item" href="<?= site_url('productos/createpdf') ?>"><i class='fas fa-file-pdf text-danger'></i> Inventario C/Stock</a>
+                                        <a class="dropdown-item" href="<?= site_url('productos/createpdfsv') ?>"><i class='fas fa-file-pdf text-danger'></i> Inventario S/Stock</a>
+                                        <a class="dropdown-item" href="<?= site_url('productos/createlistaprecios') ?>"><i class='fas fa-file-pdf text-danger'></i> Lista de Precios</a>
+                                        <div class="dropdown-divider"></div>
+                                        <a class="dropdown-item" href="#" data-toggle="modal" data-target="#modal-mas-vendidos"><i class='fas fa-star text-warning'></i> Más Vendidos</a>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                                <label class="btn bg-olive btn-sm active">
-                                    <input type="radio" name="options" id="option_b1" value='2' autocomplete="off"> Todos
-                                </label>
-                                <label class="btn bg-olive btn-sm">
-                                    <input type="radio" name="options" id="option_b2" value='1' autocomplete="off" checked=""> Con Stock
-                                </label>
-                            </div>
-                            &nbsp;&nbsp;&nbsp;&nbsp;
-                            <button type="button" id="caja_cnt" class="btn btn-<?= $color == 'success' ? $color : 'default'; ?> btn-sm"><i class="fa fa-inbox"> </i> Cja Centro</button>
-                            <button type="button" id="caja_pmz" class="btn btn-<?= $color == 'info' ? $color : 'default'; ?> btn-sm"><i class="fa fa-inbox"> </i> Cja PMeza</button>
-                            <button type="button" id="caja_jjc" class="btn btn-<?= $color == 'danger' ? $color : 'default'; ?> btn-sm"><i class="fa fa-inbox"> </i> Cja Juanjuicillo</button>
                         </div>
                     </div>
                     <div class="card-body table-responsive">
-                        <table id="productos_centro" class="table table-bordered">
+                        <table id="productos_centro" class="table table-bordered table-striped table-hover table-sm">
                             <thead>
                                 <tr>
                                     <th>Codigo</th>
@@ -72,9 +79,6 @@
 <?= $this->endSection(); ?>
 
 <?= $this->section('footer'); ?>
-<!-- DataTables -->
-<link rel="stylesheet" href="../../plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
-<link rel="stylesheet" href="../../plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
 <!-- DataTables -->
 <link rel="stylesheet" href="../../plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
 <link rel="stylesheet" href="../../plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
@@ -110,7 +114,7 @@
                 },
                 {
                     data: 'TAB_NOMLARGO',
-                    width: "10%",
+                    width: "15%",
                     className: 'dt-body-right'
                 },
                 {
@@ -118,7 +122,7 @@
                 },
                 {
                     data: 'PRE_EQUIV',
-                    width: "10%",
+                    width: "5%",
                     className: 'dt-body-right'
                 },
                 {
@@ -140,7 +144,7 @@
             rowGroup: {
                 dataSrc: 5
             },
-            searching: false,
+            searching: true,
             paging: true,
             responsive: true,
             lengthChange: false,

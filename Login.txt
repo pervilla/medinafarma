@@ -1,0 +1,372 @@
+📋 ANÁLISIS COMPLETO DEL SISTEMA DE LOGIN
+CONTEXTO GENERAL
+Este es un sistema de autenticación empresarial antiguo (VB6) con características peculiares:
+
+Control de fecha de proceso empresarial (no usa la fecha actual del sistema necesariamente)
+Validación contra un calendario corporativo
+Sistema de "recordar usuario"
+Bloqueo por fecha específica (posiblemente piratería/licenciamiento)
+Multi-nivel de usuarios con diferentes privilegios
+
+
+🔄 FLUJO COMPLETO DEL SISTEMA
+FASE 1: CARGA INICIAL DEL FORMULARIO (Form_Activate)
+┌─────────────────────────────────────┐
+│  Usuario abre la aplicación        │
+└──────────────┬──────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────┐
+│  ¿Existe archivo CODUSU$.txt?       │
+└──────────────┬──────────────────────┘
+               │
+       ┌───────┴───────┐
+       │               │
+      SÍ              NO
+       │               │
+       ▼               ▼
+┌──────────────┐  ┌────────────────┐
+│ Lee archivo  │  │ Campo vacío    │
+│ Formato:     │  │ Usuario debe   │
+│ "USUARIO0"   │  │ escribir       │
+│ "USUARIO1"   │  └────────────────┘
+└──────┬───────┘
+       │
+       ▼
+┌─────────────────────────────────────┐
+│ ¿El último carácter es 0 o 1?       │
+│ 0 = No recordar contraseña          │
+│ 1 = Recordar y auto-login           │
+└──────────────┬──────────────────────┘
+               │
+       ┌───────┴───────┐
+       │               │
+      "0"             "1"
+       │               │
+       ▼               ▼
+┌──────────────┐  ┌────────────────┐
+│ Solo llena   │  │ Llena usuario  │
+│ usuario      │  │ Y ejecuta      │
+│ Espera clave │  │ auto-login     │
+└──────────────┘  └────────────────┘
+Código clave:
+vbWTODO = WRITE1_READ2(2)  ' Lee: "ADMIN1" o "JUAN0"
+Text2.Text = Left(WTODO, Len(WTODO) - 1)  ' Extrae: "ADMIN" o "JUAN"
+wCHEK = Right(WTODO, 1)  ' Extrae: "1" o "0"
+cheguarda.Value = Val(wCHEK)  ' Marca/desmarca checkbox
+```
+
+---
+
+### **FASE 2: VALIDACIÓN DE FECHA** (`cmdIngresar_Click`)
+```
+┌─────────────────────────────────────┐
+│ Usuario presiona "Ingresar"         │
+└──────────────┬──────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────┐
+│ VALIDACIÓN 1: ¿Es una fecha válida? │
+└──────────────┬──────────────────────┘
+               │
+            ┌──┴──┐
+           NO     SÍ
+            │      │
+            ▼      ▼
+        [ERROR] [Continúa]
+               │
+               ▼
+┌─────────────────────────────────────┐
+│ VALIDACIÓN 2: ¿Fecha >= 1900?       │
+└──────────────┬──────────────────────┘
+               │
+            ┌──┴──┐
+           NO     SÍ
+            │      │
+            ▼      ▼
+        [ERROR] [Continúa]
+               │
+               ▼
+┌─────────────────────────────────────┐
+│ VALIDACIÓN 3: Busca en BD           │
+│ Tabla: cal_llave                    │
+│ WHERE fecha = fecha_proceso         │
+└──────────────┬──────────────────────┘
+               │
+        ┌──────┴──────┐
+    NO EXISTE      EXISTE
+        │              │
+        ▼              ▼
+    [ERROR]    ┌──────────────┐
+               │ ¿CAL_INDICE  │
+               │ = 1?         │
+               └──────┬───────┘
+                      │
+               ┌──────┴──────┐
+              NO             SÍ
+               │              │
+               ▼              ▼
+        ┌──────────┐   [Continúa]
+        │¿Usuario  │
+        │= SUPER?  │
+        └────┬─────┘
+             │
+      ┌──────┴──────┐
+     NO             SÍ
+      │              │
+      ▼              ▼
+  [ERROR]      [Continúa con
+               advertencia]
+```
+
+**Explicación del calendario:**
+- La empresa maneja un **calendario fiscal/contable**
+- No pueden procesar transacciones en cualquier fecha
+- Solo fechas "activadas" (`CAL_INDICE = 1`) permiten operaciones
+- El usuario `SUPER` puede saltarse esta validación (administrador supremo)
+
+---
+
+### **FASE 3: COMPARACIÓN DE FECHAS**
+```
+┌─────────────────────────────────────┐
+│ Fecha de proceso vs Fecha del PC    │
+└──────────────┬──────────────────────┘
+               │
+       ┌───────┴───────┐
+       │               │
+    IGUALES       DIFERENTES
+       │               │
+       ▼               ▼
+  [Continúa]    ┌──────────────────┐
+  silencioso    │ Muestra mensaje: │
+                │ "¿Desea ingresar │
+                │  al sistema?"    │
+                └────────┬─────────┘
+                         │
+                  ┌──────┴──────┐
+                  │             │
+              CANCELAR         OK
+                  │             │
+                  ▼             ▼
+              [SALE]      [Continúa]
+```
+
+**¿Por qué esta validación?**
+- En sistemas empresariales, la fecha de proceso puede ser diferente a la fecha actual
+- Ejemplo: Estamos en 05/02/2026 pero cerrando el mes de enero: `fecha_proceso = 31/01/2026`
+- Es una advertencia para evitar errores de registro
+
+---
+
+### **FASE 4: DETERMINACIÓN DE CLAVE**
+```
+┌─────────────────────────────────────┐
+│ ¿Qué usuario está ingresando?       │
+└──────────────┬──────────────────────┘
+               │
+       ┌───────┴───────────────┐
+       │                       │
+    ADMIN/SUPER/          OTROS USUARIOS
+    SUPERVISOR                │
+       │                      │
+       ▼                      ▼
+┌──────────────┐      ┌──────────────────┐
+│ Usa la clave │      │ Busca en BD la   │
+│ que ingresó  │      │ clave del usuario│
+│ el usuario   │      │ "SUPERVISOR"     │
+└──────────────┘      └────────┬─────────┘
+       │                       │
+       └───────┬───────────────┘
+               ▼
+┌─────────────────────────────────────┐
+│ PUB_CLAVE = clave a usar            │
+└─────────────────────────────────────┘
+Lógica de seguridad interesante:
+vbIf LK_CODUSU = "ADMIN" Or LK_CODUSU = "SUPERVISOR" Or LK_CODUSU = "SUPER" Then
+   PUB_CLAVE = Trim(Text1.Text)  ' Usa lo que escribió
+Else
+   ' Para usuarios normales, usa la clave del SUPERVISOR
+   Do Until usu.EOF
+      If Trim(usu!usu_key) = "SUPERVISOR" Then
+        PUB_CLAVE = Trim(usu!USU_CLAVE)
+        Exit Do
+      End If
+      usu.MoveNext
+   Loop
+End If
+```
+
+**Esto significa:**
+- Usuarios normales NO tienen clave propia para login
+- Todos comparten la clave del usuario "SUPERVISOR"
+- Solo admin/super/supervisor pueden tener claves únicas
+
+---
+
+### **FASE 5: BLOQUEO POR FECHA (Anti-piratería)**
+```
+┌─────────────────────────────────────┐
+│ ¿Fecha = 06/09/2002?                │
+└──────────────┬──────────────────────┘
+               │
+       ┌───────┴───────┐
+      NO               SÍ
+       │                │
+       ▼                ▼
+  [Continúa]    ┌──────────────────┐
+                │ Pide clave:      │
+                │ "159357852456"   │
+                └────────┬─────────┘
+                         │
+                  ┌──────┴──────┐
+              CORRECTA     INCORRECTA
+                  │              │
+                  ▼              ▼
+              [Continúa]    [TERMINA APP]
+Código original:
+vbIf LK_FECHA_DIA = "06/09/2002" Then
+  If InputBox("El sistema ha sido bloqueado... Cel. (496175)") = "159357852456" Then
+    ' OK
+  Else
+    End  ' Termina la aplicación
+  End If
+End If
+```
+
+**¿Qué es esto?**
+- Mecanismo de "bomba de tiempo" o licenciamiento
+- Si alguien cambia la fecha del sistema a 06/09/2002, se bloquea
+- Posiblemente una fecha de vencimiento de licencia
+- El mensaje muestra un teléfono celular del proveedor (Apisoft S.A.C.)
+
+---
+
+### **FASE 6: GUARDAR PREFERENCIAS Y ENTRAR**
+```
+┌─────────────────────────────────────┐
+│ Guardar usuario + checkbox          │
+│ Formato: "USUARIO" + "0" o "1"      │
+└──────────────┬──────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────┐
+│ Escribir archivo CODUSU$.txt        │
+│ Ejemplo: "ADMIN1" o "JUAN0"         │
+└──────────────┬──────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────┐
+│ Obtener clave de gerencia           │
+│ (del usuario ADMIN, campo clave2)   │
+└──────────────┬──────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────┐
+│ Establecer variables globales:      │
+│ - LK_FECHA_DIA                      │
+│ - PUB_CLAVE                         │
+│ - LK_CLAVE_GERENCIA                 │
+└──────────────┬──────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────┐
+│ Ocultar formulario de login         │
+│ Mostrar MDI principal (app)         │
+└─────────────────────────────────────┘
+```
+
+---
+
+## 🎯 CARACTERÍSTICAS CLAVE DEL SISTEMA
+
+### **1. Sistema de "Recordar Usuario"**
+```
+Archivo: C:\CODUSU$.txt
+Contenido: [USUARIO][CHECKBOX]
+Ejemplos:
+  - "ADMIN0" = Usuario ADMIN, NO recordar contraseña
+  - "JUAN1"  = Usuario JUAN, SÍ recordar (auto-login)
+2. Jerarquía de Usuarios
+NivelUsuarioPrivilegios🔴 MáximoSUPERPuede saltarse calendario bloqueado🟠 AltoADMINLogin propio, tiene clave de gerencia🟡 MedioSUPERVISORLogin propio, su clave es usada por usuarios normales🟢 NormalOtrosUsan clave del SUPERVISOR
+3. Calendario Corporativo
+sql-- Tabla: cal_llave
+SELECT * FROM cal_llave 
+WHERE CAL_FECHA = '2026-02-04'
+  AND CAL_INDICE = 1  -- 1 = Activo, 0 = Bloqueado
+```
+
+**Casos de uso:**
+- Cerrar períodos contables (fin de mes no permite más registros)
+- Días festivos o no laborables
+- Períodos de auditoría
+
+### **4. Dos Claves por Usuario**
+```
+usu_clave  = Clave de login
+usu_clave2 = Clave de gerencia (solo ADMIN)
+La "clave de gerencia" probablemente se usa para:
+
+Autorizar operaciones críticas
+Anular transacciones
+Acceder a reportes confidenciales
+
+
+🔒 ANÁLISIS DE SEGURIDAD
+Vulnerabilidades Detectadas:
+
+❌ Archivo de texto plano
+
+vb   Open "C:\CODUSU$.txt" For Output
+   Print #1, wWRITE  ' Guarda en texto plano!
+
+Usuario y checkbox sin encriptar
+Cualquiera puede editar el archivo
+
+
+❌ Clave hardcodeada
+
+vb   If InputBox(...) = "159357852456" Then
+
+Clave de desbloqueo visible en código
+No hay ofuscación
+
+
+❌ Usuarios sin clave propia
+
+vb   ' Usuarios normales usan la clave del SUPERVISOR
+
+Si un usuario normal es comprometido, todos lo son
+No hay trazabilidad individual
+
+
+❌ Sin validación de contraseña
+
+El código NO valida la contraseña ingresada contra la BD
+Solo obtiene la clave pero no la compara
+Parece que falta código o se valida en otro lugar
+
+
+
+
+📝 RESUMEN EJECUTIVO
+¿Qué hace este sistema?
+Es un sistema de autenticación empresarial que:
+
+Controla el acceso por usuario
+Valida que se trabaje en fechas permitidas por el calendario corporativo
+Permite "recordar usuario" para siguiente sesión
+Implementa jerarquía de usuarios con privilegios
+Tiene protección anti-piratería por fecha
+
+Flujo en una frase:
+
+Valida usuario → Verifica fecha en calendario → Compara con fecha PC → Obtiene clave según nivel → Guarda preferencias → Entra al sistema
+
+Para implementar en PHP necesitas:
+
+Tabla cal_llave (calendario)
+Tabla usu (usuarios con usu_clave y usu_clave2)
+Tabla gen (configuración con gen_bloqueo)
+Sistema de sesiones PHP
+Archivo/BD para guardar "recordar usuario"

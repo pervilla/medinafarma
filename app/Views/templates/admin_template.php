@@ -451,13 +451,14 @@
                                     </li>  
                                     <li class="nav-item">
                                         <a href="<?= site_url('productos/get_inventario') ?>" class="nav-link <?=$menu['i']==54?'active':''?>">
-                                            <i class="far fa-circle nav-icon"></i>
-                                            <p>Listado Inventario</p>
+                                            <i class="fas fa-clipboard-list nav-icon  text-danger"></i>
+                                            <p>Reportes de Inventario</p>
                                         </a>
                                     </li> 
                                     <li class="nav-item">
                                         <a href="<?= site_url('productos/get_controlados') ?>" class="nav-link <?=$menu['i']==55?'active':''?>">
-                                            <i class="far fa-circle nav-icon"></i>
+                                            
+                                            <i class="fa fa-triangle-exclamation nav-icon  text-warning"></i>
                                             <p>Listado Controlados</p>
                                         </a>
                                     </li>
@@ -470,7 +471,7 @@
                                     </li> 
                                     <li class="nav-item">
                                         <a href="<?= site_url('inventario') ?>" class="nav-link <?=$menu['i']==57?'active':''?>">
-                                            <i class="far fa-circle nav-icon"></i>
+                                            <i class="fa fa-file-signature nav-icon"></i>
                                             <p>Inventario</p>
                                         </a>
                                     </li>
@@ -611,6 +612,16 @@
                                             </div>
                                         </div>
                                         <div class="row">
+                                            <div class="col-12 mb-3">
+                                                <div class="icheck-primary">
+                                                    <input type="checkbox" id="remember" name="remember">
+                                                    <label for="remember">
+                                                        PC de Confianza (Mantener sesión)
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
                                             <div class="col-8">
                                                 <button type="button" class="btn btn-primary" data-dismiss="modal">Cerrar</button>
                                             </div>
@@ -709,7 +720,8 @@ $('#password').keypress(function(event){
     var keycode = (event.keyCode ? event.keyCode : event.which);
     if(keycode == '13'){
         var password = $("#password").val(); var usuario = $("#usuario").val();
-        $.post("<?= site_url('login/auth') ?>", {pwd: password,user: usuario}, function (result) {
+        var remember = $("#remember").is(":checked") ? 1 : 0;
+        $.post("<?= site_url('login/auth') ?>", {pwd: password,user: usuario, remember: remember}, function (result) {
                 if(result){
                     $('#modal-login').modal('hide');
                     location.reload();

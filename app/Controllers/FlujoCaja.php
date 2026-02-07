@@ -100,19 +100,21 @@ class FlujoCaja extends BaseController
             $mes = date('m', strtotime($fecha));
             $anio = date('Y', strtotime($fecha));
             
-            // Obtener ventas del día
-            $ventas = $cajaModel->get_ventas_dia($dia, $mes, $anio, null, $local);
+            // Obtener ventas del día (usando get_ventas_dia_det para incluir todo tipo de pago)
+            // Parametros: dia, mes, anio, nrocaja (null para todas), server, isadmin (true para ver todo)
+            $ventas = $cajaModel->get_ventas_dia_det($dia, $mes, $anio, null, $local, true);
             
             $totalVentas = 0;
             foreach ($ventas as $venta) {
-                $totalVentas += $venta->CAJ_EFECTIVO;
+                // TOT_VENTAS incluye efectivo, tarjetas, yape, etc.
+                $totalVentas += $venta->TOT_VENTAS;
             }
             
             if ($totalVentas > 0) {
                 $ingresos[] = [
                     'fecha' => $fecha,
                     'tipo' => 'VENTAS',
-                    'descripcion' => 'Ventas del día',
+                    'descripcion' => 'Ventas del día (Total)',
                     'monto' => $totalVentas
                 ];
             }

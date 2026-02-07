@@ -51,9 +51,15 @@
 					</div>
 				</div>
 			</div>
+			
 			<div class="row">
 				<div class="col-8">
-					
+					<div class="icheck-primary">
+              <input type="checkbox" id="remember" name="remember" value="1">
+              <label for="remember">
+                Mantener sesión activa
+              </label>
+            </div>
 				</div>
 				<!-- /.col -->
 				<div class="col-4">
@@ -75,33 +81,7 @@
 		<?php } ?>
 		<!-- /.card-body -->
 								
-		<div class="card-body login-card-body">
-			
-			<a id="caja_cnt" class="btn btn-app bg-success">
-			  <span class="badge bg-purple">891</span>
-			  <i class="fas fa-inbox"></i>Caja Centro
-			</a>
-			<a id="caja_pmz" class="btn btn-app bg-info">
-			  <span class="badge bg-teal">67</span>
-			  <i class="fas fa-inbox"></i>Caja PMeza
-			</a>
-			<a id="caja_jjc" class="btn btn-app bg-danger">
-			  <span class="badge bg-info">12</span>
-			  <i class="fas fa-inbox"></i>Juanjuicillo
-			</a>
-			<a href="<?= site_url('productos') ?>" class="btn btn-app bg-secondary">
-			  <span class="badge bg-success"></span>
-			  <i class="fas fa-barcode"></i> Products
-			</a>
-			<a href="<?= site_url('personas') ?>" class="btn btn-app bg-warning">
-			  <span class="badge bg-danger"></span>
-			  <i class="fas fa-heart"></i> Clientes
-			</a>
-			<a href="<?= site_url('dashboard') ?>" class="btn btn-app bg-info">
-			<span class="badge bg-danger"></span>
-			  <i class="fas fa-inbox"></i> Inicio
-			</a>
-		</div>
+		
 	</div>
 </div>
 <!-- /.login-box -->
@@ -136,7 +116,8 @@ $('#password').keypress(function(event){
 
 $("#login").click(function () {
 	var password = $("#password").val(); var usuario = $("#usuario").val();
-	$.post("<?= site_url('login/auth') ?>", {pwd: password,user: usuario}, function (result) {
+	var remember = $("#remember").is(":checked") ? 1 : 0;
+	$.post("<?= site_url('login/auth') ?>", {pwd: password,user: usuario, remember: remember}, function (result) {
 		if(result){
 			$('#modal-login').modal('hide');
 			$(location).attr('href', '<?= site_url('dashboard') ?>')

@@ -26,10 +26,12 @@
                         <table id="table_citas" class="table table-bordered">
                             <thead>
                                 <tr>
+                                    <th>ID</th>
                                     <th>Descripción</th>
                                     <th>Médico</th>
                                     <th>Fecha Inicio</th>
                                     <th>Fecha Fin</th>
+                                    <th>Confirmados</th>
                                     <th>Editar</th>
                                     <th>Ver Campaña</th>
                                 </tr>
@@ -57,10 +59,12 @@
                                     }
                                 ?>
                                     <tr class="<?= $css ?>">
+                                        <td><?= $campania->CAM_CODCAMP ?></td>
                                         <td><?= $campania->CAM_DESCRIP ?></td>
                                         <td><?= $campania->CLI_NOMBRE ?></td>
                                         <td><?= $date ?></td>
                                         <td><?= $date2 ?></td>
+                                        <td><?= $campania->CONFIRMADOS ?></td>
                                         <td><button type="button" class="btn btn-warning btn-sm btn-block btn-editar" data-id="<?= $campania->CAM_CODCAMP ?>" data-toggle="modal" data-target="#modal-primary"><i class="fas fa-edit"></i> Editar</button></td>
                                         <td><a class='btn btn-block bg-gradient-primary btn-sm cs_pointer' href='<?= site_url('consultorio/confirmados') . "/" . $campania->CAM_CODCAMP ?>' target='_blank'><i class='fas fa-eye'></i> Ver</a></td>
                                     </tr>
@@ -195,6 +199,7 @@
             "responsive": true,
             "autoWidth": false,
             "ordering": true,
+            "order": [],
             "language": {
                 "url": "//cdn.datatables.net/plug-ins/1.10.21/i18n/Spanish.json"
             }

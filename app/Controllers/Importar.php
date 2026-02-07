@@ -227,6 +227,7 @@ class Importar extends BaseController
         }
 
         $result = $ImportFactModel->crea_compra($idfact, $codclie);
+        log_message('error', 'Resultado de crea_compra: ' . print_r($result, true));
         if ($result && isset($result[0])) {
             $msgResult = (array)$result[0];
             $mensaje = reset($msgResult); // Obtener el primer valor de la primera fila

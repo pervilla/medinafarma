@@ -430,10 +430,10 @@ class Consultorio extends BaseController {
         $cal = $this->request->getVar('calendario');
         $data = array(
             'CAM_CODMED' => $this->request->getVar('cliente'),
-            'CAM_FEC_INI' => $cal==1?date('d/m/Y', strtotime($this->request->getVar('fechaini'))):$def,
-            'CAM_FEC_FIN' => $cal==1?date('d/m/Y', strtotime($this->request->getVar('fechafin'))):$def,
-            'CAM_HOR_INI' => date('d/m/Y h:i:s A', strtotime($this->request->getVar('fechaini'))),
-            'CAM_HOR_FIN' => date('d/m/Y h:i:s A', strtotime($this->request->getVar('fechafin'))),
+            'CAM_FEC_INI' => $cal==1?date('d/m/Y', strtotime(str_replace('/', '-', $this->request->getVar('fechaini')))):$def,
+            'CAM_FEC_FIN' => $cal==1?date('d/m/Y', strtotime(str_replace('/', '-', $this->request->getVar('fechafin')))):$def,
+            'CAM_HOR_INI' => date('d/m/Y h:i:s A', strtotime(str_replace('/', '-', $this->request->getVar('fechaini')))),
+            'CAM_HOR_FIN' => date('d/m/Y h:i:s A', strtotime(str_replace('/', '-', $this->request->getVar('fechafin')))),
             'CAM_DESCRIP' => $this->request->getVar('descrip'),
             'CAM_ID'=>$this->request->getVar('idcampania')
         ); 
@@ -457,10 +457,10 @@ class Consultorio extends BaseController {
         
         // Format dates for the form
         if ($data->CAM_FEC_INI) {
-            $data->CAM_FEC_INI_FORMAT = date('d/m/Y h:i A', strtotime($data->CAM_FEC_INI . ' ' . $data->CAM_HOR_INI));
+            $data->CAM_FEC_INI_FORMAT = date('d/m/Y h:i A', strtotime(str_replace('/', '-', $data->CAM_FEC_INI) . ' ' . $data->CAM_HOR_INI));
         }
         if ($data->CAM_FEC_FIN) {
-            $data->CAM_FEC_FIN_FORMAT = date('d/m/Y h:i A', strtotime($data->CAM_FEC_FIN . ' ' . $data->CAM_HOR_FIN));
+            $data->CAM_FEC_FIN_FORMAT = date('d/m/Y h:i A', strtotime(str_replace('/', '-', $data->CAM_FEC_FIN) . ' ' . $data->CAM_HOR_FIN));
         }
 
         return $this->response->setJSON($data);
