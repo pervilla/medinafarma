@@ -16,37 +16,72 @@ class Server03Model extends Model {
         $this->dbpm = \Config\Database::connect('pmeza');
         $this->dbjj = \Config\Database::connect('juanjuicillo');
     }
-    private function isServerAvailable($connection)
+    private function isServerAvailable($group)
     {
-        try {
-            $connection->connect();
+        $cache = \Config\Services::cache();
+        $cacheKey = "db_avail_{$group}";
+        
+        $cachedStatus = $cache->get($cacheKey);
+        if ($cachedStatus !== null) {
+            return (bool)$cachedStatus;
+        }
+
+        $dbConfig = config('Database');
+        if (!isset($dbConfig->$group)) {
+            return false;
+        }
+        
+        $config = $dbConfig->$group;
+        $host = $config['hostname'];
+        $port = $config['port'] ?? 1433;
+
+        // Limpiar hostname si tiene instancia (ej: host\instance)
+        $hostOnly = explode('\\', $host)[0];
+
+        $connection = @fsockopen($hostOnly, $port, $errno, $errstr, 1);
+
+        if ($connection) {
+            fclose($connection);
+            $cache->save($cacheKey, 1, 300); // Cache success for 5 min
             return true;
-        } catch (\Throwable $e) {
-            log_message('error', 'Database server unavailable: ' . $e->getMessage());
+        } else {
+            log_message('error', "Server group '{$group}' at {$hostOnly}:{$port} unavailable. Error: {$errstr}");
+            $cache->save($cacheKey, 0, 60); // Cache failure for 1 min
             return false;
         }
     }
     
+    private function getDbByServer($server)
+    {
+        $group = ($server == 3) ? 'pmeza' : (($server == 2) ? 'juanjuicillo' : 'default');
+        if ($this->isServerAvailable($group)) {
+            if ($group === 'pmeza') return $this->dbpm;
+            if ($group === 'juanjuicillo') return $this->dbjj;
+            return $this->db;
+        }
+        return null;
+    }
+
     public function get_max_numfac($server) {
         $sql = 'SELECT ';
         $sql .= '(SELECT MAX(ALL_NUMFAC) FROM DBO.allog WHERE ALL_TIPMOV = 6 AND ALL_CODCIA = 25 AND ALL_NUMSER = 1) FAR_NUMFAC, ';
         $sql .= '(SELECT MAX(ALL_NUMOPER) FROM DBO.ALLOG WHERE ALL_FECHA_DIA=CONVERT (date, GETDATE())) FAR_NUMOPER';
-        if($server==3){
-            $query =  $this->dbpm->query($sql);
-        }else{
-            $query =  $this->dbjj->query($sql);
-        }
+        
+        $db = $this->getDbByServer($server);
+        if (!$db) return null;
+        
+        $query = $db->query($sql);
         return $query->getRow();
     }
     public function get_max_numart($server) {
         $sql = 'SELECT MAX(ART_KEY) ART_KEY FROM DBO.ARTI';
-        if($server==3){
-            $query =  $this->dbpm->query($sql);
-        }else{
-            $query =  $this->dbjj->query($sql);
-        }
+        
+        $db = $this->getDbByServer($server);
+        if (!$db) return null;
+        
+        $query = $db->query($sql);
         $row   = $query->getRow();
-        return $row->ART_KEY;
+        return $row ? $row->ART_KEY : null;
     }
 
     public function get_comisiones_simple($mes, $anio,$server) {
@@ -61,12 +96,11 @@ class Server03Model extends Model {
         $sql .= "T1.FAR_CODART NOT IN(SELECT art_key FROM dbo.ARTI WHERE ART_GRUPOP=566) ";
         $sql .= 'GROUP BY T2.VEM_CODVEN,T2.VEM_NOMBRE ';
         $sql .= 'ORDER BY T2.VEM_CODVEN,T2.VEM_NOMBRE ';
-        //echo $sql; die();
-        if($server==3){
-            $query = $this->dbpm->query($sql);
-        }else{
-            $query = $this->dbjj->query($sql);
-        }
+        
+        $db = $this->getDbByServer($server);
+        if (!$db) return [];
+        
+        $query = $db->query($sql);
         return $query->getResult();
     }
 
@@ -81,7 +115,11 @@ class Server03Model extends Model {
         $sql .= 'ALL_SIGNO_CAJA = 1 AND ';
         $sql .= "ALL_FLAG_EXT  <> 'E' AND ";
         $sql .= "(ALL_CODTRA <> 1111 OR ALL_CODTRA <> 1122) ";
-        $query = $this->dbpm->query($sql);
+        
+        $db = $this->getDbByServer(3); // Assuming pmeza is server 3
+        if (!$db) return (object)['VENTAS' => 0];
+
+        $query = $db->query($sql);
         return $query->getRow();
     }
 
@@ -99,66 +137,51 @@ class Server03Model extends Model {
         $sql .= "T1.FAR_CODART NOT IN(SELECT art_key FROM dbo.ARTI WHERE ART_GRUPOP=566) ";
         $sql .= 'GROUP BY T2.VEM_CODVEN,T2.VEM_NOMBRE ';
         $sql .= 'ORDER BY T2.VEM_CODVEN,T2.VEM_NOMBRE ';
-        //echo $sql; die();
-        if($server==3){
-            $query = $this->dbpm->query($sql);
-        }else{
-            $query = $this->dbjj->query($sql);
-        }
+        
+        $db = $this->getDbByServer($server);
+        if (!$db) return [];
+
+        $query = $db->query($sql);
         return $query->getResult();
     }
     public function crear_guia_allog($data,$server) {
-        if($server==3){
-            return $this->dbpm->table('ALLOG')->insert($data);
-        }else{
-            return $this->dbjj->table('ALLOG')->insert($data);
-        }
+        $db = $this->getDbByServer($server);
+        if (!$db) return false;
+        return $db->table('ALLOG')->insert($data);
     }
 
     public function crear_guia_facart($data,$server) {
-        if($server==3){
-            return $this->dbpm->table('FACART')->insertBatch($data);
-        }else{
-            return $this->dbjj->table('FACART')->insertBatch($data);
-        }
+        $db = $this->getDbByServer($server);
+        if (!$db) return false;
+        return $db->table('FACART')->insertBatch($data);
     }
 
     public function crear_prod_arti($data,$server) {
-        if($server==3){
-            return $this->dbpm->table('ARTI')->insertBatch($data);
-        }else{
-            return $this->dbjj->table('ARTI')->insertBatch($data);
-        }
+        $db = $this->getDbByServer($server);
+        if (!$db) return false;
+        return $db->table('ARTI')->insertBatch($data);
     }
     public function crear_prod_articulo($data,$server) {
-        if($server==3){
-            return $this->dbpm->table('ARTICULO')->insertBatch($data);
-        }else{
-            return $this->dbjj->table('ARTICULO')->insertBatch($data);
-        }
+        $db = $this->getDbByServer($server);
+        if (!$db) return false;
+        return $db->table('ARTICULO')->insertBatch($data);
     }
     public function crear_prod_precios($data,$server) {
-        if($server==3){
-            return $this->dbpm->table('PRECIOS')->insertBatch($data);
-        }else{
-            return $this->dbjj->table('PRECIOS')->insertBatch($data);
-        }
+        $db = $this->getDbByServer($server);
+        if (!$db) return false;
+        return $db->table('PRECIOS')->insertBatch($data);
     }
     public function crear_prod_lote($data,$server) {
-        if($server==3){
-            return $this->dbpm->table('LOTE')->insertBatch($data);
-        }else{
-            return $this->dbjj->table('LOTE')->insertBatch($data);
-        }
+        $db = $this->getDbByServer($server);
+        if (!$db) return false;
+        return $db->table('LOTE')->insertBatch($data);
     }
 
     public function actualiza_stock($data,$server) {
         $sp = "sp_actualiza_stock ?,?,?,?,?,? ";
-        if($server==3){
-            $query = $this->dbpm->query($sp,[$data['TIPMOV'],$data['CODCIA'],$data['NUMSER'],$data['NUMFAC'],$data['FECHA'],$data['NUMOPER']]);
-        }else{
-            $query = $this->dbjj->query($sp,[$data['TIPMOV'],$data['CODCIA'],$data['NUMSER'],$data['NUMFAC'],$data['FECHA'],$data['NUMOPER']]);
-        }
+        $db = $this->getDbByServer($server);
+        if (!$db) return false;
+        $query = $db->query($sp,[$data['TIPMOV'],$data['CODCIA'],$data['NUMSER'],$data['NUMFAC'],$data['FECHA'],$data['NUMOPER']]);
         return $query;
     }
 
@@ -182,28 +205,25 @@ class Server03Model extends Model {
 
         switch ($local) {
             case 3:
-                if ($this->isServerAvailable($this->dbpm)) {
+                if ($this->isServerAvailable('pmeza')) {
                     $query = $this->dbpm->query($sql);
                 } else {
-                    log_message('error', 'Server 3 (pmeza) unavailable.');
                     return [];
                 }
                 break;
 
             case 2:
-                if ($this->isServerAvailable($this->dbjj)) {
+                if ($this->isServerAvailable('juanjuicillo')) {
                     $query = $this->dbjj->query($sql);
                 } else {
-                    log_message('error', 'Server 2 (juanjuicillo) unavailable.');
                     return [];
                 }
                 break;
 
             case 1:
-                if ($this->isServerAvailable($this->db)) {
+                if ($this->isServerAvailable('default')) {
                     $query = $this->db->query($sql);
                 } else {
-                    log_message('error', 'Local server unavailable.');
                     return [];
                 }
                 break;

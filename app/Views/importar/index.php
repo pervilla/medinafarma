@@ -29,10 +29,11 @@
                                     </div>
 
                                     <!-- Select Proveedor -->
-                                    <select id="b_cliente" name="b_cliente" class="form-control form-control-sm" data-placeholder="Buscar Proveedor" data-allow-clear="1"></select>
+                                    <label for="b_cliente" class="sr-only">Buscar Proveedor</label>
+                                    <select id="b_cliente" name="b_cliente" class="form-control form-control-sm" data-placeholder="Buscar Proveedor" data-allow-clear="1" title="Seleccionar Proveedor"></select>
 
                                     <!-- Rango de Fechas -->
-                                    <div id="reportrange" class="form-control form-control-sm">
+                                    <div id="reportrange" class="form-control form-control-sm" aria-label="Rango de Fechas" role="button" title="Seleccionar Rango de Fechas">
                                         <i class="fa fa-calendar"></i>&nbsp;
                                         <span></span> <i class="fa fa-caret-down"></i>
                                     </div>
@@ -112,6 +113,7 @@
                                     <button class="btn bg-primary" type="button" id="btn_promedio">Promedio</button>
                                     <button class="btn bg-info" type="button" id="btn_descuento">Desc.B-A</button>
                                     <button class="btn btn-warning" type="button" id="btn_excluir">Excluir A</button>
+                                    <button class="btn btn-dark" type="button" id="btn_procesar_reglas" title="Extraer Lote y Vencimiento"><i class="fas fa-magic"></i> Reglas</button>
                                     <button class="btn btn-secondary" type="button" id="btn_flete">A.Flete</button>
                                     <button class="btn btn-danger" type="button" id="btn_eliminar">Elim.Item</button>
                                     <button class="btn btn-success btn-outline" type="button" id="btn_crear_compra">Ingresar Compra</button>
@@ -128,6 +130,8 @@
                                 <th>ID</th>
                                 <th>COD.PROV</th>
                                 <th>DESCRIPCION FACTURA</th>
+                                <th>LOTE</th>
+                                <th>VENC</th>
                                 <th>ACT</th>
                                 <th>DESCRIPCION MEDINA</th>
                                 <th>C.MED</th>
@@ -170,9 +174,12 @@
                     <div class="input-group-prepend">
                         <span class="input-group-text"><i class="fas fa-file"></i></span>
                     </div>
-                    <input type="text" class="form-control col-1" id="codEstado" name="codEstado" value="0" disabled>
-                    <input type="text" class="form-control col-1" id="codDocIde" name="codDocIde" value="6" disabled>
-                    <select class="form-control col-2" id="tipoDoc" name="tipoDoc">
+                    <label for="codEstado" class="sr-only">Estado</label>
+                    <input type="text" class="form-control col-1" id="codEstado" name="codEstado" value="0" disabled title="Estado">
+                    <label for="codDocIde" class="sr-only">Doc. Identidad</label>
+                    <input type="text" class="form-control col-1" id="codDocIde" name="codDocIde" value="6" disabled title="Documento Identidad">
+                    <label for="tipoDoc" class="sr-only">Tipo Documento</label>
+                    <select class="form-control col-2" id="tipoDoc" name="tipoDoc" title="Tipo Documento">
                         <option value="01">01 - FACTURA</option>
                         <option value="F7">F7 - NOTA DE CREDITO</option>
                     </select>
@@ -205,8 +212,9 @@
             <div class="modal-body">
 
                 <form id="uploadForm" action="<?= site_url('importar/procesarFactura') ?>" method="post" enctype="multipart/form-data">
-                    <input type="file" name="factura_html" required>
-                    <button type="submit">Procesar Factura</button>
+                    <label for="factura_html" class="sr-only">Archivo de Factura HTML</label>
+                    <input type="file" id="factura_html" name="factura_html" required>
+                    <button type="submit" class="btn btn-sm btn-light">Procesar Factura</button>
                 </form>
             </div>
         </div>
@@ -269,7 +277,7 @@
                     <div class="col-6">
                         <div class="input-group mb-3">
                             <div class="input-group-prepend">
-                                <label class="input-group-text">EQUIV.</label>
+                                <label class="input-group-text" for="inputGroupEquiv">EQUIV.</label>
                             </div>
                             <select class="custom-select" id="inputGroupEquiv">
                                 <option selected>Seleccione</option>
@@ -281,12 +289,12 @@
                     <div class="col-12">
                         <div class="input-group mb-3">
                             <div class="input-group-prepend">
-                                <label class="input-group-text">PRECIO</label>
+                                <label class="input-group-text" for="txt_precio_ini">PRECIO</label>
                             </div>
                             <input type="text" class="form-control" id="txt_precio_ini" readonly>
-                            <label class="input-group-text form-control text-center">÷</label>
+                            <span class="input-group-text form-control text-center">÷</span>
                             <input type="text" class="form-control" id="txt_factor">
-                            <label class="input-group-text form-control text-center">=</label>
+                            <span class="input-group-text form-control text-center">=</span>
                             <div class="input-group-append">
                                 <input type="text" class="form-control" id="txt_precio_fin" readonly>
                             </div>
@@ -550,8 +558,8 @@
                 content: '' +
                     '<form action="" class="formName">' +
                     '<div class="form-group">' +
-                    '<label>Subir una factura</label>' +
-                    '<input type="file" placeholder="Factura" class="facturaup form-control" required />' +
+                    '<label for="facturaup">Subir una factura</label>' +
+                    '<input type="file" id="facturaup" placeholder="Factura" class="facturaup form-control" required />' +
                     '</div>' +
                     '</form>',
                 buttons: {
@@ -849,6 +857,12 @@ if (response.status === 200) {
                     data: 'DES_PROD'
                 },
                 {
+                    data: 'LOTE'
+                },
+                {
+                    data: 'VENCIMIENTO'
+                },
+                {
                     data: 'TOTAL_SIST',
                     render: function(data, type, row, meta) {
                         return '<a class="openPopup" id="verProd"><i class="fas fa-eye"></i></a>';
@@ -916,10 +930,10 @@ if (response.status === 200) {
                         0;
                 };
                 total = api
-                    .column(10)
+                    .column(12)
                     .data()
                     .reduce((a, b) => intVal(a) + intVal(b), 0);
-                $("#table_total").val(total);
+                $("#table_total").val(total.toFixed(2));
             },
             fnRowCallback: function(nRow, aData, iDisplayIndex, iDisplayIndexFull) {
                 var min = aData.ARM_COSPRO * aData.FAR_EQUIV * 0.85;
@@ -934,7 +948,7 @@ if (response.status === 200) {
                     alertas += '<i class="fas fa-question-circle text-warning" title="Equivalencia no existe en PRECIOS"></i> ';
                 }
                 if (alertas) {
-                    $(nRow).find('td:eq(3)').prepend(alertas);
+                    $(nRow).find('td:eq(2)').prepend(alertas);
                 }
                 
                 if (aData.ESTADO == 0) {
@@ -1327,6 +1341,38 @@ if (response.status === 200) {
                 $('#modal-equivalencia').modal('hide');
             });
         })
+
+        $("#btn_procesar_reglas").click(function() {
+            if (idfact > 0) {
+                Swal.fire({
+                    title: "Procesando Reglas...",
+                    text: "Extrayendo Lote y Vencimiento.",
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                $.post("<?= site_url('importar/procesarReglas') ?>", {
+                    idfact: idfact
+                }, function(response) {
+                    Swal.close();
+                    if (response.status === 'success') {
+                        Swal.fire("Éxito", response.message, "success");
+                        dtablefac.ajax.reload(null, false);
+                    } else if (response.status === 'warning') {
+                        Swal.fire("Atención", response.message, "warning");
+                    } else {
+                        Swal.fire("Error", response.message || "Error desconocido", "error");
+                    }
+                }).fail(function() {
+                    Swal.close();
+                    Swal.fire("Error", "Error al procesar las reglas", "error");
+                });
+            } else {
+                Swal.fire("Error", "Seleccione una factura primero", "error");
+            }
+        });
         $("#btn_crear_compra").click(function() {
             if (idfact > 0) {
                 $.confirm({

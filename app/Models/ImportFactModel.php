@@ -267,6 +267,12 @@ $data = $data->data; // Verificar si 'registros' existe y es un array
     {
         $res =  $this->db->table('IMPORT_FACT_DET')->insertBatch($data);
         $this->actualiza_productos();
+        
+        // Aplicar reglas de extracción automáticamente si hay datos
+        if ($res && !empty($data) && isset($data[0]['IDFACT'])) {
+            $this->aplicarReglasExtraccion($data[0]['IDFACT']);
+        }
+        
         return $res;
     }
     public function update_producto($data)
@@ -476,5 +482,237 @@ $data = $data->data; // Verificar si 'registros' existe y es un array
                     AND P.PRE_EQUIV = FD.FAR_EQUIV
                 )";
         return $this->db->query($sql, [$idfact])->getResult();
+    }
+
+    // =============================================
+    // MÉTODOS PARA F-BMF-10 RECEPCIÓN DE PRODUCTOS
+    // =============================================
+
+    /**
+     * Lista facturas con estado=0 (compra ingresada o con detalle) para la vista de recepción,
+     * indicando si ya están incluidas en un reporte activo.
+     */
+    public function listarDocumentosParaRecepcion($cliente, $startDate, $endDate)
+    {
+        $sql = "SELECT T1.ID, T1.RUC, T1.NRO_FACTURA, T1.FECHA, T1.TOTAL, T1.CLI_CODCLI,
+                       T2.CLI_CODCLIE, T2.CLI_NOMBRE,
+                       T1.desRazonSocialEmis,
+                       CASE WHEN RD.ID IS NOT NULL THEN 1 ELSE 0 END AS EN_REPORTE,
+                       RD.ID_REPORTE
+                FROM dbo.IMPORT_FACT AS T1
+                LEFT JOIN dbo.clientes AS T2 ON (T1.RUC = T2.CLI_RUC_ESPOSO AND T2.cli_cp = 'P')
+                LEFT JOIN dbo.RECEPCION_REPORTE_DET AS RD ON (T1.ID = RD.ID_FACT)
+                LEFT JOIN dbo.RECEPCION_REPORTE AS RR ON (RD.ID_REPORTE = RR.ID AND RR.ESTADO = 1)
+                WHERE T1.ESTADO in(0,1)
+                AND T1.FECHA BETWEEN '$startDate' AND '$endDate' ";
+        $sql .= $cliente ? "AND T2.CLI_CODCLIE = '$cliente' " : "";
+        $sql .= "ORDER BY T1.FECHA DESC, T1.ID DESC";
+        $query = $this->db->query($sql);
+        return $query->getResult();
+    }
+
+    /**
+     * Obtiene los productos de múltiples facturas para generar el PDF del reporte.
+     */
+    public function getDetalleProductosFacturas($idsFact)
+    {
+        if (empty($idsFact)) return [];
+        
+        $idsStr = implode(',', array_map('intval', $idsFact));
+        
+        $sql = "SELECT FD.IDFACT, FD.DES_PROD, FD.CANTIDAD, FD.CANTIDAD_INI, FD.LOTE, FD.VENCIMIENTO,
+                       A.ART_NOMBRE,
+                       F.NRO_FACTURA, F.RUC, F.desRazonSocialEmis, F.FECHA,
+                       C.CLI_NOMBRE
+                FROM dbo.IMPORT_FACT_DET AS FD
+                INNER JOIN dbo.IMPORT_FACT AS F ON (FD.IDFACT = F.ID)
+                LEFT JOIN dbo.ARTI AS A ON (FD.ART_KEY = A.ART_KEY)
+                LEFT JOIN dbo.clientes AS C ON (F.RUC = C.CLI_RUC_ESPOSO AND C.cli_cp = 'P')
+                WHERE FD.IDFACT IN ($idsStr)
+                ORDER BY F.NRO_FACTURA, FD.ID";
+        $query = $this->db->query($sql);
+        return $query->getResult();
+    }
+
+    /**
+     * Crea un nuevo reporte de recepción y registra las facturas asociadas.
+     */
+    public function crearReporteRecepcion($data, $facturas)
+    {
+        $this->db->transStart();
+
+        $this->db->table('RECEPCION_REPORTE')->insert($data);
+        $idReporte = $this->db->insertID();
+
+        if ($idReporte && !empty($facturas)) {
+            $detalles = [];
+            foreach ($facturas as $fact) {
+                $detalles[] = [
+                    'ID_REPORTE' => $idReporte,
+                    'ID_FACT' => $fact['id'],
+                    'NRO_FACTURA' => $fact['nro_factura']
+                ];
+            }
+            $this->db->table('RECEPCION_REPORTE_DET')->insertBatch($detalles);
+        }
+
+        $this->db->transComplete();
+
+        if ($this->db->transStatus()) {
+            return $idReporte;
+        }
+        return false;
+    }
+
+    /**
+     * Lista todos los reportes de recepción generados.
+     */
+    public function listarReportesGenerados()
+    {
+        $sql = "SELECT R.ID, R.CLI_CODCLIE, R.RUC, R.RAZON_SOCIAL, 
+                       R.FECHA_RECEPCION, R.FECHA_GENERACION, R.USUARIO, R.ESTADO,
+                       STUFF((SELECT ', ' + RD.NRO_FACTURA 
+                        FROM RECEPCION_REPORTE_DET RD 
+                        WHERE RD.ID_REPORTE = R.ID 
+                        FOR XML PATH('')), 1, 2, '') AS FACTURAS
+                FROM dbo.RECEPCION_REPORTE R
+                ORDER BY R.ID DESC";
+        $query = $this->db->query($sql);
+        return $query->getResult();
+    }
+
+    /**
+     * Anula un reporte de recepción, liberando las facturas.
+     */
+    public function anularReporte($id)
+    {
+        return $this->db->table('RECEPCION_REPORTE')
+            ->where('ID', $id)
+            ->update(['ESTADO' => 0]);
+    }
+
+    /**
+     * Obtiene los datos completos de un reporte (cabecera + facturas + productos) 
+     * para regenerar el PDF.
+     */
+    public function getReporteCompleto($idReporte)
+    {
+        // Cabecera del reporte
+        $reporte = $this->db->table('RECEPCION_REPORTE')
+            ->where('ID', $idReporte)
+            ->get()->getRow();
+
+        if (!$reporte) return null;
+
+        // Obtener IDs de facturas del reporte
+        $detalles = $this->db->table('RECEPCION_REPORTE_DET')
+            ->where('ID_REPORTE', $idReporte)
+            ->get()->getResult();
+
+        $idsFact = array_column($detalles, 'ID_FACT');
+
+        // Obtener productos
+        $productos = $this->getDetalleProductosFacturas($idsFact);
+
+        return [
+            'reporte' => $reporte,
+            'facturas' => $detalles,
+            'productos' => $productos
+        ];
+    }
+
+    /**
+     * Obtiene las reglas de extracción aplicables para un RUC o código de cliente.
+     */
+    public function getReglasExtraccion($ruc = null, $cli_codcli = null)
+    {
+        $builder = $this->db->table('IMPORT_EXTRACCION_REGLAS')
+            ->where('ESTADO', 1);
+
+        if ($ruc || $cli_codcli) {
+            $builder->groupStart();
+            if ($ruc) {
+                $builder->orWhere('RUC', $ruc);
+            }
+            if ($cli_codcli) {
+                $builder->orWhere('CLI_CODCLI', $cli_codcli);
+            }
+            $builder->groupEnd();
+        }
+
+        return $builder->get()->getResult();
+    }
+
+    /**
+     * Aplica las reglas de extracción a todos los ítems de una factura.
+     */
+    public function aplicarReglasExtraccion($idfact)
+    {
+        // 1. Obtener datos de la factura (RUC, CLI_CODCLI)
+        $factura = $this->db->table('IMPORT_FACT')
+            ->where('ID', $idfact)
+            ->get()
+            ->getRow();
+
+        if (!$factura) {
+            return ['status' => 'error', 'message' => 'Factura no encontrada'];
+        }
+
+        // 2. Obtener reglas aplicables
+        $reglas = $this->getReglasExtraccion($factura->RUC, $factura->CLI_CODCLI);
+        if (empty($reglas)) {
+            return ['status' => 'warning', 'message' => 'No hay reglas configuradas para este proveedor/cliente'];
+        }
+
+        // 3. Obtener ítems de la factura
+        $items = $this->db->table('IMPORT_FACT_DET')
+            ->where('IDFACT', $idfact)
+            ->get()
+            ->getResult();
+
+        $count = 0;
+        foreach ($items as $item) {
+            $lote = null;
+            $vencimiento = null;
+            $matched = false;
+
+            foreach ($reglas as $regla) {
+                // Extraer Lote
+                if (!empty($regla->REGEX_LOTE)) {
+                    // Usar @ como delimitador para evitar conflictos con / en regex
+                    if (@preg_match('@' . $regla->REGEX_LOTE . '@i', $item->DES_PROD, $matches)) {
+                        $lote = isset($matches[1]) ? trim($matches[1]) : null;
+                        $matched = true;
+                    }
+                }
+
+                // Extraer Vencimiento
+                if (!empty($regla->REGEX_VENCIMIENTO)) {
+                    if (@preg_match('@' . $regla->REGEX_VENCIMIENTO . '@i', $item->DES_PROD, $matches)) {
+                        $vencimiento = isset($matches[1]) ? trim($matches[1]) : null;
+                        $matched = true;
+                    }
+                }
+
+                if ($matched) break; // Usar la primera regla que coincida
+            }
+
+            if ($matched) {
+                $this->db->table('IMPORT_FACT_DET')
+                    ->where('ID', $item->ID)
+                    ->where('IDFACT', $idfact)
+                    ->update([
+                        'LOTE' => $lote,
+                        'VENCIMIENTO' => $vencimiento
+                    ]);
+                $count++;
+            }
+        }
+
+        return [
+            'status' => 'success',
+            'message' => "Se procesaron $count ítems correctamente.",
+            'count' => $count
+        ];
     }
 }

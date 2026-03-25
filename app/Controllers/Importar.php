@@ -316,6 +316,19 @@ class Importar extends BaseController
         return $actualizaProduc;
     }
     
+    public function procesarReglas()
+    {
+        $idfact = $this->request->getVar('idfact');
+        if (!$idfact) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'ID de factura no proporcionado']);
+        }
+
+        $ImportFactModel = new ImportFactModel();
+        $result = $ImportFactModel->aplicarReglasExtraccion($idfact);
+
+        return $this->response->setJSON($result);
+    }
+    
     public function procesarFactura()
     {
         if (!isset($_FILES['factura_html']) || $_FILES['factura_html']['error'] !== UPLOAD_ERR_OK) {

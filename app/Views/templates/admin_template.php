@@ -293,6 +293,12 @@
                                         </a>
                                     </li>
                                     <li class="nav-item">
+                                        <a href="<?= site_url('reportes/rentables') ?>" class="nav-link <?=$menu['i']==25?'active':''?>">
+                                        <i class="fa fa-chart-bar nav-icon text-success"></i>
+                                            <p>Rentables (Rango)</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
                                         <a href="<?= site_url('empleado/creditos_adelantos') ?>" class="nav-link <?=$menu['i']==22?'active':''?>">
                                             <i class="far fa-circle nav-icon"></i>
                                             <p>Creditos y Adelantos</p>
@@ -341,7 +347,7 @@
                                             <i class="fa fa-cart-arrow-down	 nav-icon text-success"></i>
                                             <p>Compras</p>
                                         </a>
-                                    </li>     
+                                    </li>
                                     <li class="nav-item">
                                         <a href="<?= site_url('cartera') ?>" class="nav-link <?=$menu['i']==34?'active':''?>">
                                             <i class="fa fa-hourglass-2	nav-icon"></i>
@@ -440,6 +446,12 @@
                                         <a href="<?= site_url('requerimiento') ?>" class="nav-link <?=$menu['i']==52?'active':''?>">
                                             <i class="fas fa-store nav-icon"></i>
                                             <p>Requerimientos</p>
+                                        </a>
+                                    </li>                                         
+                                    <li class="nav-item">
+                                        <a href="<?= site_url('recepcionProductos') ?>" class="nav-link <?=$menu['i']==39?'active':''?>">
+                                            <i class="fas fa-clipboard-check nav-icon text-warning"></i>
+                                            <p>Recepción (F-BMF-10)</p>
                                         </a>
                                     </li>
                                     <?php if($session->get('user_id')=='ADMIN'){?>  

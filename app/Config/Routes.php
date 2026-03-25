@@ -170,3 +170,12 @@ $routes->get('flujocaja', 'FlujoCaja::index');
 $routes->get('flujocaja/reporte', 'FlujoCaja::reporte');
 $routes->get('flujocaja/obtenerdatos', 'FlujoCaja::obtenerDatos');
 $routes->get('flujocaja/exportarexcel', 'FlujoCaja::exportarExcel');
+
+/*
+ * -------------------------
+ * RUTAS REPORTES VENTAS
+ * -------------------------
+ */
+$routes->get('reportes/rentables', 'Reportes::rentables');
+$routes->post('reportes/get_data_rentables', 'Reportes::get_data_rentables');
+$routes->match(['get', 'post'], 'reportes/export_rentables_excel', 'Reportes::export_rentables_excel');
