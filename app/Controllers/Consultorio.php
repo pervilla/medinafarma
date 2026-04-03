@@ -427,6 +427,7 @@ class Consultorio extends BaseController {
 
     public function set_campania(){
         $def = '31/12/1969';
+        log_message('error', 'Data: ' . print_r($this->request->getVar(), true));
         $cal = $this->request->getVar('calendario');
         $data = array(
             'CAM_CODMED' => $this->request->getVar('cliente'),
@@ -439,6 +440,8 @@ class Consultorio extends BaseController {
         ); 
         $Caja = new CampaniaModel();
         $campaniaId = $this->request->getVar('idcampania_hidden'); // Use a different name for the hidden ID field to avoid conflict with the select
+//var_export($data);exit;
+log_message('error', 'Data: ' . print_r($data, true));
 
         if (!empty($campaniaId)) {
             $Caja->update_campania($campaniaId, $data);

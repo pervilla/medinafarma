@@ -47,7 +47,7 @@ class CampaniaModel extends Model
                 WHERE 1 = 1 ";
 
         if (is_null($camp)) {
-             $sql .= is_null($all) ? " AND (T1.CAM_FEC_FIN >= GETDATE() or T1.CAM_FEC_FIN = '1969-12-31') " : ' ';
+             $sql .= is_null($all) ? " AND (T1.CAM_FEC_FIN >= CONVERT(date, GETDATE()) or T1.CAM_FEC_FIN = '1969-12-31') " : ' ';
         } else {
             $sql .= " AND T1.CAM_CODCAMP = " . $this->db->escape($camp);
         }
@@ -86,7 +86,6 @@ class CampaniaModel extends Model
                     END DESC,
                     T1.CAM_FEC_INI DESC,
                     T1.CAM_CODCAMP";
-
         $query =  $this->db->query($sql);
         return $query->getResult();
     }
