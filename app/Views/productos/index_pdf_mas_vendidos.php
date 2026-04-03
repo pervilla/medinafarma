@@ -56,7 +56,8 @@ body {
             $titulo = "";
             foreach ($productos as $producto) {
                 if ($cont == 0) {
-                    $tr .= "<b>REPORTE PRODUCTOS MAS VENDIDOS $anio </b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Fecha Impresión: " . date('d-m-Y h:i:s a', time()) . " - PAGINA <b>$pagina</b> ";
+                    $titulo_reporte = is_numeric($anio) ? "REPORTE PRODUCTOS MAS VENDIDOS $anio" : "CONTROL DE VENTAS TURNOS: $anio";
+                    $tr .= "<b>$titulo_reporte</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Fecha Impresión: " . date('d-m-Y h:i:s a', time()) . " - PAGINA <b>$pagina</b> ";
                     $tr .= $cabecera;
                 }
 

@@ -44,6 +44,9 @@
                                         <a class="dropdown-item" href="<?= site_url('productos/createlistaprecios') ?>"><i class='fas fa-file-pdf text-danger'></i> Lista de Precios</a>
                                         <div class="dropdown-divider"></div>
                                         <a class="dropdown-item" href="#" data-toggle="modal" data-target="#modal-mas-vendidos"><i class='fas fa-star text-warning'></i> Más Vendidos</a>
+                                        <div class="dropdown-divider"></div>
+                                        <a class="dropdown-item" href="<?= site_url('productos/createpdf_control_inventario?tipo=01') ?>" target="_blank"><i class='fas fa-clipboard-check text-success'></i> Control Ventas (Top 200 Rot.)</a>
+                                        <a class="dropdown-item" href="<?= site_url('productos/createpdf_control_inventario?tipo=02') ?>" target="_blank"><i class='fas fa-clipboard-check text-success'></i> Control Ventas (Top 50 Costo)</a>
                                     </div>
                                 </div>
                             </div>

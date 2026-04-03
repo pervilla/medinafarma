@@ -431,4 +431,80 @@ class FacartModel extends Model
         $query =  $this->db->query($sql);
         return $query->getResult();
     }
+
+    public function get_productos_control_inventario($tipo, $fecha, $horaInicio, $horaFin)
+    {
+        if ($tipo == '01') {
+            // Opción 01: De los 200 productos que mayor rotación en un año, que los haya vendido el grupo anterior.
+            $sql = "SELECT * FROM (
+                SELECT TOP 200
+                    A.ART_KEY AS Codigo_Articulo,
+                    A.ART_NOMBRE AS Nombre_Articulo,
+                    T.TAB_NOMLARGO AS Familia,
+                    P.PRE_UNIDAD AS Unidad,
+                    P.PRE_EQUIV AS Equivalencia,
+                    SUM(F_ALL.FAR_CANTIDAD) AS Total_Vendido_Anual
+                FROM FACART F_ALL
+                INNER JOIN ARTI A 
+                    ON F_ALL.FAR_CODART = A.ART_KEY 
+                   AND F_ALL.FAR_CODCIA = A.ART_CODCIA
+                LEFT JOIN TABLAS T
+                    ON A.ART_CODCIA = T.TAB_CODCIA
+                   AND A.ART_FAMILIA = T.TAB_NUMTAB
+                   AND T.TAB_TIPREG = 122
+                LEFT JOIN PRECIOS P
+                    ON A.ART_CODCIA = P.PRE_CODCIA
+                   AND A.ART_KEY = P.PRE_CODART
+                   AND P.PRE_FLAG_UNIDAD = 'A'
+                WHERE F_ALL.FAR_TIPMOV = 10
+                  AND F_ALL.FAR_ESTADO <> 'E'
+                  AND F_ALL.FAR_ESTADO2 <> 'L'
+                  AND A.ART_CODCIA = 25
+                  AND F_ALL.FAR_FECHA BETWEEN DATEADD(year, -1, GETDATE()) AND GETDATE()
+                GROUP BY A.ART_KEY, A.ART_NOMBRE, T.TAB_NOMLARGO, P.PRE_UNIDAD, P.PRE_EQUIV
+                ORDER BY SUM(F_ALL.FAR_CANTIDAD) DESC
+            ) AS TopAnual
+            WHERE Codigo_Articulo IN (
+                SELECT FAR_CODART
+                FROM FACART
+                WHERE FAR_TIPMOV = 10
+                  AND FAR_ESTADO <> 'E'
+                  AND FAR_FECHA = '$fecha'
+                  AND FAR_HORA BETWEEN '$horaInicio' AND '$horaFin'
+            )
+            ORDER BY Familia ASC, Total_Vendido_Anual DESC";
+        } else {
+            // Opción 02: Los 50 productos vendidos por el grupo anterior con mayor costo de venta.
+            $sql = "SELECT TOP 50
+                A.ART_KEY AS Codigo_Articulo,
+                A.ART_NOMBRE AS Nombre_Articulo,
+                T.TAB_NOMLARGO AS Familia,
+                P.PRE_UNIDAD AS Unidad,
+                P.PRE_EQUIV AS Equivalencia,
+                SUM((F.FAR_CANTIDAD / CASE WHEN F.FAR_EQUIV = 0 THEN 1 ELSE F.FAR_EQUIV END) * F.FAR_COSPRO) AS Costo_Venta
+            FROM FACART F
+            INNER JOIN ARTI A 
+                ON F.FAR_CODART = A.ART_KEY 
+               AND F.FAR_CODCIA = A.ART_CODCIA
+            LEFT JOIN TABLAS T
+                ON A.ART_CODCIA = T.TAB_CODCIA
+               AND A.ART_FAMILIA = T.TAB_NUMTAB
+               AND T.TAB_TIPREG = 122
+            LEFT JOIN PRECIOS P
+                ON A.ART_CODCIA = P.PRE_CODCIA
+               AND A.ART_KEY = P.PRE_CODART
+               AND P.PRE_FLAG_UNIDAD = 'A'
+            WHERE F.FAR_TIPMOV = 10
+              AND F.FAR_ESTADO <> 'E'
+              AND F.FAR_ESTADO2 <> 'L'
+              AND A.ART_CODCIA = 25
+              AND F.FAR_FECHA = '$fecha'
+              AND F.FAR_HORA BETWEEN '$horaInicio' AND '$horaFin'
+            GROUP BY A.ART_KEY, A.ART_NOMBRE, T.TAB_NOMLARGO, P.PRE_UNIDAD, P.PRE_EQUIV
+            ORDER BY SUM((F.FAR_CANTIDAD / CASE WHEN F.FAR_EQUIV = 0 THEN 1 ELSE F.FAR_EQUIV END) * F.FAR_COSPRO) DESC";
+        }
+
+        $query = $this->db->query($sql);
+        return $query->getResult();
+    }
 }
