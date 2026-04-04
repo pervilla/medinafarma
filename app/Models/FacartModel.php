@@ -470,7 +470,7 @@ class FacartModel extends Model
                 WHERE FAR_TIPMOV = 10
                   AND FAR_ESTADO <> 'E'
                   AND FAR_FECHA = '$fecha'
-                  AND FAR_HORA BETWEEN '$horaInicio' AND '$horaFin'
+                  AND ((CAST(CASE WHEN ISNUMERIC(LEFT(FAR_HORA, 2))=1 THEN LEFT(FAR_HORA, 2) ELSE '0' END AS INT) % 12) + (CASE WHEN FAR_HORA LIKE '%p.%' THEN 12 ELSE 0 END)) BETWEEN $horaInicio AND $horaFin
             )
             ORDER BY Familia ASC, Total_Vendido_Anual DESC";
         } else {
@@ -499,7 +499,7 @@ class FacartModel extends Model
               AND F.FAR_ESTADO2 <> 'L'
               AND A.ART_CODCIA = 25
               AND F.FAR_FECHA = '$fecha'
-              AND F.FAR_HORA BETWEEN '$horaInicio' AND '$horaFin'
+              AND ((CAST(CASE WHEN ISNUMERIC(LEFT(F.FAR_HORA, 2))=1 THEN LEFT(F.FAR_HORA, 2) ELSE '0' END AS INT) % 12) + (CASE WHEN F.FAR_HORA LIKE '%p.%' THEN 12 ELSE 0 END)) BETWEEN $horaInicio AND $horaFin
             GROUP BY A.ART_KEY, A.ART_NOMBRE, T.TAB_NOMLARGO, P.PRE_UNIDAD, P.PRE_EQUIV
             ORDER BY SUM((F.FAR_CANTIDAD / CASE WHEN F.FAR_EQUIV = 0 THEN 1 ELSE F.FAR_EQUIV END) * F.FAR_COSPRO) DESC";
         }

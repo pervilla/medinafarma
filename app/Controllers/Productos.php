@@ -510,29 +510,35 @@ class Productos extends BaseController
         set_time_limit(300);
         $tipo = $this->request->getVar('tipo') ?: '01';
         
+        // Fijar zona horaria de Lima para que date() devuelva la hora local correcta
+        // independientemente de la configuración del servidor de producción (generalmente UTC)
+        date_default_timezone_set('America/Lima');
+        
         // Determinar el turno anterior
         $hora_actual = date('H:i:s');
-        $fecha_actual = date('d-m-Y');
+        // Formato yyyymmdd: unambiguo en SQL Server 2008 R2 sin importar SET LANGUAGE / SET DATEFORMAT
+        $fecha_actual = date('Ymd');
         
         if ($hora_actual >= '15:00:00' && $hora_actual < '23:59:59') {
             // Turno actual: Grupo 2 (3pm - 11pm)
             // Grupo anterior: Grupo 1 (Hoy, 6am - 3pm)
             $fecha_busqueda = $fecha_actual;
-            $hora_inicio = '06:00:00';
-            $hora_fin = '15:00:00';
+            $hora_inicio = 6;   // 6am  (DATEPART HOUR, 24h)
+            $hora_fin    = 14;  // 2:59pm → hasta antes de las 15h
             $turno_label = "GRUPO 1 (6AM - 3PM) - HOY " . date('d/m/Y');
         } else {
             // Turno actual: Grupo 1 (6am - 3pm) o Madrugada
             // Grupo anterior: Grupo 2 (Ayer, 3pm - 11pm)
-            $fecha_busqueda = date('d-m-Y', strtotime('-1 day'));
-            $hora_inicio = '15:00:00';
-            $hora_fin = '23:59:59';
+            $fecha_busqueda = date('Ymd', strtotime('-1 day'));
+            $hora_inicio = 15;  // 3pm  (DATEPART HOUR, 24h)
+            $hora_fin    = 23;  // 11pm
             $turno_label = "GRUPO 2 (3PM - 11PM) - AYER " . date('d/m/Y', strtotime('-1 day'));
         }
 
         $FacartModel = new FacartModel();
         $data['productos'] = $FacartModel->get_productos_control_inventario($tipo, $fecha_busqueda, $hora_inicio, $hora_fin);
-        $data['anio'] = $turno_label; // Reutilizamos variable para el título
+        $data['anio'] = $turno_label;
+
         
         $dompdf = new Dompdf();
         $dompdf->loadHtml(view('productos/index_pdf_mas_vendidos', $data));
@@ -540,4 +546,5 @@ class Productos extends BaseController
         $dompdf->render();
         $dompdf->stream();
     }
+
 }
