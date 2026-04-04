@@ -372,6 +372,12 @@
                                             <p>Flujo de Caja</p>
                                         </a>
                                     </li>
+                                    <li class="nav-item">
+                                        <a href="<?= site_url('reportes/regventa') ?>" class="nav-link">
+                                            <i class="fas fa-file-invoice nav-icon text-warning"></i>
+                                            <p>Registro de Ventas</p>
+                                        </a>
+                                    </li>
                                 </ul>
                             </li>
                             <?php } ?>

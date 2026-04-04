@@ -179,3 +179,12 @@ $routes->get('flujocaja/exportarexcel', 'FlujoCaja::exportarExcel');
 $routes->get('reportes/rentables', 'Reportes::rentables');
 $routes->post('reportes/get_data_rentables', 'Reportes::get_data_rentables');
 $routes->match(['get', 'post'], 'reportes/export_rentables_excel', 'Reportes::export_rentables_excel');
+
+/*
+ * -------------------------
+ * RUTAS REPORTE REGVENTA
+ * -------------------------
+ */
+$routes->get('reportes/regventa', 'Reportes\Regventa::index');
+$routes->post('reportes/regventa/generar', 'Reportes\Regventa::generar');
+
