@@ -20,7 +20,7 @@ class Regventa extends BaseController
     public function index()
     {
         $session = session();
-        $codcia = $session->get('codcia') ?: '01';
+        $codcia = $session->get('codcia') ?: '25';
         $server = $this->request->getVar('server') ?: 1;
 
         $data['vendedores'] = $this->regventaModel->get_vendedores($codcia, $server);
@@ -61,7 +61,7 @@ class Regventa extends BaseController
         ];
 
         $wsTexto = 'TIPO: ';
-        if ($params['TD_F']) $wsTexto .= '- FACTORA ';
+        if ($params['TD_F']) $wsTexto .= '- FACTURA ';
         if ($params['TD_B']) $wsTexto .= '- BOLETA ';
         if ($params['TD_N']) $wsTexto .= '- NCRE. ';
         if ($params['TD_D']) $wsTexto .= '- NDEB. ';
@@ -98,11 +98,18 @@ class Regventa extends BaseController
             $this->_sumar_totales($totales_global, $grupo['totales']);
         }
 
+        $nombres_sedes = [
+            1 => 'BOTICA MEDINAFARMA - CENTRO',
+            2 => 'BOTICA MEDINAFARMA - JUANJUICILLO',
+            3 => 'BOTICA MEDINAFARMA - P. MEZA',
+        ];
+
         $this->_generar_excel($filas_reporte, $totales_global, [
             'wsTexto' => $wsTexto,
             'fecha1'  => $fecha1_raw,
             'fecha2'  => $fecha2_raw,
-            'empresa' => $session->get('nombre_empresa') ?: 'MEDINAFARMA SAC',
+            'empresa' => $nombres_sedes[$server] ?? 'BOTICA MEDINAFARMA',
+            'server'  => $server
         ]);
     }
 
@@ -286,7 +293,7 @@ class Regventa extends BaseController
         ];
 
         // Cabeceras de la empresa y reporte
-        $sheet->setCellValue('A1', 'BOTICA ""' . str_replace(' SAC', '', $meta['empresa']) . '""');
+        $sheet->setCellValue('A1', $meta['empresa']);
         $sheet->setCellValue('A2', 'REGISTRO DE VENTAS (CIA)');
         $sheet->setCellValue('A3', $meta['wsTexto'] . ' DEL ' . $meta['fecha1'] . ' al ' . $meta['fecha2']);
         
@@ -364,7 +371,7 @@ class Regventa extends BaseController
             $sheet->getColumnDimension($col)->setWidth($w);
         }
 
-        $filename = 'REGVENTA_' . date('Ymd_His') . '.xlsx';
+        $filename = 'REGVENTA_' . $meta['server'] . '_' . date('Ymd_His') . '.xlsx';
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
         header('Cache-Control: max-age=0');

@@ -432,7 +432,7 @@ class FacartModel extends Model
         return $query->getResult();
     }
 
-    public function get_productos_control_inventario($tipo, $fecha, $horaInicio, $horaFin)
+      public function get_productos_control_inventario($tipo, $fecha, $horaInicio, $horaFin)
     {
         if ($tipo == '01') {
             // Opción 01: De los 200 productos que mayor rotación en un año, que los haya vendido el grupo anterior.
@@ -499,12 +499,57 @@ class FacartModel extends Model
               AND F.FAR_ESTADO2 <> 'L'
               AND A.ART_CODCIA = 25
               AND F.FAR_FECHA = '$fecha'
-              AND ((CAST(CASE WHEN ISNUMERIC(LEFT(F.FAR_HORA, 2))=1 THEN LEFT(F.FAR_HORA, 2) ELSE '0' END AS INT) % 12) + (CASE WHEN F.FAR_HORA LIKE '%p.%' THEN 12 ELSE 0 END)) BETWEEN $horaInicio AND $horaFin
+              AND ((CAST(CASE WHEN ISNUMERIC(LEFT(F.FAR_HORA, 2))=1 THEN LEFT(F.FAR_HORA, 2) ELSE '0' END AS INT) % 12) + (CASE WHEN FAR_HORA LIKE '%p.%' THEN 12 ELSE 0 END)) BETWEEN $horaInicio AND $horaFin
             GROUP BY A.ART_KEY, A.ART_NOMBRE, T.TAB_NOMLARGO, P.PRE_UNIDAD, P.PRE_EQUIV
             ORDER BY SUM((F.FAR_CANTIDAD / CASE WHEN F.FAR_EQUIV = 0 THEN 1 ELSE F.FAR_EQUIV END) * F.FAR_COSPRO) DESC";
         }
 
         $query = $this->db->query($sql);
+        return $query->getResult();
+    }
+
+    public function get_promedio_ventas_por_hora($fechaInicio, $fechaFin, $caja)
+    {
+        $db = $this->db;
+        if ($caja == 2) {
+            $db = $this->dbjj;
+        } elseif ($caja == 3) {
+            $db = $this->dbpm;
+        }
+
+        // Aseguramos formato YYYYMMDD para SQL Server
+        $f1 = date('Ymd', strtotime($fechaInicio));
+        $f2 = date('Ymd', strtotime($fechaFin));
+
+        $diff = date_diff(date_create($fechaInicio), date_create($fechaFin));
+        $numDias = $diff->format('%a') + 1;
+        if ($numDias <= 0) $numDias = 1;
+
+        $sql = "
+            WITH HourlySales AS (
+                SELECT 
+                    ((CAST(CASE WHEN ISNUMERIC(LEFT(FAR_HORA, 2))=1 THEN LEFT(FAR_HORA, 2) ELSE '0' END AS INT) % 12) + (CASE WHEN FAR_HORA LIKE '%p.%' THEN 12 ELSE 0 END)) AS Hora,
+                    COUNT(DISTINCT CAST(FAR_NUMSER AS VARCHAR) + '-' + CAST(FAR_NUMFAC AS VARCHAR)) AS TotalTransacciones
+                FROM FACART
+                WHERE FAR_TIPMOV = 10
+                  AND FAR_ESTADO <> 'E'
+                  AND FAR_FECHA BETWEEN '$f1' AND '$f2'
+                GROUP BY ((CAST(CASE WHEN ISNUMERIC(LEFT(FAR_HORA, 2))=1 THEN LEFT(FAR_HORA, 2) ELSE '0' END AS INT) % 12) + (CASE WHEN FAR_HORA LIKE '%p.%' THEN 12 ELSE 0 END))
+            )
+            SELECT 
+                H.Hora,
+                COALESCE(S.TotalTransacciones, 0) AS TotalTransacciones,
+                CAST(COALESCE(S.TotalTransacciones, 0) AS FLOAT) / $numDias AS PromedioTransacciones
+            FROM (
+                SELECT 0 AS Hora UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION 
+                SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10 UNION SELECT 11 UNION 
+                SELECT 12 UNION SELECT 13 UNION SELECT 14 UNION SELECT 15 UNION SELECT 16 UNION SELECT 17 UNION 
+                SELECT 18 UNION SELECT 19 UNION SELECT 20 UNION SELECT 21 UNION SELECT 22 UNION SELECT 23
+            ) H
+            LEFT JOIN HourlySales S ON H.Hora = S.Hora
+            ORDER BY H.Hora";
+
+        $query = $db->query($sql);
         return $query->getResult();
     }
 }

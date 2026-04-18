@@ -547,4 +547,26 @@ class Productos extends BaseController
         $dompdf->stream();
     }
 
+    public function createpdf_ventas_hora()
+    {
+        set_time_limit(300);
+        $fecha_inicio = $this->request->getVar('fecha_inicio');
+        $fecha_fin = $this->request->getVar('fecha_fin');
+        
+        $session = session();
+        $caja = $session->get('caja') ?: 1;
+        $locales = array('', 'CENTRO', 'JUANJUICILLO', 'PMEZA');
+        
+        $FacartModel = new FacartModel();
+        $data['reporte'] = $FacartModel->get_promedio_ventas_por_hora($fecha_inicio, $fecha_fin, $caja);
+        $data['fecha_inicio'] = $fecha_inicio;
+        $data['fecha_fin'] = $fecha_fin;
+        $data['local_nombre'] = $locales[$caja];
+        
+        $dompdf = new Dompdf();
+        $dompdf->loadHtml(view('productos/index_pdf_ventas_hora', $data));
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+        $dompdf->stream("Reporte_Ventas_Hora.pdf", ["Attachment" => false]);
+    }
 }

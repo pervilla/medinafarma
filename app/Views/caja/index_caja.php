@@ -36,6 +36,18 @@
                             <tbody></tbody>
                         </table>
                         </div>
+                    </div>
+                    <div class="card shadow">
+                        <div class="card-header">
+                            <h4 class="card-title">Reportes</h4>
+                        </div>
+                        <div class="card-body">
+                            <div id="contenedor-inventario"></div>
+                            <a class="btn btn-app btn-success" href="http://192.168.101.200/productos/createpdf_control_inventario?tipo=01" target="_blank">
+                                <i class="fas fa-clipboard-check text-success"></i> Inv.(Top 200 Rot.)</a>
+                            <a class="btn btn-app btn-info" href="http://192.168.101.200/productos/createpdf_control_inventario?tipo=02" target="_blank">
+                                <i class="fas fa-clipboard-check text-warning"></i> Inv.(Top 50 Costo)</a>
+                        </div>
                     </div>                    
                 </div>
             </div>
@@ -116,7 +128,7 @@
                     </div>
                     <div class="card-footer" style="display: flex; align-items: center;">
                         <button type="button" class="btn btn-<?=$color;?>" data-toggle="modal" style="margin-right: 10px;" data-target="#modal-movimiento">Agregar Movimientos de Caja</button>
-                        <div id="contenedor-inventario"></div>
+                        
                     </div>
                 </div>
                 <div id="caja_cerrar" class="card card-<?=$color;?> shadow" style="display: none">
@@ -414,7 +426,7 @@
         const nroCaja = dato.CAJ_NRO;
         const baseUrl = '<?= base_url() ?>';
         const url = `${baseUrl}/comprobante/inventario_bebidas/${cajaSession}/${nroCaja}`;
-        const botonHTML = `<a href="${url}" class="btn btn-warning" target="_blank" title="Imprimir inventario de bebidas para esta caja">
+        const botonHTML = `<a href="${url}" class="btn btn-app btn-warning" target="_blank" title="Imprimir inventario de bebidas para esta caja">
                 <i class="fa fa-shipping-fast"></i> Inventario Bebidas
             </a>`;
         $("#contenedor-inventario").html(botonHTML);

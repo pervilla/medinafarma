@@ -44,6 +44,7 @@
                                         <a class="dropdown-item" href="<?= site_url('productos/createlistaprecios') ?>"><i class='fas fa-file-pdf text-danger'></i> Lista de Precios</a>
                                         <div class="dropdown-divider"></div>
                                         <a class="dropdown-item" href="#" data-toggle="modal" data-target="#modal-mas-vendidos"><i class='fas fa-star text-warning'></i> Más Vendidos</a>
+                                        <a class="dropdown-item" href="#" data-toggle="modal" data-target="#modal-ventas-hora"><i class='fas fa-chart-bar text-info'></i> Promedio Ventas x Hora</a>
                                         <div class="dropdown-divider"></div>
                                         <a class="dropdown-item" href="<?= site_url('productos/createpdf_control_inventario?tipo=01') ?>" target="_blank"><i class='fas fa-clipboard-check text-success'></i> Control Ventas (Top 200 Rot.)</a>
                                         <a class="dropdown-item" href="<?= site_url('productos/createpdf_control_inventario?tipo=02') ?>" target="_blank"><i class='fas fa-clipboard-check text-success'></i> Control Ventas (Top 50 Costo)</a>
@@ -225,6 +226,36 @@
     </div>
 </div>
 
+<!-- Modal Promedio Ventas x Hora -->
+<div class="modal fade" id="modal-ventas-hora" tabindex="-1" role="dialog" aria-labelledby="modalVentasHoraLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalVentasHoraLabel">Reporte: Promedio de Ventas por Hora</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="formVentasHora">
+                    <div class="form-group">
+                        <label for="fecha_inicio">Fecha Inicio</label>
+                        <input type="date" class="form-control" id="fecha_inicio" name="fecha_inicio" value="<?= date('Y-m-d', strtotime('-7 days')) ?>" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="fecha_fin">Fecha Fin</label>
+                        <input type="date" class="form-control" id="fecha_fin" name="fecha_fin" value="<?= date('Y-m-d') ?>" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" id="btnGenerarReporteHora">Generar Reporte</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     document.getElementById('btnGenerarReporte').addEventListener('click', function() {
         var anio = document.getElementById('anio').value;
@@ -232,6 +263,14 @@
         var url = "<?= site_url('productos/createpdf_masvendidos') ?>?anio=" + anio + "&cantidad=" + cantidad;
         window.open(url, '_blank');
         $('#modal-mas-vendidos').modal('hide');
+    });
+
+    document.getElementById('btnGenerarReporteHora').addEventListener('click', function() {
+        var fecha_inicio = document.getElementById('fecha_inicio').value;
+        var fecha_fin = document.getElementById('fecha_fin').value;
+        var url = "<?= site_url('productos/createpdf_ventas_hora') ?>?fecha_inicio=" + fecha_inicio + "&fecha_fin=" + fecha_fin;
+        window.open(url, '_blank');
+        $('#modal-ventas-hora').modal('hide');
     });
 </script>
 

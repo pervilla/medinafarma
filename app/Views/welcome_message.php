@@ -73,8 +73,11 @@
 			<p class="login-box-msg">Cerrar sesión</p>  
 			<p class="login-box-msg"><?= $session->get('user_id')?$session->get('user_name'):""; ?></p>
 			<div class="row">
-				<div class="col-12">
+				<div class="col-6">
 				<button id="salir_session" type="button" class="btn btn-primary btn-block">Salir</button>
+				</div>
+				<div class="col-6">
+					<a href="<?= site_url('dashboard') ?>" class="btn btn-success btn-block">Home</a>
 				</div>
 			</div>                                    
 		</div>
@@ -135,32 +138,7 @@ $("#salir_session").click(function(){
   });
 });
 
-$("#caja_cnt").click(function(e) {
-    set_caja(e,1);
-});
-$("#caja_pmz").click(function(e) {
-    set_caja(e,3);
-});
-$("#caja_jjc").click(function(e) {
-    set_caja(e,2);
-});
-function set_caja(e,x) {
-    e.preventDefault();
-    $.ajax({
-        type: "POST",
-        url: "<?= site_url('caja/set_caja') ?>",
-        data: { 
-			caja:x ,opci: 'login'
-        },
-        success: function(result) {
-            window.location.href = "<?= site_url('caja/dia') ?>";
-    		return false;
-        },
-        error: function(result) {
-            alert('error');
-        }
-    });
-}
+
 
 </script>
 </body>
