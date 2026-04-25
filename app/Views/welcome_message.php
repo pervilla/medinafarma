@@ -26,47 +26,49 @@
 		if(empty($session->get('user_id'))){
 	?> 
 		<div class="card-body login-card-body">
-			<p class="login-box-msg">Identifíquese, para iniciar sesión</p>                                    
-			<div class="input-group mb-3">
-				<input type="text" class="form-control" id="usuario" placeholder="Usuario">
-				<div class="input-group-append">
-					<div class="input-group-text">
-						<span class="fas fa-users"></span>
+			<p class="login-box-msg">Identifíquese, para iniciar sesión</p>
+			<form id="form-login">
+				<div class="input-group mb-3">
+					<input type="text" class="form-control" id="usuario" placeholder="Usuario" enterkeyhint="next">
+					<div class="input-group-append" id="btn-search-user" style="cursor: pointer;">
+						<div class="input-group-text">
+							<span class="fas fa-users"></span>
+						</div>
 					</div>
 				</div>
-			</div>
-			<div class="input-group mb-3">
-				<input type="text" class="form-control" id="desc_usuario" placeholder="Descripción">
-				<div class="input-group-append">
-					<div class="input-group-text">
-						<span class="fas fa-user"></span>
+				<div class="input-group mb-3">
+					<input type="text" class="form-control" id="desc_usuario" placeholder="Descripción" readonly>
+					<div class="input-group-append">
+						<div class="input-group-text">
+							<span class="fas fa-user"></span>
+						</div>
 					</div>
 				</div>
-			</div>
-			<div class="input-group mb-3">
-				<input type="password" class="form-control" id="password" placeholder="Password">
-				<div class="input-group-append">
-					<div class="input-group-text">
-						<span class="fas fa-lock"></span>
+				<div class="input-group mb-3">
+					<input type="password" class="form-control" id="password" placeholder="Password" enterkeyhint="go">
+					<div class="input-group-append">
+						<div class="input-group-text">
+							<span class="fas fa-lock"></span>
+						</div>
 					</div>
 				</div>
-			</div>
-			
-			<div class="row">
-				<div class="col-8">
-					<div class="icheck-primary">
-              <input type="checkbox" id="remember" name="remember" value="1">
-              <label for="remember">
-                Mantener sesión activa
-              </label>
-            </div>
+				
+				<div class="row">
+					<div class="col-8">
+						<div class="icheck-primary">
+				  <input type="checkbox" id="remember" name="remember" value="1">
+				  <label for="remember">
+					Mantener sesión activa
+				  </label>
 				</div>
-				<!-- /.col -->
-				<div class="col-4">
-					<button type="button"  id="login" name="login" class="btn btn-primary btn-block">Iniciar</button>
+					</div>
+					<!-- /.col -->
+					<div class="col-4">
+						<button type="submit" id="login" name="login" class="btn btn-primary btn-block">Iniciar</button>
+					</div>
+					<!-- /.col -->
 				</div>
-				<!-- /.col -->
-			</div>                                    
+			</form>
 		</div>
 		<?php } else {?>
 		<div class="card-body login-card-body">
@@ -96,11 +98,10 @@
 <!-- AdminLTE App -->
 <script src="<?= site_url('dist/js/adminlte.js') ?>"></script>
 <script>
-    $('#usuario').keypress(function(event){
-    var keycode = (event.keyCode ? event.keyCode : event.which);
-    if(keycode == '13'){
+    function buscarUsuario() {
         var usuario = $("#usuario").val();
-        $.post("<?= site_url('login/user') ?>", {user: usuario}, function (result) {
+        if (usuario.length > 0) {
+            $.post("<?= site_url('login/user') ?>", {user: usuario}, function (result) {
                 if(result){
                     $("#desc_usuario").val(result);
                     $("#password").focus();
@@ -108,27 +109,47 @@
                     $("#usuario").focus();
                 }                
             });
+        }
     }
-});
-$('#password').keypress(function(event){
-    var keycode = (event.keyCode ? event.keyCode : event.which);
-    if(keycode == '13'){
-		$('#login').trigger('click');
-    }
-});
 
-$("#login").click(function () {
-	var password = $("#password").val(); var usuario = $("#usuario").val();
-	var remember = $("#remember").is(":checked") ? 1 : 0;
-	$.post("<?= site_url('login/auth') ?>", {pwd: password,user: usuario, remember: remember}, function (result) {
-		if(result){
-			$('#modal-login').modal('hide');
-			$(location).attr('href', '<?= site_url('dashboard') ?>')
-		}else{
-			$("#password").focus();
-		}                
-	});
-});
+    $('#usuario').keypress(function(event){
+        var keycode = (event.keyCode ? event.keyCode : event.which);
+        if(keycode == '13'){
+            event.preventDefault();
+            buscarUsuario();
+        }
+    });
+
+    $('#btn-search-user').click(function() {
+        buscarUsuario();
+    });
+
+    $('#password').keypress(function(event){
+        var keycode = (event.keyCode ? event.keyCode : event.which);
+        if(keycode == '13'){
+            // El submit del form se encargará del login
+        }
+    });
+
+    $("#form-login").submit(function (event) {
+        event.preventDefault();
+        var password = $("#password").val(); 
+        var usuario = $("#usuario").val();
+        var remember = $("#remember").is(":checked") ? 1 : 0;
+        
+        if (!usuario || !password) {
+            return;
+        }
+
+        $.post("<?= site_url('login/auth') ?>", {pwd: password, user: usuario, remember: remember}, function (result) {
+            if(result){
+                $('#modal-login').modal('hide');
+                window.location.href = '<?= site_url('dashboard') ?>';
+            }else{
+                $("#password").focus();
+            }                
+        });
+    });
 
 
 $("#salir_session").click(function(){
