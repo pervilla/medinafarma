@@ -231,6 +231,17 @@ class Importar extends BaseController
         if ($result && isset($result[0])) {
             $msgResult = (array)$result[0];
             $mensaje = reset($msgResult); // Obtener el primer valor de la primera fila
+            
+            if (is_numeric($mensaje)) {
+                $mensaje_html = "La compra ha sido procesada correctamente.<br><br>";
+                $mensaje_html .= "<b>Guía Interna:</b> <span class='badge badge-success' style='font-size: 1rem;'>1-" . $mensaje . "</span><br>";
+                $mensaje_html .= "<b>Proveedor:</b> " . ($comp->desRazonSocialEmis ?? 'N/A') . "<br>";
+                $mensaje_html .= "<b>Documento:</b> " . ($comp->NRO_FACTURA ?? 'N/A') . "<br>";
+                $mensaje_html .= "<b>Total:</b> S/ " . number_format($comp->TOTAL ?? 0, 2);
+                
+                return $this->response->setJSON(['status' => 200, 'message' => $mensaje_html]);
+            }
+            
             return $this->response->setJSON(['status' => 200, 'message' => $mensaje]);
         }
         return $this->response->setJSON(['status' => 500, 'message' => 'Error inesperado al procesar la compra']);
@@ -938,5 +949,26 @@ class Importar extends BaseController
         </html>';
         
         return $html;
+    }
+
+    public function searchInTransit()
+    {
+        $query = $this->request->getVar('query');
+        if (empty($query)) {
+            return $this->response->setJSON([]);
+        }
+
+        $db = \Config\Database::connect();
+        $builder = $db->table('IMPORT_FACT_DET d');
+        $builder->select('d.DES_PROD, d.CANTIDAD, d.PRECIO, f.NRO_FACTURA, f.FECHA, f.RUC, c.CLI_NOMBRE as PROVEEDOR');
+        $builder->join('IMPORT_FACT f', 'd.IDFACT = f.ID');
+        $builder->join('clientes c', 'f.RUC = c.CLI_RUC_ESPOSO AND c.cli_cp = \'P\'', 'left');
+        $builder->where('f.ESTADO', 0);
+        $builder->like('d.DES_PROD', $query);
+        $builder->orderBy('f.FECHA', 'DESC');
+        
+        $results = $builder->get()->getResult();
+
+        return $this->response->setJSON($results);
     }
 }

@@ -3,6 +3,161 @@
 /** @var CodeIgniter\View\View $this*/ ?>
 <?= $this->extend('templates/admin_template') ?>
 <?= $this->section('content') ?>
+<style>
+    /* Premium Table & UI Styles */
+    #table_detalle tbody tr:hover {
+        background-color: #4a4a4a !important; /* Color oscuro para contraste */
+        color: #ffffff !important;
+        transition: all 0.15s ease;
+        cursor: pointer;
+    }
+
+    /* Asegurar que el texto de las celdas cambie a blanco al hacer hover */
+    #table_detalle tbody tr:hover td {
+        color: #ffffff !important;
+    }
+
+    /* Evitar que los inputs pierdan legibilidad */
+    #table_detalle tbody tr:hover input {
+        color: #495057 !important;
+    }
+    
+    #table_detalle thead th {
+        position: sticky;
+        top: 0; /* Default if not in fixed layout */
+        z-index: 1000;
+        background-color: #fff;
+        border-bottom: 2px solid #dee2e6;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    /* Ajuste para AdminLTE layout-fixed */
+    .layout-fixed .main-header + .content-wrapper #table_detalle thead th {
+        top: 57px;
+    }
+
+    /* Floating Action Bar */
+    .floating-action-bar {
+        position: fixed;
+        bottom: -100px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        padding: 10px 20px;
+        border-radius: 15px;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .floating-action-bar.active {
+        bottom: 25px;
+    }
+
+    .floating-action-bar .btn {
+        border-radius: 8px;
+        padding: 6px 15px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+    }
+
+    .selection-info {
+        border-right: 1px solid #ddd;
+        padding-right: 15px;
+        margin-right: 10px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .selection-info .count {
+        font-weight: 800;
+        color: #007bff;
+        font-size: 1.1rem;
+    }
+
+    .selection-info .text {
+        font-size: 0.7rem;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    /* Animación de entrada para los botones de la tabla */
+    .btn-group-sm .btn {
+        transition: all 0.2s ease;
+    }
+    .btn-group-sm .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    /* Balance Indicator */
+    .balance-badge {
+        font-weight: 700;
+        border-radius: 50px;
+        padding: 5px 15px;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .balance-balanced {
+        background-color: #28a745 !important;
+        color: white;
+    }
+    .balance-unbalanced {
+        background-color: #dc3545 !important;
+        color: white;
+        animation: pulse-red 2s infinite;
+    }
+    @keyframes pulse-red {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+    /* Main Table Selection */
+    #table_documentos tbody tr {
+        cursor: pointer;
+        transition: all 0.1s ease;
+    }
+    #table_documentos tbody tr.selected {
+        background-color: rgba(0, 123, 255, 0.1) !important;
+        box-shadow: inset 4px 0 0 #007bff;
+    }
+
+    /* Financial Typography */
+    #table_detalle td {
+        vertical-align: middle !important;
+    }
+    .col-money {
+        font-family: 'Monaco', 'Consolas', monospace;
+        font-weight: 600;
+        text-align: right;
+    }
+    
+    /* Empty State */
+    #empty_detail_state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 250px;
+        background: #f8f9fa;
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        margin: 20px;
+    }
+</style>
+
 <div class="container-fluid">
     <div class="content-header">
     </div>
@@ -14,33 +169,35 @@
                 <div class="card-header">
                     <div class="row align-items-center w-100 mx-0">
                         <!-- Título -->
-                        <div class="col-6">
-                            <h3 class="card-title mb-0">FACTURA</h3>
+                        <div class="col-md-3">
+                            <h3 class="card-title mb-0 font-weight-bold text-primary"><i class="fas fa-list-ul"></i> LISTADO FACTURAS</h3>
                         </div>
                         <!-- Grupo de herramientas -->
-                        <div class="col-6">
-                            <div class="card-tools">
-                                <div class="input-group input-group-sm">
-                                    <!-- Botones Izquierda -->
-                                    <div class="input-group-prepend">
-                                        <button class="btn btn-primary btn-sm" type="button" data-toggle="modal" data-target="#importarSireModal">Importar Sire</button>
-                                        <button class="btn btn-primary btn-sm" type="button" data-toggle="modal" data-target="#uploadModal">Upload</button>
-                                        <button class="btn btn-dark btn-sm" type="button"><i class="fa fa-qrcode"></i></button>
-                                    </div>
-
-                                    <!-- Select Proveedor -->
-                                    <label for="b_cliente" class="sr-only">Buscar Proveedor</label>
-                                    <select id="b_cliente" name="b_cliente" class="form-control form-control-sm" data-placeholder="Buscar Proveedor" data-allow-clear="1" title="Seleccionar Proveedor"></select>
-
+                        <div class="col-md-9">
+                            <div class="card-tools float-right w-100">
+                                <div class="input-group input-group-sm justify-content-end">
                                     <!-- Rango de Fechas -->
-                                    <div id="reportrange" class="form-control form-control-sm" aria-label="Rango de Fechas" role="button" title="Seleccionar Rango de Fechas">
-                                        <i class="fa fa-calendar"></i>&nbsp;
+                                    <div id="reportrange" class="form-control form-control-sm shadow-sm" style="max-width: 220px;" aria-label="Rango de Fechas" role="button" title="Seleccionar Rango de Fechas">
+                                        <i class="fa fa-calendar text-primary"></i>&nbsp;
                                         <span></span> <i class="fa fa-caret-down"></i>
                                     </div>
 
-                                    <!-- Botón Buscar -->
+                                    <!-- Select Proveedor -->
+                                    <select id="b_cliente" name="b_cliente" class="form-control form-control-sm ml-1 shadow-sm" style="max-width: 250px;" data-placeholder="Buscar Proveedor" data-allow-clear="1" title="Seleccionar Proveedor"></select>
+
+                                    <!-- Botones de Acción -->
                                     <div class="input-group-append">
-                                        <button id="bListarDoc" class="btn btn-danger btn-sm" type="button">Buscar</button>
+                                        <button id="bListarDoc" class="btn btn-danger shadow-sm ml-1 px-3 font-weight-bold" type="button">
+                                            <i class="fas fa-search"></i> BUSCAR
+                                        </button>
+                                        
+                                        <div class="mx-2 border-left" style="height: 24px; margin-top: 4px;"></div>
+                                        
+                                        <button class="btn btn-dark shadow-sm" type="button" data-toggle="modal" data-target="#modal-transit-search" title="Buscar productos en facturas pendientes">
+                                            <i class="fas fa-truck-loading"></i> <span class="d-none d-lg-inline">En Tránsito</span>
+                                        </button>
+                                        <button class="btn btn-primary ml-1" id="bimport" type="button" data-toggle="modal" data-target="#uploadModal">XML</button>
+                                        <button class="btn btn-info ml-1" id="bsire" type="button" data-toggle="modal" data-target="#importarSireModal">Sire</button>
                                     </div>
                                 </div>
                             </div>
@@ -72,51 +229,49 @@
 
     <div class="row">
         <div class="col-12">
-            <div id="caja_detalle" class="card shadow">
-                <div class="card-header">
+            <div id="caja_detalle" class="card shadow" style="display: none;">
+                <div class="card-header d-flex align-items-center">
                     <h3 class="card-title">DETALLE FACTURA</h3>
-                    <div class="card-tools">
-                        <div class="input-group input-group-sm" style="width: 150px;">
-                            <div class="input-group-prepend">
-                                <button class="btn btn-default">
-                                    <b>S/.</b>
-                                </button>
-                            </div>
-                            <input type="text" id="table_total" name="table_total" class="form-control float-right" placeholder="Total">
-                            <div class="input-group-append">
-                                <button class="btn btn-default">
-                                    <i class="fa fa-cart-plus"></i>
-                                </button>
-                            </div>
+                    <div id="balance_indicator" class="balance-badge badge-secondary ml-3" style="display: none;">
+                        <i class="fas fa-sync fa-spin"></i> <span>Cargando...</span>
+                    </div>
+                    <div class="card-tools ml-auto">
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-primary shadow-sm" type="button" id="btn_promedio" title="Promediar"><i class="fas fa-percentage"></i> <span class="d-none d-lg-inline">Promedio</span></button>
+                            <button class="btn btn-info shadow-sm" type="button" id="btn_descuento" title="Descuento B a A"><i class="fas fa-tags"></i> <span class="d-none d-lg-inline">Desc.B-A</span></button>
+                            <button class="btn btn-warning shadow-sm" type="button" id="btn_excluir" title="Excluir"><i class="fas fa-ban"></i> <span class="d-none d-lg-inline">Excluir A</span></button>
+                            <button class="btn btn-dark shadow-sm" type="button" id="btn_procesar_reglas" title="Extraer Lote y Vencimiento"><i class="fas fa-magic"></i> <span class="d-none d-lg-inline">Reglas</span></button>
+                            <button class="btn btn-secondary shadow-sm" type="button" id="btn_flete" title="Flete"><i class="fas fa-truck"></i> <span class="d-none d-lg-inline">Flete</span></button>
+                            <button class="btn btn-danger shadow-sm" type="button" id="btn_eliminar" title="Eliminar"><i class="fas fa-trash"></i> <span class="d-none d-lg-inline">Eliminar</span></button>
                         </div>
                     </div>
                 </div>
-                <div class="card-body">
+                <div class="card-body bg-light">
                     <div class="row">
                         <div class="col-12">
-                            <div class="input-group input-group-sm">
+                            <div class="input-group input-group-sm shadow-sm">
                                 <div class="input-group-prepend">
-                                    <span class="input-group-text"><i class="fas fa-file"></i></span>
+                                    <span class="input-group-text bg-white"><i class="fas fa-file-invoice"></i> &nbsp; <span class="d-none d-md-inline">Datos Factura</span></span>
                                 </div>
-                                <input type="text" class="form-control" id="fac_cod" name="fac_cod" placeholder="Codigo" aria-label="Codigo">
-                                <input type="text" class="form-control" id="fac_cli" name="fac_cli" placeholder="Cliente" aria-label="Cliente">
-                                <input type="text" class="form-control" id="fac_ser" name="fac_ser" placeholder="Serie" aria-label="Serie">
-                                <input type="text" class="form-control" id="fac_num" name="fac_num" placeholder="Numero" aria-label="Numero">
-                                <input type="text" class="form-control" id="fac_tot" name="fac_tot" placeholder="Total" aria-label="Total">
+                                <input type="text" class="form-control" id="fac_cod" name="fac_cod" placeholder="RUC" title="RUC Proveedor">
+                                <input type="text" class="form-control w-25" id="fac_cli" name="fac_cli" placeholder="Proveedor" title="Nombre Proveedor">
+                                <input type="text" class="form-control" id="fac_ser" name="fac_ser" placeholder="Serie" title="Serie">
+                                <input type="text" class="form-control" id="fac_num" name="fac_num" placeholder="Número" title="Número">
+                                
+                                <div class="input-group-prepend ml-2">
+                                    <span class="input-group-text bg-primary text-white"><i class="fas fa-file-import"></i> &nbsp; <span class="d-none d-md-inline">Total Fact.</span></span>
+                                </div>
+                                <input type="text" class="form-control font-weight-bold" id="fac_tot" name="fac_tot" placeholder="Total Factura">
+                                
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text bg-info text-white"><i class="fas fa-calculator"></i> &nbsp; <span class="d-none d-md-inline">Total Tabla</span></span>
+                                </div>
+                                <input type="text" class="form-control font-weight-bold" id="table_total" name="table_total" placeholder="Total Tabla" readonly>
 
-                                <div class="input-group-append">
-                                    <button class="btn btn-default">
-                                        <i class="fa fa-cart-plus"></i>
+                                <div class="input-group-append ml-2">
+                                    <button class="btn btn-success shadow font-weight-bold" type="button" id="btn_crear_compra">
+                                        <i class="fas fa-check-double"></i> &nbsp; INGRESAR COMPRA
                                     </button>
-                                </div>
-                                <div class="input-group-append">
-                                    <button class="btn bg-primary" type="button" id="btn_promedio">Promedio</button>
-                                    <button class="btn bg-info" type="button" id="btn_descuento">Desc.B-A</button>
-                                    <button class="btn btn-warning" type="button" id="btn_excluir">Excluir A</button>
-                                    <button class="btn btn-dark" type="button" id="btn_procesar_reglas" title="Extraer Lote y Vencimiento"><i class="fas fa-magic"></i> Reglas</button>
-                                    <button class="btn btn-secondary" type="button" id="btn_flete">A.Flete</button>
-                                    <button class="btn btn-danger" type="button" id="btn_eliminar">Elim.Item</button>
-                                    <button class="btn btn-success btn-outline" type="button" id="btn_crear_compra">Ingresar Compra</button>
                                 </div>
                             </div>
                         </div>
@@ -135,11 +290,11 @@
                                 <th>ACT</th>
                                 <th>DESCRIPCION MEDINA</th>
                                 <th>C.MED</th>
-                                <th>FAR_EQUIV</th>
+                                <th>EQUIV</th>
                                 <th>CANT</th>
-                                <th>PU</th>
+                                <th class="text-right">PU</th>
                                 <th>CoAn</th>
-                                <th>TOTAL</th>
+                                <th class="text-right">TOTAL</th>
                                 <th>A</th>
                                 <th>B</th>
                             </tr>
@@ -151,9 +306,33 @@
                 </div>
                 <div class="card-footer"></div>
             </div>
+
+            <!-- Empty State Container -->
+            <div id="empty_detail_card" class="card shadow-none border-0">
+                <div id="empty_detail_state">
+                    <i class="fas fa-file-invoice fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted font-weight-light">No hay factura seleccionada</h4>
+                    <p class="text-secondary">Haz clic en "Ver" en la lista superior para cargar el detalle y procesar el ingreso.</p>
+                </div>
+            </div>
         </div>
     </div>
 
+
+</div>
+
+<!-- Floating Action Bar -->
+<div id="floating_actions" class="floating-action-bar">
+    <div class="selection-info">
+        <span class="count" id="selected_count">0</span>
+        <span class="text">Seleccionados</span>
+    </div>
+    <button class="btn bg-primary btn-sm" type="button" onclick="$('#btn_promedio').click()"><i class="fas fa-percentage"></i> Promedio</button>
+    <button class="btn bg-info btn-sm" type="button" onclick="$('#btn_descuento').click()"><i class="fas fa-tags"></i> Desc.B-A</button>
+    <button class="btn btn-warning btn-sm" type="button" onclick="$('#btn_excluir').click()"><i class="fas fa-ban"></i> Excluir</button>
+    <button class="btn btn-danger btn-sm" type="button" onclick="$('#btn_eliminar').click()"><i class="fas fa-trash"></i> Eliminar</button>
+    <div style="width: 1px; height: 30px; background: #ddd; margin: 0 5px;"></div>
+    <button class="btn btn-success btn-sm" type="button" onclick="$('#btn_crear_compra').click()"><i class="fas fa-check-double"></i> Ingresar Compra</button>
 </div>
 
 
@@ -262,6 +441,56 @@
 </div>
 
 <!-- Modal -->
+<!-- Modal Buscar en Tránsito -->
+<div class="modal fade" id="modal-transit-search" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title font-weight-bold"><i class="fas fa-search-location"></i> Localizador de Productos en Tránsito</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body bg-light">
+                <div class="input-group mb-4 shadow-sm">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text bg-white"><i class="fas fa-search text-primary"></i></span>
+                    </div>
+                    <input type="text" id="transit_search_input" class="form-control form-control-lg" placeholder="Escribe el nombre del producto o código para buscar en facturas pendientes...">
+                </div>
+                
+                <div id="transit_results_container" class="card shadow-none border" style="max-height: 500px; overflow-y: auto;">
+                    <table class="table table-hover table-striped table-valign-middle mb-0" id="table_transit_results">
+                        <thead class="bg-white" style="position: sticky; top: 0; z-index: 1;">
+                            <tr>
+                                <th>PRODUCTO</th>
+                                <th class="text-center">CANT.</th>
+                                <th class="text-right">PRECIO</th>
+                                <th>PROVEEDOR</th>
+                                <th>FACTURA</th>
+                                <th>FECHA</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="7" class="text-center text-muted p-5">
+                                    <i class="fas fa-keyboard fa-3x mb-3 d-block opacity-50"></i>
+                                    Inicia la búsqueda escribiendo el nombre de un producto arriba...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer bg-light">
+                <p class="small text-muted mb-0"><i class="fas fa-info-circle"></i> Solo se muestran resultados de comprobantes que <b>aún no han sido ingresados</b> al sistema.</p>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="modal-equivalencia" data-keyboard="false" style="display: none;" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -460,13 +689,57 @@
         initializeDateRangePicker('#reportrange2', start, end, function(start, end) {
             updateDateRangeText(start, end, '#reportrange2 span');
         });
-        // Inicializar un segundo calendario (ejemplo)
-        initializeDateRangePicker('#reportrange3', start, end, function(start, end) {
-            updateDateRangeText(start, end, '#reportrange3 span');
+        // Inicializar el tercer calendario (Sire) con lógica de rango mensual obligatorio
+        var startSire = moment().startOf('month');
+        var endSire = moment().endOf('month');
+        
+        $('#reportrange3').daterangepicker({
+            startDate: startSire,
+            endDate: endSire,
+            showDropdowns: true,
+            linkedCalendars: false,
+            ranges: {
+                'Este Mes': [moment().startOf('month'), moment().endOf('month')],
+                'Mes Pasado': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+                'Hace 2 Meses': [moment().subtract(2, 'month').startOf('month'), moment().subtract(2, 'month').endOf('month')],
+                'Hace 3 Meses': [moment().subtract(3, 'month').startOf('month'), moment().subtract(3, 'month').endOf('month')]
+            },
+            locale: {
+                "format": "DD/MM/YYYY",
+                "separator": " - ",
+                "applyLabel": "Aplicar",
+                "cancelLabel": "Cancelar",
+                "fromLabel": "Desde",
+                "toLabel": "Hasta",
+                "customRangeLabel": "Otro Mes",
+                "weekLabel": "W",
+                "daysOfWeek": ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa"],
+                "monthNames": ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"],
+                "firstDay": 1
+            }
+        }, function(start, end) {
+            // Forzar que el rango sea del 1 al último día del mes seleccionado
+            var s = start.clone().startOf('month');
+            var e = end.clone().endOf('month');
+            
+            updateDateRangeText(s, e, '#reportrange3 span');
+            
+            // Sincronizar el picker internamente con el ajuste mensual
+            setTimeout(function() {
+                var drp = $('#reportrange3').data('daterangepicker');
+                drp.setStartDate(s);
+                drp.setEndDate(e);
+            }, 100);
         });
+
+        updateDateRangeText(startSire, endSire, '#reportrange3 span');
 
         // Evento click del botón #bimpsire
         $(document).ready(function() {
+            // Monitorizar cambios en fac_tot para actualizar balance
+            $('#fac_tot').on('input change', function() {
+                updateBalance();
+            });
             $('#bimpsire').on('click', function() {
                 var $btn = $(this); // Guardar referencia al botón
                 var codEstado = $('#codEstado').val().trim();
@@ -778,7 +1051,11 @@ if (response.status === 200) {
                         action: function() {
                             $.post('importar/eliminar_compra', { id: id }, function(response) {
                                 if (response.status === 200) {
-                                    Swal.fire("Éxito", response.message, "success");
+                                    Swal.fire({
+                                        title: "¡Eliminado!",
+                                        text: response.message,
+                                        icon: "success"
+                                    });
                                     tablePrinFact.ajax.reload(null, false);
                                 } else if (response.status === 300) {
                                     Swal.fire({
@@ -807,6 +1084,13 @@ if (response.status === 200) {
 
             var data = tablePrinFact.row($(this).parents('tr')).data();
             idfact = data['ID'];
+            idscmb = []; // Limpiar selección
+            $('#floating_actions').removeClass('active');
+            
+            // Mostrar panel de detalle y ocultar empty state
+            $('#caja_detalle').fadeIn();
+            $('#empty_detail_card').hide();
+
             dtablefac.ajax.reload(null, false);
             $("#imp_ruc_f").val(data['CLI_CODCLIE']);
             $("#fac_cod").val(data['CLI_CODCLIE']);
@@ -814,6 +1098,7 @@ if (response.status === 200) {
             $("#fac_ser").val(data['ALL_NUMSER']);
             $("#fac_num").val(data['ALL_NUMFACT']);
             $("#fac_tot").val(data['TOTAL']);
+            updateBalance();
             if ($(this).hasClass('selected')) {
                 $(this).removeClass('selected');
             } else {
@@ -889,20 +1174,25 @@ if (response.status === 200) {
                 },
                 {
                     data: 'PRECIO',
-                    render: $.fn.dataTable.render.number(',', '.', 2, 'S/. ')
+                    className: 'col-money',
+                    render: function(data, type, row, meta) {
+                        return '<b>S/ ' + (Math.round(data * 1000) / 1000).toFixed(3) + '</b>';
+                    }
                 },
                 {
                     data: 'ARM_COSPRO',
+                    className: 'col-money text-muted',
                     render: function(data, type, row, meta) {
-                        return (Math.round(data * row.FAR_EQUIV * 1000) / 1000);
+                        return (Math.round(data * row.FAR_EQUIV * 1000) / 1000).toFixed(3);
                     }
 
                 },
                 {
                     data: 'TOTAL_SIST',
+                    className: 'col-money',
                     render: function(data, type, row, meta) {
-                        return "<input type='text' id='TOT_" + row.ID + "' class='form-control form-control-sm rowTotal' style='width:60px;' value='" +
-                            Math.round(data * 1000) / 1000 + "'>"
+                        return "<input type='text' id='TOT_" + row.ID + "' class='form-control form-control-sm rowTotal text-right font-weight-bold' style='width:80px; border-color:#17a2b8;' value='" +
+                            (Math.round(data * 1000) / 1000).toFixed(2) + "'>"
                     }
                 },
                 {
@@ -934,6 +1224,7 @@ if (response.status === 200) {
                     .data()
                     .reduce((a, b) => intVal(a) + intVal(b), 0);
                 $("#table_total").val(total.toFixed(2));
+                updateBalance();
             },
             fnRowCallback: function(nRow, aData, iDisplayIndex, iDisplayIndexFull) {
                 var min = aData.ARM_COSPRO * aData.FAR_EQUIV * 0.85;
@@ -970,10 +1261,19 @@ if (response.status === 200) {
         });
         $('#table_detalle tbody').on('click', '.check_a', function() {
             var ids = [];
-            $('input[name="group1"]:checked').each(function() {
+            var $checks = $('input[name="group1"]:checked');
+            $checks.each(function() {
                 ids.push(this.value);
-                idscmb = ids;
             });
+            idscmb = ids;
+
+            // Actualizar barra flotante
+            if (ids.length > 0) {
+                $('#selected_count').text(ids.length);
+                $('#floating_actions').addClass('active');
+            } else {
+                $('#floating_actions').removeClass('active');
+            }
         });
 
         $('#table_detalle tbody').on('click', '.check_b', function() {
@@ -1391,7 +1691,11 @@ if (response.status === 200) {
                                     codclie: $("#fac_cod").val()
                                 }, function(response) {
                                     if (response.status === 200) {
-                                        Swal.fire("Éxito", response.message, "success");
+                                        Swal.fire({
+                                            title: "¡Éxito!",
+                                            html: response.message,
+                                            icon: "success"
+                                        });
                                         tablePrinFact.ajax.reload(null, false);
                                         // También recargar detalle o limpiar si es necesario
                                         if (typeof dtablefac !== 'undefined') dtablefac.ajax.reload(null, false);
@@ -1481,6 +1785,69 @@ if (response.status === 200) {
                 $(this).val('0');
             }
         });
+    });
+
+    function updateBalance() {
+        var totalFactura = parseFloat($('#fac_tot').val()) || 0;
+        var totalTabla = parseFloat($('#table_total').val()) || 0;
+        var diferencia = totalFactura - totalTabla;
+        
+        var $indicator = $('#balance_indicator');
+        $indicator.show();
+        
+        if (Math.abs(diferencia) < 0.01) {
+            $indicator.removeClass('balance-unbalanced badge-secondary').addClass('balance-balanced');
+            $indicator.html('<i class="fas fa-check-circle"></i> ¡Cuadrado!');
+            $('#fac_tot, #table_total').css('border-color', '#28a745');
+        } else {
+            $indicator.removeClass('balance-balanced badge-secondary').addClass('balance-unbalanced');
+            $indicator.html('<i class="fas fa-exclamation-triangle"></i> Diferencia: S/ ' + diferencia.toFixed(2));
+            $('#fac_tot, #table_total').css('border-color', '#dc3545');
+        }
+    }
+
+    // Lógica para búsqueda en tránsito
+    $('#transit_search_input').on('keyup', function() {
+        var query = $(this).val();
+        if (query.length < 3) return;
+
+        $.post('importar/searchInTransit', { query: query }, function(data) {
+            var html = '';
+            if (data.length === 0) {
+                html = '<tr><td colspan="7" class="text-center p-4"><i class="fas fa-times-circle text-danger mb-2 d-block"></i> No se encontraron productos en tránsito con ese nombre.</td></tr>';
+            } else {
+                data.forEach(function(item) {
+                    html += '<tr>';
+                    html += '<td><div class="font-weight-bold">' + item.DES_PROD + '</div><small class="text-muted">' + item.RUC + '</small></td>';
+                    html += '<td class="text-center"><span class="badge badge-info p-2" style="font-size:0.9rem;">' + item.CANTIDAD + '</span></td>';
+                    html += '<td class="text-right font-weight-bold">S/ ' + parseFloat(item.PRECIO).toFixed(3) + '</td>';
+                    html += '<td><small class="text-uppercase">' + (item.PROVEEDOR || 'Desconocido') + '</small></td>';
+                    html += '<td><span class="badge badge-light border text-primary">' + item.NRO_FACTURA + '</span></td>';
+                    html += '<td>' + moment(item.FECHA).format('DD/MM/YYYY') + '</td>';
+                    html += '<td class="text-right"><button class="btn btn-sm btn-primary shadow-sm btn-go-to-fact" data-fact="' + item.NRO_FACTURA + '"><i class="fas fa-eye"></i></button></td>';
+                    html += '</tr>';
+                });
+            }
+            $('#table_transit_results tbody').html(html);
+        });
+    });
+
+    $(document).on('click', '.btn-go-to-fact', function() {
+            var nroFact = $(this).data('fact');
+            $('#modal-transit-search').modal('hide');
+            
+            // Buscar en la tabla principal
+            tablePrinFact.search(nroFact).draw();
+            
+            // Mostrar notificación
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                icon: 'info',
+                title: 'Filtrado por factura: ' + nroFact
+            });
     });
 </script>
 
