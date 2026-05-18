@@ -299,9 +299,135 @@ class AIMatching extends BaseController
     }
     
     // Get statistics
-    public function stats()
+    // Dashboard de sugerencias de subgrupos
+    public function subgrupos()
     {
-        $stats = $this->matchingModel->getMatchingStats();
-        return $this->response->setJSON($stats);
+        $db = \Config\Database::connect();
+        
+        $res = $db->query("SELECT COUNT(*) as total FROM ARTI WHERE (ART_SUBGRU IS NULL OR ART_SUBGRU = 0) AND ART_SITUACION = 0")->getRow();
+        $data['sin_subgrupo'] = $res->total;
+        
+        $res = $db->query("SELECT COUNT(*) as total FROM TABLAS WHERE TAB_TIPREG = 129")->getRow();
+        $data['total_subgrupos'] = $res->total;
+        
+        $data['menu']['p'] = 50;
+        $data['menu']['i'] = 52; // Asumiendo un nuevo ID de menú
+        
+        return view('ai_matching/subgrupos', $data);
+    }
+    
+    // Obtener sugerencias via AJAX
+    public function get_subgrupo_suggestions()
+    {
+        $products = $this->matchingModel->getUncategorizedProducts(50);
+        $subgroups = $this->matchingModel->getSubgroups();
+        
+        $results = [];
+        foreach ($products as $product) {
+            $bestMatch = null;
+            $highestScore = 0;
+            
+            // Preparar data del producto (con sinónimos)
+            $productNameNorm = aplicar_sinonimos($product['ART_NOMBRE']);
+            $productConc = extraer_concentracion($product['ART_NOMBRE']);
+            
+            foreach ($subgroups as $sub) {
+                $subNameNorm = normalizar_producto($sub['TAB_NOMLARGO']);
+                if (empty($subNameNorm)) continue;
+                
+                $subConc = extraer_concentracion($sub['TAB_NOMLARGO']);
+
+                $score = 0;
+                
+                // 1. Coincidencia de nombre
+                if (strpos($productNameNorm, $subNameNorm) !== false || strpos($subNameNorm, $productNameNorm) !== false) {
+                    $score = 0.85;
+                } else {
+                    $pWords = explode(' ', $productNameNorm);
+                    $sWords = explode(' ', $subNameNorm);
+                    $matches = array_intersect($pWords, $sWords);
+                    
+                    if (count($matches) > 0) {
+                        $score = count($matches) / max(count($pWords), count($sWords));
+                        if ($pWords[0] === $sWords[0]) $score += 0.2;
+                    }
+                }
+                
+                // 2. VALIDACIÓN DE CONCENTRACIÓN (Factor Crítico)
+                if ($score > 0.5) {
+                    if (!empty($productConc) && !empty($subConc)) {
+                        // Si tienen concentraciones y no son iguales, penalizar fuertemente
+                        if ($productConc !== $subConc) {
+                            $score = 0.1; // Baja a casi cero
+                        } else {
+                            $score = max($score, 0.95); // Sube si coinciden
+                        }
+                    } elseif (!empty($subConc) && empty($productConc)) {
+                        // Si el subgrupo exige concentración pero el producto no la tiene
+                        $score -= 0.3;
+                    }
+                }
+                
+                if ($score > $highestScore) {
+                    $highestScore = min(1.0, $score);
+                    $bestMatch = $sub;
+                }
+            }
+            
+            if ($highestScore > 0.3) { // Umbral mínimo
+                $results[] = [
+                    'art_key' => $product['ART_KEY'],
+                    'art_nombre' => $product['ART_NOMBRE'],
+                    'suggested_id' => $bestMatch['TAB_NUMTAB'],
+                    'suggested_name' => $bestMatch['TAB_NOMLARGO'],
+                    'score' => round($highestScore * 100, 2)
+                ];
+            } else {
+                $results[] = [
+                    'art_key' => $product['ART_KEY'],
+                    'art_nombre' => $product['ART_NOMBRE'],
+                    'suggested_id' => null,
+                    'suggested_name' => 'Sin sugerencia clara',
+                    'score' => 0
+                ];
+            }
+        }
+        
+        return $this->response->setJSON($results);
+    }
+    
+    // Aplicar cambio
+    public function apply_subgrupo()
+    {
+        $artKey = $this->request->getPost('art_key');
+        $subgruId = $this->request->getPost('subgru_id');
+        
+        if ($this->matchingModel->updateProductSubgroup($artKey, $subgruId)) {
+            return $this->response->setJSON(['success' => true]);
+        }
+        return $this->response->setJSON(['success' => false]);
+    }
+
+    // Obtener todos los subgrupos para gestión
+    public function get_subgroups_master()
+    {
+        $subgroups = $this->matchingModel->getSubgroups();
+        return $this->response->setJSON($subgroups);
+    }
+    
+    // Actualizar nombre en el maestro (TABLAS)
+    public function update_subgroup_master()
+    {
+        $id = $this->request->getPost('id');
+        $newName = strtoupper(trim($this->request->getPost('name')));
+        
+        $db = \Config\Database::connect();
+        $res = $db->query("
+            UPDATE TABLAS 
+            SET TAB_NOMLARGO = ? 
+            WHERE TAB_TIPREG = 129 AND TAB_NUMTAB = ?
+        ", [$newName, $id]);
+        
+        return $this->response->setJSON(['success' => $res]);
     }
 }

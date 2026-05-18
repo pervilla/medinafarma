@@ -198,6 +198,9 @@
                                         </button>
                                         <button class="btn btn-primary ml-1" id="bimport" type="button" data-toggle="modal" data-target="#uploadModal">XML</button>
                                         <button class="btn btn-info ml-1" id="bsire" type="button" data-toggle="modal" data-target="#importarSireModal">Sire</button>
+                                        <button class="btn btn-success ml-1" id="btn_sync_manual" type="button" title="Sincronizar facturas ya ingresadas manualmente">
+                                            <i class="fas fa-sync-alt"></i> <span class="d-none d-md-inline">Sincronizar Manuales</span>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -1837,7 +1840,9 @@ if (response.status === 200) {
             $('#modal-transit-search').modal('hide');
             
             // Buscar en la tabla principal
-            tablePrinFact.search(nroFact).draw();
+            if (typeof dtablefac !== 'undefined') {
+                dtablefac.search(nroFact).draw();
+            }
             
             // Mostrar notificación
             Swal.fire({
@@ -1848,6 +1853,44 @@ if (response.status === 200) {
                 icon: 'info',
                 title: 'Filtrado por factura: ' + nroFact
             });
+        });
+
+        // Evento para sincronizar facturas manuales (Delegación global)
+        $(document).on('click', '#btn_sync_manual', function() {
+            Swal.fire({
+                title: '¿Sincronizar ingresos manuales?',
+                text: "El sistema buscará facturas pendientes que ya hayan sido ingresadas manualmente al inventario y las marcará como procesadas.",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, sincronizar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Sincronizando...',
+                        allowOutsideClick: false,
+                        didOpen: () => { Swal.showLoading(); }
+                    });
+
+                    $.post("<?= site_url('importar/verificar_ingresos_manuales') ?>", function(data) {
+                        if (data.status === 200) {
+                            if (typeof dtablefac !== 'undefined') {
+                                dtablefac.ajax.reload(null, false);
+                            }
+                            Swal.fire({
+                                icon: data.actualizados > 0 ? 'success' : 'info',
+                                title: 'Sincronización terminada',
+                                text: data.mensaje,
+                                footer: data.detalles.length > 0 ? 'Documentos: ' + data.detalles.join(', ') : ''
+                            });
+                        } else {
+                            Swal.fire("Error", "Hubo un problema al sincronizar.", "error");
+                        }
+                    });
+                }
+        });
     });
 </script>
 

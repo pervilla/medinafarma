@@ -57,67 +57,69 @@ class ArticuloModel extends Model
     }
     public function get_articulos_det($busqueda)
     {
-        // Validar entrada: si está vacía, devolver un resultado vacío
-        if (empty(trim($busqueda))) {
-            return []; // Devuelve un array vacío
-        }
-
-        // Convertir la búsqueda a mayúsculas y reemplazar caracteres especiales
-        $busqueda = strtoupper($busqueda);
-        $busqueda = str_replace(
-            ['Á', 'É', 'Í', 'Ó', 'Ú', 'Ñ'],
-            ['A', 'E', 'I', 'O', 'U', 'Ñ'],
-            $busqueda
-        );
-
-        // Limpiar caracteres no alfanuméricos pero conservar "Ñ" y "ñ"
-        $busqueda = preg_replace('/[^A-Za-z0-9 ñÑ]/', '', $busqueda);
-
-        // Dividir la búsqueda en palabras y construir condiciones
-        $palabras = explode(' ', $busqueda);
         $condiciones = [];
         $params = [];
-        foreach ($palabras as $palabra) {
-            $palabra = trim($palabra); // Eliminar espacios en cada palabra
-            if ($palabra !== '') {    // Ignorar palabras vacías
-                $condiciones[] = "T2.ART_NOMBRE LIKE ?";
-                $params[] = "%$palabra%"; // Parámetro para la condición
+
+        // Limpiar y preparar términos de búsqueda
+        $busqueda = trim($busqueda);
+        if (empty($busqueda)) return [];
+
+        // Dividir por espacios para búsqueda multi-palabra
+        $terminos = explode(' ', $busqueda);
+        $search_parts = [];
+        foreach ($terminos as $t) {
+            $t = trim($t);
+            if (strlen($t) >= 3) {
+                $search_parts[] = $t;
+                $condiciones[] = "(T2.ART_NOMBRE LIKE ? OR EXISTS (
+                    SELECT 1 FROM PRECIOS_DET_DIGEMID_MEDINA R 
+                    INNER JOIN PRECIOS_DIGEMID D ON R.Cod_Prod = D.Cod_Prod 
+                    WHERE R.PRE_CODART = T1.ARM_CODART AND R.ESTADO = 1 AND D.Nom_IFA LIKE ?
+                ))";
+                $params[] = "%$t%";
+                $params[] = "%$t%";
             }
         }
 
-        // Si no hay palabras válidas después del procesamiento, devolver vacío
-        if (empty($condiciones)) {
-            return [];
+        // Si no hay términos de 3 letras, intentar solo por nombre
+        if (empty($condiciones) && !empty($busqueda)) {
+             $condiciones[] = "T2.ART_NOMBRE LIKE ?";
+             $params[] = "%" . trim($busqueda) . "%";
         }
 
-        // Unir condiciones con "AND"
+        if (empty($condiciones)) return [];
+
         $condiciones_str = implode(' AND ', $condiciones);
 
-        // Construcción de la consulta SQL
-        $sql = "SELECT TOP 100 
-                RTRIM(LTRIM(T4.TAB_NOMLARGO)) AS TAB_NOMLARGO,
-                T1.ARM_CODART,
-                T2.ART_SUBGRU,
-                RTRIM(LTRIM(TABLAS2.TAB_CONTABLE2)) AS CNTLD,
-                RTRIM(LTRIM(T2.ART_NOMBRE)) AS ART_NOMBRE,
+        $sql = "SELECT 
+                RTRIM(LTRIM(T4.TAB_NOMLARGO)) AS TAB_NOMLARGO, 
+                T1.ARM_CODART, 
+                T2.ART_SUBGRU, 
+                RTRIM(LTRIM(TABLAS2.TAB_CONTABLE2)) AS CNTLD, 
+                RTRIM(LTRIM(T2.ART_NOMBRE)) AS ART_NOMBRE, 
+                MAX(T3.PRE_EQUIV) AS EQUIVALENCIA,
+                MAX(T3.PRE_EQUIV) AS CANT, 
+                MAX(T3.PRE_PRE1) AS PRE_CAJA,  
+                MIN(T3.PRE_PRE1) AS PRE_UND,
+                MAX(T3.PRE_PRE2) AS PRE_CAJA_2,  
+                MIN(T3.PRE_PRE2) AS PRE_UND_2,
                 AVG(T1.ARM_STOCK) AS StockGen,
-                MAX(PRE_EQUIV) AS CANT, 
-                MAX(PRE_PRE1) AS PRE_CAJA,  
-                MIN(PRE_PRE1) AS PRE_UND,
-                MAX(PRE_PRE2) AS PRE_CAJA_2,  
-                MIN(PRE_PRE2) AS PRE_UND_2,
-                (AVG(T1.ARM_STOCK) % MAX(PRE_EQUIV)) AS ART_UNID,
-                FLOOR(AVG(T1.ARM_STOCK) / MAX(PRE_EQUIV)) AS ART_PQT,
+                (AVG(T1.ARM_STOCK) % NULLIF(MAX(T3.PRE_EQUIV),0)) AS ART_UNID,
+                FLOOR(AVG(T1.ARM_STOCK) / NULLIF(MAX(T3.PRE_EQUIV),0)) AS ART_PQT,
                 CASE 
-                    WHEN MAX(PRE_EQUIV) = 1 
+                    WHEN MAX(T3.PRE_EQUIV) = 1 
                         THEN CAST(FLOOR(AVG(T1.ARM_STOCK)) AS VARCHAR)
-                    ELSE CAST(FLOOR(AVG(T1.ARM_STOCK) / MAX(PRE_EQUIV)) AS VARCHAR) 
-                         + '/' + CAST(FLOOR(AVG(T1.ARM_STOCK) % MAX(PRE_EQUIV)) AS VARCHAR) 
+                    ELSE CAST(FLOOR(AVG(T1.ARM_STOCK) / NULLIF(MAX(T3.PRE_EQUIV),0)) AS VARCHAR) 
+                         + '/' + CAST(FLOOR(AVG(T1.ARM_STOCK) % NULLIF(MAX(T3.PRE_EQUIV),0)) AS VARCHAR) 
                 END AS STOCK,
                 STUFF((SELECT ',' + RTRIM(LTRIM(b.PRE_UNIDAD)) 
                        FROM PRECIOS b
                        WHERE b.PRE_CODART = T1.ARM_CODART AND b.PRE_CODCIA = '25'
-                       FOR XML PATH('')), 1, 1, '') AS UNIDADES
+                       FOR XML PATH('')), 1, 1, '') AS UNIDADES,
+                (SELECT TOP 1 D.Nom_IFA 
+                 FROM PRECIOS_DET_DIGEMID_MEDINA R 
+                 INNER JOIN PRECIOS_DIGEMID D ON R.Cod_Prod = D.Cod_Prod 
+                 WHERE R.PRE_CODART = T1.ARM_CODART AND R.ESTADO = 1) AS Nom_IFA
             FROM dbo.ARTICULO AS T1
             INNER JOIN DBO.ARTI AS T2 
                 ON T1.ARM_CODART = T2.ART_KEY AND T1.ARM_CODCIA = T2.ART_CODCIA
@@ -140,23 +142,52 @@ class ArticuloModel extends Model
                 T2.ART_SUBGRU, 
                 TABLAS2.TAB_CONTABLE2, 
                 T2.ART_NOMBRE
-            ORDER BY T4.TAB_NOMLARGO, T2.ART_NOMBRE";
+            ORDER BY 
+                CASE WHEN T2.ART_NOMBRE LIKE ? THEN 0 ELSE 1 END,
+                T2.ART_NOMBRE ASC";
 
-        // Depuración de SQL y parámetros
-        log_message('debug', "SQL Query: $sql");
-        log_message('debug', 'Parameters: ' . json_encode($params));
+        // Parámetro adicional para el ORDER BY (relevancia al inicio)
+        $params[] = trim($busqueda) . "%";
 
-        // Ejecutar la consulta con parámetros enlazados
         $query = $this->db->query($sql, $params);
+        return $query ? $query->getResult() : [];
+    }
 
-        // Verificar si la consulta falló
-        if (!$query) {
-            log_message('error', 'Database query failed: ' . $this->db->error());
-            return [];
+    /**
+     * Obtiene productos en facturas pendientes (en tránsito)
+     */
+    public function get_productos_transito($busqueda)
+    {
+        if (empty(trim($busqueda))) return [];
+
+        $palabras = explode(' ', strtoupper(trim($busqueda)));
+        $condiciones = [];
+        $params = [];
+        foreach ($palabras as $palabra) {
+            if (trim($palabra) !== '') {
+                $condiciones[] = "d.DES_PROD LIKE ?";
+                $params[] = "%$palabra%";
+            }
         }
 
-        // Retornar los resultados
-        return $query->getResult();
+        $condiciones_str = implode(' AND ', $condiciones);
+
+        $sql = "SELECT 
+                    RTRIM(d.DES_PROD) AS ART_NOMBRE, 
+                    d.CANTIDAD, 
+                    d.PRECIO, 
+                    RTRIM(f.NRO_FACTURA) AS NRO_FACTURA, 
+                    CONVERT(VARCHAR, f.FECHA, 103) AS FECHA_DOC,
+                    RTRIM(c.CLI_NOMBRE) AS PROVEEDOR
+                FROM IMPORT_FACT_DET d
+                INNER JOIN IMPORT_FACT f ON d.IDFACT = f.ID
+                LEFT JOIN clientes c ON f.RUC = c.CLI_RUC_ESPOSO AND c.cli_cp = 'P'
+                WHERE f.ESTADO = 0 
+                AND ($condiciones_str)
+                ORDER BY f.FECHA ASC";
+
+        $query = $this->db->query($sql, $params);
+        return $query ? $query->getResult() : [];
     }
 
     public function get_stock_articulos($stock, $server, $order = "laboratorio", $unidad = "caja", $familias = [])
@@ -338,5 +369,50 @@ class ArticuloModel extends Model
                 'error' => $e->getMessage(),
             ];
         }
+    }
+
+    public function get_articulos_por_ifa($ifa, $server)
+    {
+        if (empty($ifa)) return [];
+
+        // 1. Obtener todos los ART_KEY que comparten este principio activo (Nom_IFA)
+        $sqlKeys = "SELECT DISTINCT REL.PRE_CODART 
+                    FROM PRECIOS_DET_DIGEMID_MEDINA REL
+                    INNER JOIN PRECIOS_DIGEMID DIG ON DIG.Cod_Prod = REL.Cod_Prod
+                    WHERE DIG.Nom_IFA = ? AND REL.ESTADO = 1";
+        
+        $keysQuery = $this->db->query($sqlKeys, [$ifa]);
+        $results = $keysQuery->getResult();
+        
+        if (empty($results)) return [];
+        
+        $artKeys = [];
+        foreach ($results as $row) {
+            $artKeys[] = $row->PRE_CODART;
+        }
+        $keysList = implode(',', $artKeys);
+        
+        // 2. Consultar el stock de esos productos en el servidor destino
+        $sql = "SELECT T1.ARM_CODART, art_familia, 
+                RTRIM(LTRIM(T2.ART_NOMBRE)) ART_NOMBRE, AVG(T1.ARM_STOCK) AS StockGen, 
+                CASE WHEN MAX(PRE_EQUIV) = 1 THEN CAST(FLOOR(AVG(T1.ARM_STOCK)) AS varchar)
+                ELSE CAST((FLOOR(AVG(T1.ARM_STOCK)/MAX(PRE_EQUIV))) AS varchar)
+                + '/' + CAST(FLOOR(AVG(T1.ARM_STOCK)%MAX(PRE_EQUIV)) AS VARCHAR) END AS STOCK 
+                FROM dbo.ARTICULO AS T1 
+                INNER JOIN DBO.ARTI AS T2 ON (T1.ARM_CODART = T2.ART_KEY AND T1.ARM_CODCIA = T2.ART_CODCIA) 
+                LEFT JOIN PRECIOS AS T3 ON (T3.PRE_CODART = T1.ARM_CODART AND T3.PRE_CODCIA = '25') 
+                WHERE T1.ARM_CODART IN ($keysList)
+                GROUP BY T1.ARM_CODART, T2.ART_NOMBRE, art_familia 
+                ORDER BY T1.ARM_CODART, T2.ART_NOMBRE";
+
+        if ($server == 2) {
+            $query = $this->dbjj->query($sql);
+        } elseif ($server == 3) {
+            $query = $this->dbpm->query($sql);
+        } else {
+            $query = $this->db->query($sql);
+        }
+        
+        return $query ? $query->getResult() : [];
     }
 }

@@ -1,74 +1,170 @@
 <?= $this->extend('templates/admin_template'); ?>
 <?= $this->section('content'); ?>
-<!-- Content Header (Page header) -->
-<div class="content-header"></div>
-<!-- /.content-header -->
 
-<!-- Main content -->
+<style>
+    .search-container {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+    .search-input-group {
+        box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+        border-radius: 50px;
+        overflow: hidden;
+        background: white;
+        display: flex;
+        align-items: center;
+        padding: 5px 15px;
+    }
+    .search-input-group input {
+        border: none !important;
+        box-shadow: none !important;
+        font-size: 1.2rem;
+        padding: 10px 15px;
+    }
+    .search-input-group .btn-search {
+        border-radius: 50px;
+        padding: 10px 25px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    .card {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        transition: transform 0.2s;
+    }
+    .card-header {
+        border-radius: 12px 12px 0 0 !important;
+        font-weight: bold;
+        text-transform: uppercase;
+        font-size: 0.9rem;
+    }
+    .table thead th {
+        border-top: none;
+        background: #f8f9fa;
+        color: #495057;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+    .bg-transit {
+        background-color: #fff3cd !important;
+        border-left: 4px solid #ffc107;
+    }
+    .selected {
+        background-color: #e8f0fe !important;
+        border-left: 4px solid #4285f4;
+    }
+    .badge-stock {
+        font-size: 0.9rem;
+        padding: 5px 10px;
+        border-radius: 6px;
+    }
+</style>
+
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">Localizador de Productos</h1>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="content">
     <div class="container-fluid">
+        <!-- Buscador Principal -->
+        <div class="search-container">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="search-input-group">
+                        <i class="fas fa-search text-muted ml-2"></i>
+                        <input type="text" class="form-control" id="busqueda" placeholder="Escribe el nombre del producto o principio activo..." autocomplete="off">
+                        <button type="button" id="buscar" class="btn btn-primary btn-search shadow-sm">
+                            <i class="fa fa-bolt mr-1"></i> Buscar
+                        </button>
+                    </div>
+                    <small class="text-muted mt-2 d-block text-center">
+                        <i class="fas fa-info-circle mr-1"></i> Tip: Puedes buscar por sinónimos o marcas genéricas. Presiona ENTER para buscar.
+                    </small>
+                </div>
+            </div>
+        </div>
+
         <div class="row">
-            <div class="col-lg-12">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="row">
-                            <!-- /.col -->
-                            <div class="col-md-4">
-                                <div class="form-group row">
-                                    <label class="col-sm-3 col-form-label">Producto</label>
-                                    <div class="col-sm-9">
-                                        <input type="text" class="form-control" id="busqueda" placeholder="Producto">
-                                    </div>
-                                </div>
-                                <!-- /.form-group -->
-                            </div>
-                            <div class="col-md-2">
-                                <button type="button" id="buscar" name="buscar" class="btn btn-primary btn-block"><i class="fa fa-search"></i> Buscar</button>
-                            </div>
+            <!-- Panel Izquierdo: Resultados Principales -->
+            <div class="col-lg-8">
+                <div class="card card-outline card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-pills mr-2"></i> Stock en Sede Actual</h3>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table id="productos_centro" class="table table-hover table-striped mb-0 w-100">
+                                <thead>
+                                    <tr>
+                                        <th>Código</th>
+                                        <th>Nombre del Producto</th>
+                                        <th>Principio Activo</th>
+                                        <th class="text-center">Stock (C/U)</th>
+                                        <th>P. Unit.</th>
+                                        <th>P. Empaque</th>
+                                        <th>Laboratorio</th>
+                                        <th width="50"></th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NUEVA SECCIÓN: Productos en Tránsito -->
+                <div class="card card-outline card-warning mt-4">
+                    <div class="card-header">
+                        <h3 class="card-title text-dark"><i class="fas fa-truck-loading mr-2"></i> Próximos Ingresos (En Tránsito)</h3>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table id="productos_transito" class="table table-sm mb-0 w-100">
+                                <thead>
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th>Cant.</th>
+                                        <th>Factura</th>
+                                        <th>Fecha Compra</th>
+                                        <th>Proveedor</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-light">
+                                    <tr>
+                                        <td colspan="5" class="text-center py-3 text-muted">Realiza una búsqueda para ver ingresos pendientes...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="row">
-            <div class="col-lg-7">
-                <div class="card card-primary">
-                    <div class="card-header">
-                        <h3 class="card-title">Centro</h3>
-                    </div>
-                    <div class="card-body p-0">
-                        <table id="productos_centro" class="table table-bordered" style="margin-top: 0px !important;">
-                            <thead>
-                                <tr>
-                                    <th>Codigo</th>
-                                    <th>Articulo</th>
-                                    <th>Pq/Und</th>
-                                    <th>P.U.</th>
-                                    <th>P.C</th>
-                                    <th>LAB</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-                </div>
-                <!-- /.card -->
-            </div>
-            <!-- /.col-md-6 -->
-            <div class="col-lg-5">
+
+            <!-- Panel Derecho: Detalles e Información Extra -->
+            <div class="col-lg-4">
                 <div class="card card-secondary">
                     <div class="card-header">
-                        <h3 class="card-title">Stock Otros Locales</h3>
+                        <h3 class="card-title"><i class="fas fa-map-marker-alt mr-2"></i> Stock Otros Locales</h3>
                     </div>
                     <div class="card-body p-0">
-                        <table id="productos_medina3" class="table table-bordered">
+                        <table id="productos_medina3" class="table table-sm table-bordered mb-0">
                             <thead>
                                 <tr>
-                                    <th>Local</th>
-                                    <th>Articulo</th>
-                                    <th>Stock Pq/Und</th>
-                                    <th></th>
+                                    <th>Sede</th>
+                                    <th>Producto</th>
+                                    <th class="text-center">Stock</th>
+                                    <th width="40"></th>
                                 </tr>
                             </thead>
                             <tbody></tbody>
@@ -76,333 +172,214 @@
                     </div>
                 </div>
 
-                <!-- /.card -->
-                <div class="card card-warning">
+                <div class="card card-info mt-4">
                     <div class="card-header">
-                        <h3 class="card-title">Equivalentes</h3>
+                        <h3 class="card-title"><i class="fas fa-exchange-alt mr-2"></i> Sugerencias / Equivalentes</h3>
                     </div>
                     <div class="card-body p-0">
-                        <table id="productos_equival" class="table table-bordered">
+                        <table id="productos_equival" class="table table-sm table-bordered mb-0">
                             <thead>
                                 <tr>
-                                    <th>Local</th>
-                                    <th>Articulo</th>
-                                    <th>Stock Pq/Und</th>
-                                    <th></th>
+                                    <th>Sede</th>
+                                    <th>Producto</th>
+                                    <th class="text-center">Stock</th>
+                                    <th width="40"></th>
                                 </tr>
                             </thead>
                             <tbody></tbody>
                         </table>
                     </div>
                 </div>
-                <!-- /.card -->
             </div>
-            <!-- /.col-md-6 -->
         </div>
-        <!-- /.row -->
     </div>
-    <!-- /.container-fluid -->
 
+    <!-- Modales (se mantienen pero se pueden pulir después) -->
     <div class="modal fade" id="modal-overlay">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-lg shadow-lg">
             <div class="modal-content">
-                <!--div class="overlay d-flex justify-content-center align-items-center">
-                <i class="fas fa-2x fa-sync fa-spin"></i>
-            </div-->
-                <div class="modal-header">
-                    <h4 class="modal-title">Ficha del Producto</h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <div class="modal-header bg-primary text-white">
+                    <h4 class="modal-title">Ficha Detallada del Producto</h4>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <div class="modal-body">
-                    <app-modal-producto-detalle _nghost-c4="">
-                        <!---->
-                        <div class="modal-body pb-0">
-                            <div class="card ">
-                                <div class=" row">
-                                    <div class="col-sm-8"><label>Nombre:</label><input class="form-control" disabled="" id="nombreProducto" type="text"></div>
-                                    <div class="col-sm-4"><label>Precio unitario S/.:</label><input class="form-control" disabled="" name="precio2" type="text"></div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-sm-8"><label>Presentación:</label><input class="form-control" disabled="" id="presentacion" type="text"></div>
-                                    <!---->
-                                    <div class="col-sm-4 ng-star-inserted"><label>Precio empaque S/.:</label><input class="form-control" disabled="" name="precioV" type="text"></div>
-                                </div>
-                                <div class=" row">
-                                    <div class="col-sm-4"><label>Registro Sanitario:</label><input class="form-control" disabled="" id="registroSanitario" type="text"></div>
-                                    <div class="col-sm-4"><label>Concentracion:</label><input class="form-control" disabled="" id="Concent" type="text"></div>
-                                    <div class="col-sm-4"><label>Presentacion:</label><input class="form-control" disabled="" id="Presentac" type="text"></div>
-                                </div>
-                                <div class=" row pb-2">
-                                    <div class="col-sm-4"><label>Nombre del Titular:</label><input class="form-control" disabled="" id="nombreTitular" type="text"></div>
-                                    <div class="col-sm-4"><label>Nombre del Fabricante:</label><input class="form-control" disabled="" name="nombreFabricante" type="text"></div>
-                                    <div class="col-sm-4"><label>País de fabricación:</label><input class="form-control" disabled="" name="paisFabricacion" type="text"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </app-modal-producto-detalle>
-
+                <div class="modal-body bg-light">
+                    <div class="row">
+                        <div class="col-sm-8"><label>Nombre:</label><input class="form-control mb-2" disabled id="nombreProducto" type="text"></div>
+                        <div class="col-sm-4"><label>Precio Unitario:</label><input class="form-control mb-2" disabled name="precio2" type="text"></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-8"><label>Presentación:</label><input class="form-control mb-2" disabled id="presentacion" type="text"></div>
+                        <div class="col-sm-4"><label>Precio Empaque:</label><input class="form-control mb-2" disabled name="precioV" type="text"></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-4"><label>Reg. Sanitario:</label><input class="form-control" disabled id="registroSanitario" type="text"></div>
+                        <div class="col-sm-4"><label>Concentración:</label><input class="form-control" disabled id="Concent" type="text"></div>
+                        <div class="col-sm-4"><label>Forma Farm.:</label><input class="form-control" disabled id="Presentac" type="text"></div>
+                    </div>
                 </div>
-                <div class="modal-footer justify-content-between">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary">Save changes</button>
-                </div>
-            </div>
-            <!-- /.modal-content -->
-        </div>
-        <!-- /.modal-dialog -->
-    </div>
-    <!-- /.modal -->
-    <div class="modal fade" id="modal-componentes">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title">Large Modal</h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">×</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <p>One fine body…</p>
-                    <select class="js-data-example-ajax"  data-placeholder="Buscar Proveedor" data-allow-clear="1"></select>
-                    
-                </div>
-                <div class="modal-footer justify-content-between">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary">Save changes</button>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>
     </div>
 </div>
-<!-- /.content -->
 
 <?= $this->endSection(); ?>
 
 <?= $this->section('footer'); ?>
 <link rel="stylesheet" href="../../plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
-<link rel="stylesheet" href="../../plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
-<!-- DataTables -->
-<link rel="stylesheet" href="../../plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
-<link rel="stylesheet" href="../../plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
-<link rel="stylesheet" href="../../plugins/datatables-buttons/css/buttons.bootstrap4.min.css">
-<!-- DataTables -->
 <script src="../../plugins/datatables/jquery.dataTables.min.js"></script>
 <script src="../../plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
-<script src="../../plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
-<script src="../../plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
-<script src="../../plugins/datatables-buttons/js/dataTables.buttons.min.js"></script>
-<script src="../../plugins/datatables-buttons/js/buttons.bootstrap4.min.js"></script>
-<script src="../../plugins/jszip/jszip.min.js"></script>
-<script src="../../plugins/pdfmake/pdfmake.min.js"></script>
-<script src="../../plugins/pdfmake/vfs_fonts.js"></script>
-<script src="../../plugins/datatables-buttons/js/buttons.html5.min.js"></script>
-<script src="../../plugins/datatables-buttons/js/buttons.print.min.js"></script>
-<script src="../../plugins/datatables-buttons/js/buttons.colVis.min.js"></script>
-<script>
-    $(document).on('keydown', function(event) {
-        if (event.key == "Escape") {
-            $("#busqueda").val('');
-        }
-    });
 
+<script>
     $(document).ready(function() {
+        // Inicialización de Datatable Principal
         var dtable = $('#productos_centro').DataTable({
             ajax: {
                 url: "<?= site_url('productos/get_productos') ?>",
                 type: "POST",
                 dataSrc: '',
-                data: {
-                    busqueda: function() {
-                    var busqueda = $("input#busqueda").val().length>0?$("input#busqueda").val():'A';
-                        return busqueda;
-                    }
+                data: function(d) {
+                    d.busqueda = $("#busqueda").val() || 'A';
                 }
             },
-            columns: [{
-                    data: 'ARM_CODART',
-                    orderable: false
-                },
-                {
+            columns: [
+                { data: 'ARM_CODART', className: 'text-muted small' },
+                { 
                     data: 'ART_NOMBRE',
-                    render: function(data, type, row, meta) {
-                        return (row.CNTLD == 'C' ? "© " : "") + data;
-                    },
-                    orderable: false
+                    render: function(data, type, row) {
+                        let icon = row.CNTLD == 'C' ? "<span class='text-danger mr-1' title='Controlado'><i class='fas fa-copyright'></i></span>" : "";
+                        return `<strong>${icon}${data}</strong>`;
+                    }
                 },
-                {
-                    data: 'STOCK'
+                { 
+                    data: 'Nom_IFA',
+                    render: function(data) {
+                        return data ? `<small class="text-primary"><i>${data}</i></small>` : `<small class="text-muted">No relacionado</small>`;
+                    }
                 },
-                {
+                { 
+                    data: 'STOCK', 
+                    className: 'text-center',
+                    render: function(data) {
+                        return `<span class="badge badge-stock ${data.includes('/') && data.split('/')[0] > 0 ? 'bg-success' : (data > 0 ? 'bg-success' : 'bg-secondary')}">${data}</span>`;
+                    }
+                },
+                { 
                     data: 'PRE_UND',
-                    render: function(data, type, row, meta) {
-                        return "<small class='text-primary'>S/.  </small> " + (Math.round(data * 1000) / 1000).toFixed(2);
-                    },
-                    orderable: false
+                    render: data => `S/. ${parseFloat(data).toFixed(2)}`
                 },
-                {
+                { 
                     data: 'PRE_CAJA',
-                    render: function(data, type, row, meta) {
-                        return "<small class='text-primary'>S/.  </small> " + (Math.round(data * 1000) / 1000).toFixed(2);
-                    },
-                    orderable: false
+                    render: data => `S/. ${parseFloat(data).toFixed(2)}`
                 },
-                {
-                    data: 'TAB_NOMLARGO'
-                },
-                {
+                { data: 'TAB_NOMLARGO', className: 'small' },
+                { 
                     data: 'ARM_CODART',
-                    render: function(data, type, row, meta) {
-                        return '<a href="#" class="text-muted" data-toggle="modal" data-target="#modal-componentes"> <i class="fa fa-flask"></i></a>';
+                    render: function(data) {
+                        return `<button class="btn btn-xs btn-outline-info" data-toggle="modal" data-target="#modal-overlay" data-id="${data}"><i class="fa fa-info-circle"></i></button>`;
                     }
                 }
             ],
-            fnRowCallback: function(nRow, aData, iDisplayIndex, iDisplayIndexFull) {
-                if (aData.StockGen > 0) {
-                    $(nRow).addClass('bg-success');
-                    if (aData.CNTLD == 'C') {
-                        $(nRow).addClass('bg-danger');
-                    }
-                }
-                return nRow;
+            language: {
+                emptyTable: "No se encontraron productos",
+                loadingRecords: "Buscando productos...",
+                processing: "Procesando..."
             },
-            order: [
-                [1, 'asc']
-            ],
             searching: false,
             paging: true,
-            orderable: false,
             responsive: true,
-            lengthChange: false,
-            autoWidth: false,
-            select: true
-        });
-        $('#productos_centro').on('click', 'tbody tr', function(event) {
-            var data = dtable.row($(this)).data();
-            var opci = $("input#RadioStock").val();
-            $("#productos_medina2 > tbody").html('');
-            $("#productos_medina3 > tbody").html('');
-            $("#productos_equival > tbody").html('');
-            $.post("<?= site_url('productos/get_stock') ?>", {
-                artkey: data['ARM_CODART'],
-                artsbg: '',
-                local: 3
-            }, function(htmlexterno) {
-                $("#productos_medina3 > tbody").append(htmlexterno);
-            }); /**/
-            $.post("<?= site_url('productos/get_stock') ?>", {
-                artkey: data['ARM_CODART'],
-                artsbg: '',
-                local: 2
-            }, function(htmlexterno) {
-                $("#productos_medina3 > tbody").append(htmlexterno);
-            });
-            $.post("<?= site_url('productos/get_stock') ?>", {
-                artkey: '',
-                artsbg: data['ART_SUBGRU'],
-                local: 1
-            }, function(htmlexterno) {
-                $("#productos_equival > tbody").append(htmlexterno);
-            });
-            dtable.$('tr.selected').removeClass('selected');
-            $(this).addClass('selected');
-
-            var $bridge = $("<input>")
-            $("body").append($bridge);
-            $bridge.val(data['ARM_CODART']).select();
-            document.execCommand("copy");
-            $bridge.remove();
-
+            order: [[1, 'asc']]
         });
 
-
-
-        $('#busqueda').keydown(function(event) {
-            var keyCode = (event.keyCode ? event.keyCode : event.which);
-            if (keyCode == 13) {
-                $('#buscar').trigger('click');
-            }
-        });
-
-        $("#buscar").click(function() {
-            dtable.ajax.reload();
-        });
-
-
-
-        $('#productos_medina3').on('click', '#addRequer', function(event) {
-            $.post(
-                "<?= site_url('requerimiento/agregar') ?>", {
-                    codart: $(this).attr('data-id'),
-                    local: $(this).attr('data-local')
-                },
-                function(rpta) {
-                    const myArray = rpta.split("|");
-                    color = myArray[0] == 0 ? 'bg-danger' : 'bg-success';
-                    $(document).Toasts('create', {
-                        class: color,
-                        title: 'Producto',
-                        body: myArray[1],
-                        position: 'bottomRight',
-                        icon: 'far fa-check-circle fa-lg',
-                        animation: true,
-                        autohide: true,
-                        delay: 2500
+        // Función para buscar en tránsito
+        function buscarTransito(query) {
+            if (!query) return;
+            
+            $("#productos_transito tbody").html('<tr><td colspan="5" class="text-center py-2"><i class="fas fa-sync fa-spin"></i> Consultando tránsito...</td></tr>');
+            
+            $.post("<?= site_url('productos/get_transito') ?>", { busqueda: query }, function(data) {
+                let html = '';
+                if (data && data.length > 0) {
+                    data.forEach(item => {
+                        html += `<tr class="bg-transit">
+                            <td>${item.ART_NOMBRE}</td>
+                            <td>${item.CANTIDAD}</td>
+                            <td>${item.NRO_FACTURA}</td>
+                            <td>${item.FECHA_DOC}</td>
+                            <td><small>${item.PROVEEDOR}</small></td>
+                        </tr>`;
                     });
+                } else {
+                    html = '<tr><td colspan="5" class="text-center text-muted py-2">No hay ingresos próximos para esta búsqueda.</td></tr>';
                 }
-            );
+                $("#productos_transito tbody").html(html);
+            });
+        }
+
+        // Eventos de Búsqueda
+        $("#buscar").click(function() {
+            let query = $("#busqueda").val();
+            dtable.ajax.reload();
+            buscarTransito(query);
         });
 
-        $('#modal-overlay').on('shown.bs.modal', function(e) {
-            var id = $(e.relatedTarget).data().id;
-            $.post("<?= site_url('productos/get_precios_digemid') ?>", {
-                artkey: id
-            }, function(htmlexterno) {
-                $.each(eval(htmlexterno), function(index, value) {
-                    $("#nombreProducto:text").val(value.Nom_Prod);
-                    $("#presentacion:text").val(value.Presentac);
-                    $("#registroSanitario:text").val(value.Num_RegSan);
-                    $("#nombreTitular:text").val(value.Nom_Titular);
-                    $("#Concent:text").val(value.Concent);
-                    $("#Presentac:text").val(value.Presentac);
-                    console.log(value);
+        $('#busqueda').on('keypress', function(e) {
+            if (e.which == 13) $("#buscar").trigger('click');
+        });
+
+        // Click en fila para cargar stock externo y equivalentes
+        $('#productos_centro tbody').on('click', 'tr', function() {
+            let data = dtable.row(this).data();
+            if (!data) return;
+
+            $(this).addClass('selected').siblings().removeClass('selected');
+            
+            // Limpiar paneles
+            $("#productos_medina3 tbody, #productos_equival tbody").html('<tr><td colspan="4" class="text-center"><i class="fas fa-sync fa-spin"></i></td></tr>');
+
+            // Cargar Stock Locales
+            [2, 3].forEach(localId => {
+                $.post("<?= site_url('productos/get_stock') ?>", { artkey: data.ARM_CODART, local: localId }, function(htm) {
+                    if (localId == 2) $("#productos_medina3 tbody").html(''); // Limpiar en la primera respuesta
+                    $("#productos_medina3 tbody").append(htm);
                 });
             });
-            $('#nombreProducto').trigger('focus');
-        })
 
-        $('#modal-componentes').on('shown.bs.modal', function(e) {
+            // Cargar Equivalentes (Smart: Prioriza Principio Activo)
+            let equivParams = data.Nom_IFA ? { ifa: data.Nom_IFA, local: 1 } : { artkey: '', artsbg: data.ART_SUBGRU, local: 1 };
+            $.post("<?= site_url('productos/get_stock') ?>", equivParams, function(htm) {
+                $("#productos_equival tbody").html(htm);
+            });
+        });
 
-            var id = $(e.relatedTarget).data().id;
-            $('.js-data-example-ajax').select2({
-                theme: 'bootstrap4',
-        
-        placeholder: "Buscar Proveedor",
-                ajax: {
-                    url: "<?= site_url('productos/get_pa') ?>",
-                    type: "post",
-                    dataType: 'json',
-                    delay: 250,
-                    data: function(params) {
-                        return {
-                            searchTerm: params.term // search term
-                        };
-                    },
-                    processResults: function(response) {
-                        return {
-                            results: response.results
-                        };
-                    },
-                    cache: true
+        // Manejo de Modal de Detalles
+        $('#modal-overlay').on('shown.bs.modal', function(e) {
+            let id = $(e.relatedTarget).data('id');
+            $.post("<?= site_url('productos/get_precios_digemid') ?>", { artkey: id }, function(res) {
+                let json = JSON.parse(res);
+                if (json && json[0]) {
+                    let v = json[0];
+                    $("#nombreProducto").val(v.Nom_Prod);
+                    $("#presentacion").val(v.Presentac);
+                    $("#registroSanitario").val(v.Num_RegSan);
+                    $("#nombreTitular").val(v.Nom_Titular);
+                    $("#Concent").val(v.Concent);
+                    $("#Presentac").val(v.Presentac);
                 }
             });
-        })
+        });
 
-
+        // Limpiar búsqueda con ESC
+        $(document).keydown(function(e) {
+            if (e.key === "Escape") {
+                $("#busqueda").val('').focus();
+            }
+        });
     });
 </script>
-
-
 
 <?= $this->endSection(); ?>

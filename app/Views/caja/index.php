@@ -5,7 +5,13 @@
     
 </div>
 <!-- /.content-header -->
-<?php $session = session(); ?>
+<?php 
+$session = session(); 
+if ($session->get('rol') != 1) {
+    echo "<script>alert('Acceso restringido: Solo para administradores.'); window.location.href='".site_url('dashboard')."';</script>";
+    exit;
+}
+?>
 <!-- Main content -->
 <div class="content">
     <div class="container-fluid">

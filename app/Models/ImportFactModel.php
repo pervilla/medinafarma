@@ -460,6 +460,13 @@ $data = $data->data; // Verificar si 'registros' existe y es un array
             ->countAllResults() > 0;
     }
 
+    public function actualizarEstadoProcesado($id)
+    {
+        return $this->db->table('IMPORT_FACT')
+            ->where('ID', $id)
+            ->update(['ESTADO' => 1]);
+    }
+
     public function verificar_productos_inactivos($idfact)
     {
         return $this->db->table('IMPORT_FACT_DET as FD')

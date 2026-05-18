@@ -27,12 +27,20 @@ class Personas extends BaseController {
     }
     
     public function get_personas(){
-        $busqueda = $this->request->getVar('busqueda');
-        $tipoCli = $this->request->getVar('tipoCli');
-        
-        $ClientesModel = new ClientesModel();
-        $clientes = $ClientesModel->get_personas($busqueda, null, null, $tipoCli);
-        return $this->response->setJSON($clientes);
+        try {
+            $busqueda = $this->request->getVar('busqueda');
+            $tipoCli = $this->request->getVar('tipoCli');
+            
+            $ClientesModel = new ClientesModel();
+            $clientes = $ClientesModel->get_personas($busqueda, null, null, $tipoCli);
+            return $this->response->setJSON($clientes);
+        } catch (\Exception $e) {
+            log_message('error', 'Error en get_personas: ' . $e->getMessage());
+            return $this->response->setJSON([
+                'error' => true,
+                'message' => 'Error al obtener personas: ' . $e->getMessage()
+            ])->setStatusCode(500);
+        }
     }
     
     public function get_proveedores() {

@@ -195,13 +195,40 @@ class AIMatchingModel extends Model
         }
     }
     
-    // Clear old rejected suggestions
-    public function clearOldRejections($days = 30)
+    // Get all subgroups (Principle Actives)
+    public function getSubgroups()
     {
         return $this->db->query("
-            DELETE FROM digemid_matching_suggestions
-            WHERE status = 'rejected' 
-            AND validated_at < DATEADD(day, -{$days}, GETDATE())
-        ");
+            SELECT TAB_NUMTAB, RTRIM(TAB_NOMLARGO) as TAB_NOMLARGO 
+            FROM TABLAS 
+            WHERE TAB_TIPREG = 129 
+            AND RTRIM(TAB_NOMLARGO) <> ''
+            ORDER BY TAB_NOMLARGO
+        ")->getResultArray();
+    }
+    
+    // Get products without a subgroup
+    public function getUncategorizedProducts($limit = 100)
+    {
+        return $this->db->query("
+            SELECT TOP {$limit}
+                ART_KEY,
+                RTRIM(ART_NOMBRE) as ART_NOMBRE,
+                ART_SUBGRU
+            FROM ARTI
+            WHERE (ART_SUBGRU IS NULL OR ART_SUBGRU = 0)
+            AND ART_SITUACION = 0
+            ORDER BY ART_NOMBRE
+        ")->getResultArray();
+    }
+    
+    // Update product subgroup
+    public function updateProductSubgroup($artKey, $subgruId)
+    {
+        return $this->db->query("
+            UPDATE ARTI 
+            SET ART_SUBGRU = ? 
+            WHERE ART_KEY = ?
+        ", [$subgruId, $artKey]);
     }
 }

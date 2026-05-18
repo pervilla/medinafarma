@@ -29,6 +29,11 @@ use Luecano\NumeroALetras\NumeroALetras;
  */
 class Productos extends BaseController
 {
+    public function initController(\CodeIgniter\HTTP\RequestInterface $request, \CodeIgniter\HTTP\ResponseInterface $response, \Psr\Log\LoggerInterface $logger)
+    {
+        parent::initController($request, $response, $logger);
+        helper('pharma');
+    }
 
     public function index()
     {
@@ -39,10 +44,28 @@ class Productos extends BaseController
 
     public function get_productos()
     {
+        try {
+            $busqueda = $this->request->getVar('busqueda');
+            
+            $ArticuloModel = new ArticuloModel();
+            $articulos = $ArticuloModel->get_articulos_det($busqueda);
+            return $this->response->setJSON($articulos);
+        } catch (\Exception $e) {
+            log_message('error', 'Error en get_productos: ' . $e->getMessage());
+            return $this->response->setJSON([
+                'error' => true,
+                'message' => $e->getMessage()
+            ])->setStatusCode(500);
+        }
+    }
+
+    public function get_transito()
+    {
         $busqueda = $this->request->getVar('busqueda');
+        
         $ArticuloModel = new ArticuloModel();
-        $articulos = $ArticuloModel->get_articulos_det($busqueda);
-        return $this->response->setJSON($articulos);
+        $transito = $ArticuloModel->get_productos_transito($busqueda);
+        return $this->response->setJSON($transito);
     }
     public function enfermedades()
     {
@@ -112,9 +135,20 @@ class Productos extends BaseController
         $artsbg = $this->request->getVar('artsbg');
         $local = $this->request->getVar('local');
         $btn = $this->request->getVar('btn');
-        if (!empty($artkey) || $artsbg > 0) {
-            $Server03Model = new Server03Model();
+        $ifa = $this->request->getVar('ifa');
+
+        $articulos = [];
+        $Server03Model = new Server03Model();
+
+        if (!empty($ifa)) {
+            // Buscar por principio activo (IFA)
+            $ArticuloModel = new ArticuloModel();
+            $articulos = $ArticuloModel->get_articulos_por_ifa($ifa, $local);
+        } elseif (!empty($artkey) || $artsbg > 0) {
             $articulos = $Server03Model->get_articulos_selec($artkey, $artsbg, $local);
+        }
+
+        if (!empty($articulos)) {
             $locales = array('', 'CENTRO', 'JCILLO', 'PMEZA');
             foreach ($articulos as $val) {
                 $class = $val->StockGen > 0 ? 'even bg-success' : '';
@@ -125,8 +159,8 @@ class Productos extends BaseController
                     $class = 'even bg-gray-dark';
                 }
                 $group = "<div class='btn-group btn-group-sm' role='group' aria-label='Small button group'><button type='button' class='btn btn-primary' data-id='" . $val->ARM_CODART . "'  data-toggle='modal' data-target='#modal-overlay'><i class='fas fa-eye'></i></button><button type='button' id='addRequer' data-id='" . $val->ARM_CODART . "' data-local='" . $local . "' class='btn btn-warning'><i class='fa fa-shopping-basket'></i> </button></div>";
-                $btn = $btn ? "<td><button id='selprod' class='btn btn-primary btn-xs'><i class='fas fa-pills'></i> </button></td>" : "<td>" . $group . "</td>";
-                $tr = "<tr class='$class'><td>$locales[$local]</td></td></t><td class='descrip'>$RNT $val->ART_NOMBRE</td><td>$val->STOCK</td>$btn</tr>";
+                $btn_html = $btn ? "<td><button id='selprod' class='btn btn-primary btn-xs'><i class='fas fa-pills'></i> </button></td>" : "<td>" . $group . "</td>";
+                $tr = "<tr class='$class'><td>$locales[$local]</td><td class='descrip'>$RNT $val->ART_NOMBRE</td><td>$val->STOCK</td>$btn_html</tr>";
                 echo $tr;
             }
         }

@@ -131,6 +131,45 @@ class Importar extends BaseController
         $listarDocumentos = $ImportFactModel->listarDetalleDocumentos($id);
         return $this->response->setJSON($listarDocumentos);
     }
+
+    /**
+     * Verifica si un comprobante pendiente ya existe en el sistema (ingreso manual)
+     * y lo marca como procesado (ESTADO=1) si se encuentra.
+     */
+    public function verificar_ingresos_manuales()
+    {
+        $ids = $this->request->getVar('ids'); // Opcional: lista de IDs específicos
+        $ImportFactModel = new ImportFactModel();
+        
+        $db = \Config\Database::connect();
+        $builder = $db->table('IMPORT_FACT');
+        $builder->where('ESTADO', 0); // Solo pendientes
+        
+        if (!empty($ids)) {
+            $builder->whereIn('ID', $ids);
+        }
+        
+        $pendientes = $builder->get()->getResult();
+        $actualizados = 0;
+        $detalles = [];
+
+        foreach ($pendientes as $fact) {
+            if ($ImportFactModel->check_comprobante_existente($fact->RUC, $fact->NRO_FACTURA)) {
+                $ImportFactModel->actualizarEstadoProcesado($fact->ID);
+                $actualizados++;
+                $detalles[] = $fact->NRO_FACTURA;
+            }
+        }
+
+        return $this->response->setJSON([
+            'status' => 200,
+            'actualizados' => $actualizados,
+            'mensaje' => $actualizados > 0 
+                ? "Se sincronizaron $actualizados facturas que ya estaban ingresadas manualmente."
+                : "No se encontraron nuevos ingresos manuales para los comprobantes pendientes.",
+            'detalles' => $detalles
+        ]);
+    }
     public function update_producto()
     {
         // Get and validate input

@@ -104,15 +104,13 @@ class ClientesModel extends Model
         // Ordenar resultados
         $sql .= "ORDER BY CLI_NOMBRE";
 
-        // Depuración
-        log_message('debug', "Consulta get_personas: $sql");
-
         // Ejecutar consulta
         $query = $this->db->query($sql);
 
         // Verificar errores
         if (!$query) {
-            log_message('error', 'Database query failed in get_personas: ' . $this->db->error());
+            $error = $this->db->error();
+            log_message('error', 'Database query failed in get_personas: ' . json_encode($error));
             return [];
         }
 

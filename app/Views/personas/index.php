@@ -290,7 +290,7 @@ $(document).ready(function () {
         var dtable = $('#productos_centro').DataTable({
             ajax: {
                 url: "<?= site_url('personas/get_personas') ?>",
-                type: "POST",
+                type: "GET",
                 dataSrc: '',
                 data: { 
                     busqueda: function () { return $("input#busqueda").val(); },

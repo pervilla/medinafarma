@@ -20,6 +20,8 @@
         <link rel="stylesheet" href="<?= site_url('plugins/jqvmap/jqvmap.min.css') ?>">
         <!-- Theme style -->
         <link rel="stylesheet" href="<?= site_url('dist/css/adminlte.min.css') ?>">
+        <!-- Toastr -->
+        <link rel="stylesheet" href="<?= site_url('plugins/toastr/toastr.min.css') ?>">
         <!-- overlayScrollbars -->
         <link rel="stylesheet" href="<?= site_url('plugins/overlayScrollbars/css/OverlayScrollbars.min.css') ?>">
         <!-- Daterange picker -->
@@ -719,6 +721,8 @@
     <script src="<?= site_url('plugins/overlayScrollbars/js/jquery.overlayScrollbars.min.js') ?>"></script>
     <!-- AdminLTE App -->
     <script src="<?= site_url('dist/js/adminlte.js') ?>"></script>
+    <!-- Toastr -->
+    <script src="<?= site_url('plugins/toastr/toastr.min.js') ?>"></script>
 <script>
     $('#usuario').keypress(function(event){
     var keycode = (event.keyCode ? event.keyCode : event.which);
