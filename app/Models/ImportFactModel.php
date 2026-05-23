@@ -22,18 +22,24 @@ class ImportFactModel extends Model
 
     public function getClient($ruc)
     {
-        $sql = "SELECT CLI_CODCLIE,CLI_NOMBRE,CLI_AUTO1 FROM clientes WHERE cli_cp = 'P' and cli_ruc_esposo = $ruc";
-        $query = $this->db->query($sql);
+        $sql = "SELECT CLI_CODCLIE,CLI_NOMBRE,CLI_AUTO1 FROM clientes WHERE cli_cp = 'P' and cli_ruc_esposo = ?";
+        $query = $this->db->query($sql, [$ruc]);
         return $query->getRow();
     }
     public function listarDocumentos($cliente, $startDate, $endDate)
     {
+        $params = [];
         $sql = 'SELECT * ';
         $sql .= "FROM dbo.IMPORT_FACT as T1 ";
         $sql .= "LEFT JOIN dbo.clientes as T2 ON(T1.RUC=T2.CLI_RUC_ESPOSO and cli_cp = 'P') ";
-        $sql .= "WHERE FECHA BETWEEN '$startDate' AND '$endDate' ";
-        $sql .= $cliente?"AND T2.CLI_CODCLIE = $cliente ":"";
-        $query = $this->db->query($sql);
+        $sql .= "WHERE FECHA BETWEEN ? AND ? ";
+        $params[] = $startDate;
+        $params[] = $endDate;
+        if ($cliente) {
+            $sql .= "AND T2.CLI_CODCLIE = ? ";
+            $params[] = $cliente;
+        }
+        $query = $this->db->query($sql, $params);
         return $query->getResult();
     }
     public function listarDetalleDocumentos($id)
@@ -501,6 +507,7 @@ $data = $data->data; // Verificar si 'registros' existe y es un array
      */
     public function listarDocumentosParaRecepcion($cliente, $startDate, $endDate)
     {
+        $params = [];
         $sql = "SELECT T1.ID, T1.RUC, T1.NRO_FACTURA, T1.FECHA, T1.TOTAL, T1.CLI_CODCLI,
                        T2.CLI_CODCLIE, T2.CLI_NOMBRE,
                        T1.desRazonSocialEmis,
@@ -511,10 +518,15 @@ $data = $data->data; // Verificar si 'registros' existe y es un array
                 LEFT JOIN dbo.RECEPCION_REPORTE_DET AS RD ON (T1.ID = RD.ID_FACT)
                 LEFT JOIN dbo.RECEPCION_REPORTE AS RR ON (RD.ID_REPORTE = RR.ID AND RR.ESTADO = 1)
                 WHERE T1.ESTADO in(0,1)
-                AND T1.FECHA BETWEEN '$startDate' AND '$endDate' ";
-        $sql .= $cliente ? "AND T2.CLI_CODCLIE = '$cliente' " : "";
+                AND T1.FECHA BETWEEN ? AND ? ";
+        $params[] = $startDate;
+        $params[] = $endDate;
+        if ($cliente) {
+            $sql .= "AND T2.CLI_CODCLIE = ? ";
+            $params[] = $cliente;
+        }
         $sql .= "ORDER BY T1.FECHA DESC, T1.ID DESC";
-        $query = $this->db->query($sql);
+        $query = $this->db->query($sql, $params);
         return $query->getResult();
     }
 
