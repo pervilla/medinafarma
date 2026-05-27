@@ -375,10 +375,10 @@ $nro_Boleta = $documento.TRIM($facart[0]->FAR_NUMSER)."-".$facart[0]->FAR_NUMFAC
                         <tr>
                             <td>#<?= $item->ART_KEY ?></td>
                             <td><?= trim($item->ART_NOMBRE) ?></td>
-                            <td class="text-center"><?= number_format($item->FAR_CANTIDAD_P, 0) ?></td>
+                            <td class="text-center"><?= (float)($item->FAR_CANTIDAD_P / ($item->FAR_EQUIV ?: 1)) ?></td>
                             <td class="m-0 text-center"><?= trim($item->FAR_DESCRI) ?></td>
                             <td class="text-right">S/. <?= number_format($item->FAR_PRECIO, 2) ?></td>
-                            <td class="text-right">S/. <?= number_format($item->FAR_PRECIO * $item->FAR_CANTIDAD_P, 2) ?></td>
+                            <td class="text-right">S/. <?= number_format($item->FAR_PRECIO * $item->FAR_CANTIDAD_P / ($item->FAR_EQUIV ?: 1), 2) ?></td>
                         </tr>
                         <?php endforeach; ?>
                     <?php endif; ?>
@@ -397,7 +397,7 @@ $nro_Boleta = $documento.TRIM($facart[0]->FAR_NUMSER)."-".$facart[0]->FAR_NUMFAC
                                 $subtotal = 0;
                                 if (isset($facart) && is_array($facart)) {
                                     foreach ($facart as $item) {
-                                        $subtotal += $item->FAR_PRECIO * $item->FAR_CANTIDAD_P;
+                                        $subtotal += $item->FAR_PRECIO * $item->FAR_CANTIDAD_P / ($item->FAR_EQUIV ?: 1);
                                     }
                                 }
                                 $igv = $subtotal * 0.18;
@@ -424,7 +424,7 @@ $nro_Boleta = $documento.TRIM($facart[0]->FAR_NUMSER)."-".$facart[0]->FAR_NUMFAC
                             $subtotal = 0;
                             if (isset($facart) && is_array($facart)) {
                                 foreach ($facart as $item) {
-                                    $subtotal += $item->FAR_PRECIO * $item->FAR_CANTIDAD_P;
+                                    $subtotal += $item->FAR_PRECIO * $item->FAR_CANTIDAD_P / ($item->FAR_EQUIV ?: 1);
                                 }
                             }
                             $igv = $subtotal * 0;
