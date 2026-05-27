@@ -174,10 +174,15 @@ $(document).ready(function() {
             { data: null, render: function(d, t, r) {
                 var btn = '';
                 if (r.estado == 0) {
+                    btn += '<a href="<?= site_url('cmHistoria/triaje/') ?>'+r.id+'" class="btn btn-warning btn-xs mr-1" title="Triaje"><i class="fas fa-heartbeat"></i></a>';
                     btn += '<button class="btn btn-success btn-xs cobrar-ajax mr-1" data-cita="'+r.id+'" title="Cobrar"><i class="fas fa-cash-register"></i></button>';
                 }
                 if (r.estado == 1) {
+                    btn += '<a href="<?= site_url('cmHistoria/triaje/') ?>'+r.id+'" class="btn btn-warning btn-xs mr-1" title="Triaje"><i class="fas fa-heartbeat"></i></a>';
                     btn += '<button class="btn btn-info btn-xs atender-ajax mr-1" data-cita="'+r.id+'" title="Atender"><i class="fas fa-check"></i></button>';
+                }
+                if (r.estado == 2) {
+                    btn += '<a href="<?= site_url('cmHistoria/ver/') ?>'+r.id+'" class="btn btn-outline-info btn-xs mr-1" title="Ver Historia"><i class="fas fa-file-medical"></i></a>';
                 }
                 if (r.estado != 3) {
                     btn += '<button class="btn btn-danger btn-xs anular-ajax" data-cita="'+r.id+'" title="Anular"><i class="fas fa-times"></i></button>';
