@@ -102,17 +102,37 @@ class CmHistoria extends BaseController
         $db = \Config\Database::connect();
         $historia_id = $this->request->getPost('historia_id');
         $cita_id = $this->request->getPost('cita_id');
+        $finalizar = $this->request->getPost('finalizar') == '1';
         
-        $db->query("UPDATE CM_HISTORIA SET examen_clinico=?, plan_trabajo=?, indicaciones=?, estado=1, updated_at=GETDATE() WHERE id=?",
+        $db->query("UPDATE CM_HISTORIA SET examen_clinico=?, plan_trabajo=?, indicaciones=?, estado=?, updated_at=GETDATE() WHERE id=?",
             [$this->request->getPost('examen_clinico'), $this->request->getPost('plan_trabajo'),
-             $this->request->getPost('indicaciones'), $historia_id]);
+             $this->request->getPost('indicaciones'), $finalizar ? 2 : 1, $historia_id]);
         
-        // Marcar cita como atendida
-        $db->query("UPDATE CM_CITAS SET estado = 2, updated_at = GETDATE() WHERE id = ?", [$cita_id]);
+        if ($finalizar) {
+            // Si finaliza, marcar cita como atendida
+            $db->query("UPDATE CM_CITAS SET estado = 2, updated_at = GETDATE() WHERE id = ?", [$cita_id]);
+            $msg = 'Atención finalizada. Cita marcada como atendida.';
+        } else {
+            $msg = 'Atención guardada como pendiente. Puede continuar después.';
+        }
         
-        return redirect()->to('cmHistoria/atencion/' . $cita_id)->with('msg', 'Atención guardada. Cita marcada como atendida.');
+        return redirect()->to('cmHistoria/atencion/' . $cita_id)->with('msg', $msg);
     }
     
+    public function actualizar_diagnostico()
+    {
+        $db = \Config\Database::connect();
+        $id = $this->request->getPost('id');
+        $field = $this->request->getPost('field');
+        $value = $this->request->getPost('value');
+        
+        $allowed = ['tipo', 'caso', 'alta'];
+        if (!in_array($field, $allowed)) return $this->response->setJSON(['status' => 'error']);
+        
+        $db->query("UPDATE CM_HISTORIA_DIAGNOSTICO SET {$field} = ? WHERE id = ?", [$value, $id]);
+        return $this->response->setJSON(['status' => 'ok']);
+    }
+
     public function guardar_diagnostico()
     {
         $db = \Config\Database::connect();
@@ -130,6 +150,18 @@ class CmHistoria extends BaseController
         return redirect()->back()->with('msg', 'Diagnóstico agregado');
     }
     
+    public function buscar_articulo()
+    {
+        $term = $this->request->getPost('term');
+        $db = \Config\Database::connect();
+        $sql = "SELECT TOP 20 ART_KEY, RTRIM(ART_NOMBRE) AS ART_NOMBRE
+                FROM ARTI
+                WHERE ART_SITUACION = 0 AND ART_NOMBRE LIKE ?
+                ORDER BY ART_NOMBRE";
+        $result = $db->query($sql, ['%'.$term.'%'])->getResult();
+        return $this->response->setJSON($result);
+    }
+
     public function guardar_receta()
     {
         $db = \Config\Database::connect();
@@ -163,6 +195,38 @@ class CmHistoria extends BaseController
         return redirect()->back()->with('msg', 'Receta eliminada');
     }
     
+    public function receta($cita_id = null)
+    {
+        if (!$cita_id) return redirect()->to('cmCitas/listado');
+        $db = \Config\Database::connect();
+        
+        $cita = $db->query("
+            SELECT cc.*, C.CLI_NOMBRE, C.CLI_RUC_ESPOSA AS DNI, FLOOR(DATEDIFF(DAY, C.CLI_FECHA_NAC, GETDATE()) / 365.25) AS edad,
+                   H.fecha_especifica, (M.nombres + ' ' + M.apellidos) AS medico
+            FROM CM_CITAS cc
+            INNER JOIN CM_PACIENTES P ON P.id = cc.paciente_id
+            INNER JOIN CLIENTES C ON C.CLI_CODCLIE = P.cliente_id
+            INNER JOIN CM_MEDICOS_HORARIOS H ON H.id = cc.horario_id
+            LEFT JOIN CM_MEDICOS M ON M.id = H.medico_id
+            WHERE cc.id = ?
+        ", [$cita_id])->getRow();
+        
+        if (!$cita) return redirect()->to('cmCitas/listado');
+        
+        $historia = $db->table('CM_HISTORIA')->where('cita_id', $cita_id)->get()->getRow();
+        $diagnosticos = [];
+        $recetas = [];
+        if ($historia) {
+            $diagnosticos = $db->table('CM_HISTORIA_DIAGNOSTICO')->where('historia_id', $historia->id)->get()->getResult();
+            $recetas = $db->table('CM_HISTORIA_RECETA')->where('historia_id', $historia->id)->get()->getResult();
+        }
+        
+        return view('cm_historia/receta', [
+            'cita' => $cita, 'historia' => $historia,
+            'diagnosticos' => $diagnosticos, 'recetas' => $recetas
+        ]);
+    }
+
     public function ver($cita_id = null)
     {
         if (!$cita_id) return redirect()->to('cmCitas/listado');

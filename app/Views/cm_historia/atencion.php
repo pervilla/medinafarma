@@ -8,8 +8,11 @@
                 <h1 class="m-0 text-dark"><i class="fas fa-stethoscope text-success mr-2"></i> <?= esc($titulo) ?></h1>
             </div>
             <div class="col-sm-6 text-right">
+                <?php $estadoBadge = $historia->estado == 2 ? 'badge-success' : 'badge-warning'; ?>
+                <span class="badge <?= $estadoBadge ?> mr-2"><?= $historia->estado == 2 ? 'Finalizado' : 'Pendiente' ?></span>
                 <a href="<?= site_url('cmHistoria/triaje/' . $cita->id) ?>" class="btn btn-outline-warning btn-sm"><i class="fas fa-heartbeat mr-1"></i> Triaje</a>
                 <a href="<?= site_url('cmHistoria/ver/' . $cita->id) ?>" class="btn btn-outline-info btn-sm ml-1"><i class="fas fa-file-medical mr-1"></i> Ver Historia</a>
+                <a href="<?= site_url('cmHistoria/receta/' . $cita->id) ?>" class="btn btn-outline-secondary btn-sm ml-1" target="_blank"><i class="fas fa-print mr-1"></i> Imprimir Receta</a>
                 <a href="<?= site_url('cmCitas/listado') ?>" class="btn btn-outline-secondary btn-sm ml-1"><i class="fas fa-arrow-left mr-1"></i> Volver</a>
             </div>
         </div>
@@ -64,7 +67,10 @@
                                 <textarea name="plan_trabajo" class="form-control" rows="3"><?= esc($historia->plan_trabajo ?? '') ?></textarea></div>
                             <div class="form-group"><label>Indicaciones</label>
                                 <textarea name="indicaciones" class="form-control" rows="2"><?= esc($historia->indicaciones ?? '') ?></textarea></div>
-                            <button type="submit" class="btn btn-success"><i class="fas fa-save mr-1"></i> Guardar y Marcar Atendido</button>
+                            <div class="btn-group">
+                                <button type="submit" name="finalizar" value="0" class="btn btn-warning"><i class="fas fa-save mr-1"></i> Guardar Pendiente</button>
+                                <button type="submit" name="finalizar" value="1" class="btn btn-success"><i class="fas fa-check-circle mr-1"></i> Finalizar Atención</button>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -76,25 +82,61 @@
                     </div>
                     <div class="card-body">
                         <div class="row mb-2">
-                            <div class="col-md-5">
-                                <select class="form-control form-control-sm" id="cie_search" style="width:100%" placeholder="Buscar código o descripción CIE-10..."></select>
+                            <div class="col-md-3">
+                                <select class="form-control form-control-sm" id="cie_search" style="width:100%"></select>
                             </div>
-                            <div class="col-md-5">
-                                <input type="text" class="form-control form-control-sm" id="cie_desc_manual" placeholder="O escriba la descripción manual">
+                            <div class="col-md-3">
+                                <input type="text" class="form-control form-control-sm" id="cie_desc_manual" placeholder="Descripción">
                             </div>
                             <div class="col-md-2">
-                                <button class="btn btn-primary btn-sm btn-block" id="btnAddDiagnostico"><i class="fas fa-plus"></i> Agregar</button>
+                                <select class="form-control form-control-sm" id="cie_tipo">
+                                    <option value="DEFINITIVO">Definitivo</option>
+                                    <option value="PRESUNTIVO">Presuntivo</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <select class="form-control form-control-sm" id="cie_caso">
+                                    <option value="NUEVO">Nuevo</option>
+                                    <option value="REPETIDO">Repetido</option>
+                                </select>
+                            </div>
+                            <div class="col-md-1">
+                                <select class="form-control form-control-sm" id="cie_alta">
+                                    <option value="">-</option>
+                                    <option value="SI">Sí</option>
+                                    <option value="NO">No</option>
+                                </select>
+                            </div>
+                            <div class="col-md-1">
+                                <button class="btn btn-primary btn-sm btn-block" id="btnAddDiagnostico"><i class="fas fa-plus"></i></button>
                             </div>
                         </div>
                         <table class="table table-sm table-bordered" id="tabla_diag">
-                            <thead><tr><th>Código</th><th>Descripción</th><th>Tipo</th><th>Caso</th><th></th></tr></thead>
+                            <thead><tr><th>Código</th><th>Descripción</th><th>Tipo</th><th>Caso</th><th>Alta</th><th></th></tr></thead>
                             <tbody>
                                 <?php foreach($diagnosticos as $d): ?>
-                                <tr>
+                                <tr data-diag-id="<?= $d->id ?>">
                                     <td><?= esc($d->cie_codigo) ?></td>
                                     <td><?= esc($d->cie_descripcion) ?></td>
-                                    <td><span class="badge badge-info"><?= esc($d->tipo) ?></span></td>
-                                    <td><span class="badge badge-secondary"><?= esc($d->caso) ?></span></td>
+                                    <td>
+                                        <select class="form-control form-control-sm diag-tipo" data-id="<?= $d->id ?>">
+                                            <option value="DEFINITIVO" <?= $d->tipo == 'DEFINITIVO' ? 'selected' : '' ?>>Definitivo</option>
+                                            <option value="PRESUNTIVO" <?= $d->tipo == 'PRESUNTIVO' ? 'selected' : '' ?>>Presuntivo</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <select class="form-control form-control-sm diag-caso" data-id="<?= $d->id ?>">
+                                            <option value="NUEVO" <?= $d->caso == 'NUEVO' ? 'selected' : '' ?>>Nuevo</option>
+                                            <option value="REPETIDO" <?= $d->caso == 'REPETIDO' ? 'selected' : '' ?>>Repetido</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <select class="form-control form-control-sm diag-alta" data-id="<?= $d->id ?>">
+                                            <option value="" <?= !$d->alta ? 'selected' : '' ?>>-</option>
+                                            <option value="SI" <?= $d->alta == 'SI' ? 'selected' : '' ?>>Sí</option>
+                                            <option value="NO" <?= $d->alta == 'NO' ? 'selected' : '' ?>>No</option>
+                                        </select>
+                                    </td>
                                     <td><a href="<?= site_url('cmHistoria/eliminar_diagnostico/' . $d->id) ?>" class="btn btn-xs btn-danger"><i class="fas fa-times"></i></a></td>
                                 </tr>
                                 <?php endforeach; ?>
@@ -110,17 +152,17 @@
                     </div>
                     <div class="card-body">
                         <div class="row mb-2">
-                            <div class="col-md-7">
-                                <input type="text" class="form-control form-control-sm" id="receta_nombre" placeholder="Nombre del medicamento/artículo...">
+                            <div class="col-md-5">
+                                <select class="form-control form-control-sm" id="receta_buscar" style="width:100%"></select>
                             </div>
                             <div class="col-md-1">
-                                <input type="number" class="form-control form-control-sm" id="receta_cant" value="1" min="1">
+                                <input type="number" class="form-control form-control-sm" id="receta_cant" value="1" min="1" placeholder="Cant">
                             </div>
                             <div class="col-md-1">
-                                <input type="number" class="form-control form-control-sm" id="receta_dias" value="1" min="1">
+                                <input type="number" class="form-control form-control-sm" id="receta_dias" value="1" min="1" placeholder="Días">
                             </div>
-                            <div class="col-md-2">
-                                <input type="text" class="form-control form-control-sm" id="receta_ind" placeholder="Indicaciones">
+                            <div class="col-md-4">
+                                <input type="text" class="form-control form-control-sm" id="receta_ind" placeholder="Indicaciones (ej: 1 tab c/8h)">
                             </div>
                             <div class="col-md-1">
                                 <button class="btn btn-info btn-sm btn-block" id="btnAddReceta"><i class="fas fa-plus"></i></button>
@@ -183,18 +225,47 @@ $(function() {
             historia_id: <?= $historia->id ?>,
             cie_codigo: codigo || '',
             cie_descripcion: desc,
-            tipo: 'DEFINITIVO',
-            caso: 'NUEVO'
+            tipo: $('#cie_tipo').val(),
+            caso: $('#cie_caso').val(),
+            alta: $('#cie_alta').val()
         }, function() { location.reload(); });
+    });
+
+    // Editar tipo/caso/alta inline
+    $(document).on('change', '.diag-tipo, .diag-caso, .diag-alta', function() {
+        let id = $(this).data('id');
+        let field = $(this).hasClass('diag-tipo') ? 'tipo' : ($(this).hasClass('diag-caso') ? 'caso' : 'alta');
+        let val = $(this).val();
+        $.post("<?= site_url('cmHistoria/actualizar_diagnostico') ?>", {
+            id: id, field: field, value: val
+        });
+    });
+
+    // Inicializar buscador de recetas
+    $('#receta_buscar').select2({
+        theme: 'bootstrap4',
+        placeholder: 'Buscar medicamento o artículo...',
+        ajax: {
+            url: "<?= site_url('cmHistoria/buscar_articulo') ?>",
+            type: "post", dataType: 'json', delay: 250,
+            data: function(p) { return { term: p.term }; },
+            processResults: function(data) {
+                return { results: (data||[]).map(function(d) {
+                    return { id: d.ART_KEY, text: d.ART_NOMBRE, art_key: d.ART_KEY, nombre: d.ART_NOMBRE };
+                })};
+            }
+        }
     });
 
     // Agregar receta
     $('#btnAddReceta').click(function() {
-        let nombre = $('#receta_nombre').val();
-        if (!nombre) { alert('Ingrese el nombre del artículo'); return; }
+        let sel = $('#receta_buscar').select2('data')[0];
+        let nombre = sel ? sel.nombre : $('#receta_buscar').val();
+        if (!nombre || nombre.length < 2) { Swal.fire({icon:'warning', title:'Busque o escriba un artículo'}); return; }
         $.post("<?= site_url('cmHistoria/guardar_receta') ?>", {
             historia_id: <?= $historia->id ?>,
             nombre_articulo: nombre,
+            art_key: sel ? sel.art_key : 0,
             cantidad: $('#receta_cant').val()||1,
             dias: $('#receta_dias').val()||1,
             indicaciones: $('#receta_ind').val()
