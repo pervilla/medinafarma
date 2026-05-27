@@ -432,8 +432,46 @@
                                         </a>
                                     </li>                                                              
                                 </ul>
-                                
-                            </li>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="<?= site_url('cmCitas') ?>" class="nav-link <?=$menu['i']==46?'active':''?>">
+                                            <i class="fas fa-calendar-alt nav-icon"></i>
+                                            <p>Nuevo Dashboard</p>
+                                        </a>
+                                    </li>
+                                </ul>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="<?= site_url('cmMedicos') ?>" class="nav-link <?=$menu['i']==47?'active':''?>">
+                                            <i class="fas fa-user-md nav-icon"></i>
+                                            <p>Médicos</p>
+                                        </a>
+                                    </li>
+                                </ul>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="<?= site_url('cmHorarios') ?>" class="nav-link <?=$menu['i']==48?'active':''?>">
+                                            <i class="far fa-clock nav-icon"></i>
+                                            <p>Horarios</p>
+                                        </a>
+                                    </li>
+                                </ul>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="<?= site_url('cmPacientes') ?>" class="nav-link <?=$menu['i']==49?'active':''?>">
+                                            <i class="fas fa-users nav-icon"></i>
+                                            <p>Pacientes</p>
+                                        </a>
+                                    </li>
+                                </ul>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="<?= site_url('cmCitas/listado') ?>" class="nav-link <?=$menu['i']==50?'active':''?>">
+                                            <i class="fas fa-list nav-icon"></i>
+                                            <p>Todas las Citas</p>
+                                        </a>
+                                    </li>
+                                </ul>
                             <?php } ?>                            
                             <li class="nav-item <?=$menu['p']==50?'menu-open':''?> has-treeview">
                                 <a href="#" class="nav-link <?=$menu['p']==50?'active':''?>">
