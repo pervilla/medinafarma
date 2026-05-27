@@ -28,11 +28,7 @@ class CmHistoria extends BaseController
         // Buscar o crear historia
         $historia = $db->table('CM_HISTORIA')->where('cita_id', $cita_id)->get()->getRow();
         if (!$historia) {
-            $db->table('CM_HISTORIA')->insert([
-                'cita_id' => $cita_id,
-                'paciente_id' => $cita->paciente_id,
-                'created_at' => date('Y-m-d H:i:s')
-            ]);
+            $db->query("INSERT INTO CM_HISTORIA (cita_id, paciente_id) VALUES (?, ?)", [$cita_id, $cita->paciente_id]);
             $historia = $db->table('CM_HISTORIA')->where('cita_id', $cita_id)->get()->getRow();
         }
         
@@ -54,18 +50,11 @@ class CmHistoria extends BaseController
             return redirect()->back()->with('error', 'Historia no encontrada');
         }
         
-        $data = [
-            'presion_arterial' => $this->request->getPost('presion_arterial'),
-            'temperatura' => $this->request->getPost('temperatura'),
-            'peso' => $this->request->getPost('peso'),
-            'talla' => $this->request->getPost('talla'),
-            'saturacion' => $this->request->getPost('saturacion'),
-            'frec_cardiaca' => $this->request->getPost('frec_cardiaca'),
-            'frec_respiratoria' => $this->request->getPost('frec_respiratoria'),
-            'updated_at' => date('Y-m-d H:i:s')
-        ];
-        
-        $db->table('CM_HISTORIA')->where('id', $historia_id)->update($data);
+        $db->query("UPDATE CM_HISTORIA SET presion_arterial=?, temperatura=?, peso=?, talla=?, saturacion=?, frec_cardiaca=?, frec_respiratoria=?, updated_at=GETDATE() WHERE id=?",
+            [$this->request->getPost('presion_arterial'), $this->request->getPost('temperatura'),
+             $this->request->getPost('peso'), $this->request->getPost('talla'),
+             $this->request->getPost('saturacion'), $this->request->getPost('frec_cardiaca'),
+             $this->request->getPost('frec_respiratoria'), $historia_id]);
         
         return redirect()->to('cmHistoria/atencion/' . $cita_id)->with('msg', 'Triaje guardado');
     }
@@ -114,15 +103,9 @@ class CmHistoria extends BaseController
         $historia_id = $this->request->getPost('historia_id');
         $cita_id = $this->request->getPost('cita_id');
         
-        $data = [
-            'examen_clinico' => $this->request->getPost('examen_clinico'),
-            'plan_trabajo' => $this->request->getPost('plan_trabajo'),
-            'indicaciones' => $this->request->getPost('indicaciones'),
-            'estado' => 1,
-            'updated_at' => date('Y-m-d H:i:s')
-        ];
-        
-        $db->table('CM_HISTORIA')->where('id', $historia_id)->update($data);
+        $db->query("UPDATE CM_HISTORIA SET examen_clinico=?, plan_trabajo=?, indicaciones=?, estado=1, updated_at=GETDATE() WHERE id=?",
+            [$this->request->getPost('examen_clinico'), $this->request->getPost('plan_trabajo'),
+             $this->request->getPost('indicaciones'), $historia_id]);
         
         // Marcar cita como atendida
         $db->query("UPDATE CM_CITAS SET estado = 2, updated_at = GETDATE() WHERE id = ?", [$cita_id]);
