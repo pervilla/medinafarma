@@ -50,6 +50,7 @@ body {
         $cont = 0;
         $tr = "";
         
+        $caja = isset($caja) ? $caja : 1;
         if (empty($productos)) {
              echo "<b>NO SE ENCONTRARON REGISTROS</b>";
         } else {
@@ -70,7 +71,8 @@ body {
                 $nombre = substr(trim($producto->Nombre_Articulo), 0, 52);
                 $unidad = trim($producto->Unidad) . "(" . intval($producto->Equivalencia) . ")";
                 
-                $tr .= "<tr><td>$producto->Codigo_Articulo</td><td>$nombre</td><td>$unidad</td><td>.</td><td></td><td>-</td><td>+</td></tr>";
+                $stock_val = ($caja != 1 && isset($producto->Stock)) ? $producto->Stock : ".";
+                $tr .= "<tr><td>$producto->Codigo_Articulo</td><td>$nombre</td><td>$unidad</td><td>$stock_val</td><td></td><td>-</td><td>+</td></tr>";
 
                 $cont++;
                 if ($cont >= 61) {
