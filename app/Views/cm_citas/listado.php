@@ -104,21 +104,106 @@
         <div class="modal-body">
             <input type="hidden" id="vp_cita_id">
             <input type="hidden" id="vp_paciente_id">
-            <div class="row mb-2">
-                <div class="col-6"><strong>Nombre:</strong> <span id="vp_nombre_txt"></span><input class="form-control form-control-sm d-none" id="vp_nombre_inp"></div>
-                <div class="col-3"><strong>DNI:</strong> <span id="vp_dni_txt"></span><input class="form-control form-control-sm d-none" id="vp_dni_inp" maxlength="11"></div>
-                <div class="col-3"><strong>Edad:</strong> <span id="vp_edad"></span></div>
+            
+            <div class="card card-outline card-info mb-3">
+                <div class="card-header py-2"><h6 class="mb-0"><i class="fas fa-id-card mr-1"></i> Datos Personales</h6></div>
+                <div class="card-body py-2">
+                    <div class="row">
+                        <div class="col-5">
+                            <label class="small mb-0">Nombre</label>
+                            <span id="vp_nombre_txt" class="d-block font-weight-bold"></span>
+                            <input class="form-control form-control-sm d-none" id="vp_nombre_inp">
+                        </div>
+                        <div class="col-2">
+                            <label class="small mb-0">DNI</label>
+                            <span id="vp_dni_txt" class="d-block"></span>
+                            <input class="form-control form-control-sm d-none" id="vp_dni_inp" maxlength="11">
+                        </div>
+                        <div class="col-2">
+                            <label class="small mb-0">Edad</label>
+                            <span id="vp_edad" class="d-block"></span>
+                        </div>
+                        <div class="col-3">
+                            <label class="small mb-0">Total</label>
+                            <span id="vp_total" class="d-block font-weight-bold text-success"></span>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-3">
+                            <label class="small mb-0">Teléfono</label>
+                            <span id="vp_tel_txt" class="d-block"></span>
+                            <input class="form-control form-control-sm d-none" id="vp_tel_inp">
+                        </div>
+                        <div class="col-4">
+                            <label class="small mb-0">Fec. Nacimiento</label>
+                            <span id="vp_fnac_txt" class="d-block"></span>
+                            <input type="date" class="form-control form-control-sm d-none" id="vp_fnac_inp">
+                        </div>
+                        <div class="col-5">
+                            <label class="small mb-0">Campaña / Médico</label>
+                            <span id="vp_campana" class="d-block small"></span>
+                            <span id="vp_medico" class="d-block small text-muted"></span>
+                        </div>
+                    </div>
+                    <div id="vp_servicios" class="mt-2 small"></div>
+                </div>
             </div>
-            <div class="row mb-2">
-                <div class="col-3"><strong>Teléfono:</strong> <span id="vp_tel_txt"></span><input class="form-control form-control-sm d-none" id="vp_tel_inp"></div>
-                <div class="col-4"><strong>Fec. Nac:</strong> <span id="vp_fnac_txt"></span><input type="date" class="form-control form-control-sm d-none" id="vp_fnac_inp"></div>
-                <div class="col-5 text-right"><strong>Total:</strong> <span id="vp_total"></span></div>
+
+            <div class="card card-outline card-success mb-3">
+                <div class="card-header py-2"><h6 class="mb-0"><i class="fas fa-notes-medical mr-1"></i> Ficha Clínica</h6></div>
+                <div class="card-body py-2">
+                    <div class="row">
+                        <div class="col-3">
+                            <label class="small mb-0">Tipo de Sangre</label>
+                            <span id="vp_sangre_txt" class="d-block"></span>
+                            <select class="form-control form-control-sm d-none" id="vp_sangre_inp">
+                                <option value="">Desconocido</option>
+                                <option value="O+">O+</option><option value="O-">O-</option>
+                                <option value="A+">A+</option><option value="A-">A-</option>
+                                <option value="B+">B+</option><option value="B-">B-</option>
+                                <option value="AB+">AB+</option><option value="AB-">AB-</option>
+                            </select>
+                        </div>
+                        <div class="col-4">
+                            <label class="small mb-0">Contacto Emergencia</label>
+                            <span id="vp_contacto_txt" class="d-block"></span>
+                            <input class="form-control form-control-sm d-none" id="vp_contacto_inp">
+                        </div>
+                        <div class="col-3">
+                            <label class="small mb-0">Tel. Emergencia</label>
+                            <span id="vp_tel_emergencia_txt" class="d-block"></span>
+                            <input class="form-control form-control-sm d-none" id="vp_tel_emergencia_inp">
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-6">
+                            <label class="small mb-0">Alergias Conocidas</label>
+                            <span id="vp_alergias_txt" class="d-block"></span>
+                            <input class="form-control form-control-sm d-none" id="vp_alergias_inp" placeholder="Ej. Penicilina, Ibuprofeno...">
+                        </div>
+                        <div class="col-6">
+                            <label class="small mb-0">Enfermedades Crónicas</label>
+                            <span id="vp_enfermedades_txt" class="d-block"></span>
+                            <input class="form-control form-control-sm d-none" id="vp_enfermedades_inp" placeholder="Ej. Hipertensión, Diabetes...">
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            <label class="small mb-0">Observaciones Médicas</label>
+                            <span id="vp_observaciones_txt" class="d-block"></span>
+                            <textarea class="form-control form-control-sm d-none" id="vp_observaciones_inp" rows="2"></textarea>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="row mb-2"><div class="col-6"><strong>Campaña:</strong> <span id="vp_campana"></span></div><div class="col-6"><strong>Médico:</strong> <span id="vp_medico"></span></div></div>
-            <div id="vp_servicios" class="mb-3"></div>
-            <button class="btn btn-success btn-sm d-none" id="btnGuardarPaciente" type="button"><i class="fas fa-save"></i> Guardar Cambios</button>
-            <hr><h6>Historial de Citas</h6>
-            <table class="table table-sm table-bordered"><thead><tr><th>#</th><th>Fecha</th><th>Médico</th><th>Total</th><th>Estado</th></tr></thead><tbody id="vp_historial"></tbody></table>
+
+            <button class="btn btn-success d-none" id="btnGuardarPaciente" type="button"><i class="fas fa-save"></i> Guardar Cambios</button>
+            
+            <hr>
+            <h6><i class="fas fa-history mr-1"></i> Historial de Citas</h6>
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered"><thead class="thead-light"><tr><th>#</th><th>Fecha</th><th>Médico</th><th>Total</th><th>Estado</th></tr></thead><tbody id="vp_historial"></tbody></table>
+            </div>
         </div>
     </div></div>
 </div>
@@ -175,10 +260,12 @@ $(document).ready(function() {
                 var btn = '';
                 if (r.estado == 0) {
                     btn += '<a href="<?= site_url('cmHistoria/triaje/') ?>'+r.id+'" class="btn btn-warning btn-xs mr-1" title="Triaje"><i class="fas fa-heartbeat"></i></a>';
+                    btn += '<a href="<?= site_url('CmHistoria/imprimir_triaje/') ?>'+r.id+'" target="_blank" class="btn btn-secondary btn-xs mr-1" title="Imprimir Triaje"><i class="fas fa-print"></i></a>';
                     btn += '<button class="btn btn-success btn-xs cobrar-ajax mr-1" data-cita="'+r.id+'" title="Cobrar"><i class="fas fa-cash-register"></i></button>';
                 }
                 if (r.estado == 1) {
                     btn += '<a href="<?= site_url('cmHistoria/triaje/') ?>'+r.id+'" class="btn btn-warning btn-xs mr-1" title="Triaje"><i class="fas fa-heartbeat"></i></a>';
+                    btn += '<a href="<?= site_url('CmHistoria/imprimir_triaje/') ?>'+r.id+'" target="_blank" class="btn btn-secondary btn-xs mr-1" title="Imprimir Triaje"><i class="fas fa-print"></i></a>';
                     btn += '<button class="btn btn-info btn-xs atender-ajax mr-1" data-cita="'+r.id+'" title="Atender"><i class="fas fa-check"></i></button>';
                 }
                 if (r.estado == 2) {
@@ -255,6 +342,18 @@ $(document).ready(function() {
             $('#vp_campana').text(c.fecha_especifica ? c.fecha_especifica.substring(0,10) : '-');
             $('#vp_medico').text(c.medico || '-');
             $('#vp_servicios').html(c.servicios_extra ? '<strong>Servicios extra:</strong> '+c.servicios_extra : '');
+            $('#vp_sangre_txt').text(c.tipo_sangre ? c.tipo_sangre : 'No registrado');
+            $('#vp_sangre_inp').val(c.tipo_sangre || '');
+            $('#vp_contacto_txt').text(c.contacto_emergencia || 'No registrado');
+            $('#vp_contacto_inp').val(c.contacto_emergencia || '');
+            $('#vp_tel_emergencia_txt').text(c.telefono_emergencia || 'No registrado');
+            $('#vp_tel_emergencia_inp').val(c.telefono_emergencia || '');
+            $('#vp_alergias_txt').text(c.alergias || 'Ninguna');
+            $('#vp_alergias_inp').val(c.alergias || '');
+            $('#vp_enfermedades_txt').text(c.enfermedades_cronicas || 'Ninguna');
+            $('#vp_enfermedades_inp').val(c.enfermedades_cronicas || '');
+            $('#vp_observaciones_txt').text(c.observaciones_medicas || 'Ninguna');
+            $('#vp_observaciones_inp').val(c.observaciones_medicas || '');
             let hhtml = '';
             if (res.historial.length > 0) {
                 res.historial.forEach(function(h) {
@@ -298,7 +397,13 @@ $(document).ready(function() {
             nombre: $('#vp_nombre_inp').val(),
             dni: $('#vp_dni_inp').val(),
             telefono: $('#vp_tel_inp').val(),
-            fecha_nac: $('#vp_fnac_inp').val()
+            fecha_nac: $('#vp_fnac_inp').val(),
+            tipo_sangre: $('#vp_sangre_inp').val(),
+            contacto_emergencia: $('#vp_contacto_inp').val(),
+            telefono_emergencia: $('#vp_tel_emergencia_inp').val(),
+            alergias: $('#vp_alergias_inp').val(),
+            enfermedades_cronicas: $('#vp_enfermedades_inp').val(),
+            observaciones_medicas: $('#vp_observaciones_inp').val()
         }, function(res) {
             Swal.fire({ icon: res.status === 'success' ? 'success' : 'error', title: res.msg });;
             if (res.status === 'success') {

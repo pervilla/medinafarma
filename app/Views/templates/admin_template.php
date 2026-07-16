@@ -621,6 +621,44 @@
                                 </ul>
                             </li>
                             <?php } ?>
+
+                            <?php if($session->get('user_id')=='ADMIN'){?>
+                            <li class="nav-item <?=$menu['p']==90?'menu-open':''?> has-treeview">
+                                <a href="#" class="nav-link <?=$menu['p']==90?'active':''?>">
+                                    <i class="nav-icon fas fa-file-invoice"></i>
+                                    <p>
+                                        SUNAT
+                                        <i class="fas fa-angle-left right"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="<?= site_url('sunat') ?>" class="nav-link <?=$menu['i']==91?'active':''?>">
+                                            <i class="fas fa-plus-circle nav-icon"></i>
+                                            <p>Nuevo Resumen</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="<?= site_url('sunat/historial') ?>" class="nav-link <?=$menu['i']==92?'active':''?>">
+                                            <i class="fas fa-history nav-icon"></i>
+                                            <p>Historial</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="<?= site_url('sunat/facturas') ?>" class="nav-link <?=$menu['i']==93?'active':''?>">
+                                            <i class="fas fa-file-invoice nav-icon text-warning"></i>
+                                            <p>Facturas</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="<?= site_url('sunat/comprobantes') ?>" class="nav-link <?=$menu['i']==94?'active':''?>">
+                                            <i class="fas fa-check-double nav-icon text-success"></i>
+                                            <p>Comprobantes Enviados</p>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                            <?php } ?>
                             
                         </ul>
                     </nav>

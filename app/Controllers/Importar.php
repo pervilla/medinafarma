@@ -43,6 +43,120 @@ class Importar extends BaseController
         // Llamar al método getComprobantesPorFecha
         return $SireSunat->getComprobantesPorFechaSire($codEstado, $codDocIde, $tipoDoc, $fecEmisionIni, $fecEmisionFin);
     }
+    /**
+     * Obtiene/actualiza la referencia de una Nota de Crédito desde SUNAT.
+     * Es el fallback cuando numCpeRel no se guardó inicialmente.
+     */
+    public function obtenerReferenciaNC()
+    {
+        $id = $this->request->getVar('id');
+        if (!$id) {
+            return $this->response->setJSON(['status' => 400, 'message' => 'ID no proporcionado']);
+        }
+
+        $db = \Config\Database::connect();
+        $nc = $db->table('IMPORT_FACT')->where('ID', $id)->where('codCpe', '07')->get()->getRow();
+        if (!$nc) {
+            return $this->response->setJSON(['status' => 400, 'message' => 'Nota de Crédito no encontrada']);
+        }
+
+        // Si ya tiene numCpeRel, no necesita buscar
+        if (!empty($nc->numCpeRel)) {
+            return $this->response->setJSON([
+                'status' => 200,
+                'message' => 'La NC ya tiene referencia: ' . $nc->numCpeRel,
+                'numCpeRel' => $nc->numCpeRel
+            ]);
+        }
+
+        // Intentar obtener el detalle desde SUNAT (solo vista, no guarda detalle)
+        $doc = explode("-", $nc->NRO_FACTURA);
+        if (count($doc) < 2) {
+            return $this->response->setJSON(['status' => 400, 'message' => 'Formato de factura inválido']);
+        }
+        $serie = $doc[0];
+        $numero = $doc[1];
+        $rpta = 2;
+        $cod = 'F7';
+
+        $SireSunat = new SireSunat();
+
+        // Hacemos la misma llamada que getDetalleComprobante pero procesamos solo la referencia
+        $url = "https://api-cpe.sunat.gob.pe/v1/contribuyente/consultacpe/comprobantes/{$nc->RUC}-{$cod}-{$serie}-{$numero}-{$rpta}";
+        $apiResponse = $SireSunat->getApiResponse($url);
+
+        if (!is_object($apiResponse) || !isset($apiResponse->status) || $apiResponse->status != 200) {
+            return $this->importaComprobanteSunatConReferencia($id);
+        }
+
+        $numCpeRel = $apiResponse->data->comprobantes[0]->numCpeRel ?? null;
+
+        // Validar que sea un valor válido (no 0, no null, no vacío)
+        if ($numCpeRel === null || $numCpeRel === '' || $numCpeRel === 0) {
+            // Fallback: import completo
+            return $this->importaComprobanteSunatConReferencia($id);
+        }
+
+        $ImportFactModel = new ImportFactModel();
+        $ImportFactModel->actualizarReferenciaNC($id, $numCpeRel);
+
+        return $this->response->setJSON([
+            'status' => 200,
+            'message' => 'Referencia obtenida: ' . $numCpeRel,
+            'numCpeRel' => $numCpeRel
+        ]);
+    }
+
+    /**
+     * Fallback: importa el detalle completo de la NC desde SUNAT y extrae la referencia.
+     */
+    private function importaComprobanteSunatConReferencia($id)
+    {
+        $db = \Config\Database::connect();
+        $nc = $db->table('IMPORT_FACT')->where('ID', $id)->where('codCpe', '07')->get()->getRow();
+        if (!$nc) {
+            return $this->response->setJSON(['status' => 400, 'message' => 'NC no encontrada']);
+        }
+
+        // Llamar a importaComprobanteSunat con los datos de la NC
+        $ruc = $nc->RUC;
+        $nro = $nc->NRO_FACTURA;
+        $cod = '07';
+
+        $doc = explode("-", $nro);
+        if (count($doc) < 2) {
+            return $this->response->setJSON(['status' => 400, 'message' => 'Formato incorrecto']);
+        }
+        $serie = $doc[0];
+        $numero = $doc[1];
+        $rpta = 2;
+        $codApi = 'F7';
+
+        $SireSunat = new SireSunat();
+        $resultado = $SireSunat->getDetalleComprobante($ruc, $codApi, $serie, $numero, $rpta);
+
+        if (is_object($resultado) && method_exists($resultado, 'getStatusCode')) {
+            $statusCode = $resultado->getStatusCode();
+            if ($statusCode == 200) {
+                // Ahora numCpeRel debería estar guardado (gracias al fix en procesarRespuestaYGuardar)
+                $ncActualizado = $db->table('IMPORT_FACT')->where('ID', $id)->get()->getRow();
+                $ref = $ncActualizado->numCpeRel ?? null;
+                if ($ref && $ref != 0) {
+                    return $this->response->setJSON([
+                        'status' => 200,
+                        'message' => 'Referencia obtenida: ' . $ref,
+                        'numCpeRel' => $ref
+                    ]);
+                }
+                // NC importada pero sin referencia
+                return $this->response->setJSON([
+                    'status' => 404,
+                    'message' => 'La NC fue importada, pero SUNAT no devolvió información del comprobante referenciado. Es posible que esta NC no tenga un comprobante asociado.'
+                ]);
+            }
+        }
+    }
+
     public function importaComprobanteSunat()
     {
         // Obtener los datos enviados por POST
@@ -120,8 +234,16 @@ class Importar extends BaseController
         $cliente = $this->request->getVar('cliente');
         $startDate = $this->request->getVar('startDate');
         $endDate = $this->request->getVar('endDate');
+        $tipoDoc = $this->request->getVar('tipoDoc');
+        $estadoDoc = $this->request->getVar('estadoDoc');
         $ImportFactModel = new ImportFactModel();
-        $listarDocumentos = $ImportFactModel->listarDocumentos($cliente, $startDate, $endDate);
+        $listarDocumentos = $ImportFactModel->listarDocumentos($cliente, $startDate, $endDate, $tipoDoc, $estadoDoc);
+
+        // Agregar información de relación NC para cada documento
+        foreach ($listarDocumentos as $doc) {
+            $doc->RELACION = $ImportFactModel->getRelacionNotaCredito($doc->ID);
+        }
+
         return $this->response->setJSON($listarDocumentos);
     }
     public function listarDetalleDocumentos()
@@ -211,8 +333,8 @@ class Importar extends BaseController
     {
         $id = $this->request->getVar('id');
         $idfact = $this->request->getVar('idfact');
-        $cantidad = $this->request->getVar('cantidad');
-        $precio = round($this->request->getVar('total') / $cantidad, 4);
+        $cantidad = (float) $this->request->getVar('cantidad');
+        $precio = round((float) $this->request->getVar('total') / $cantidad, 4);
         $ImportFactModel = new ImportFactModel();
         $actualizaProduc = $ImportFactModel->actualiza_item_fact($idfact, $id, $precio);
         return $actualizaProduc;
@@ -255,7 +377,19 @@ class Importar extends BaseController
             ]);
         }
 
-        // VALIDACIÓN 3: No ingresar si la unidad del producto ya no existe (en PRECIOS)
+        // VALIDACIÓN 3: Verificar si el comprobante tiene una NC relacionada
+        if ($comp->codCpe != '07') {
+            $relacion = $ImportFactModel->getRelacionNotaCredito($idfact);
+            if ($relacion && isset($relacion['tiene_nc']) && $relacion['tiene_nc']) {
+                $ncs = implode(', ', $relacion['notas_credito']);
+                return $this->response->setJSON([
+                    'status' => 400,
+                    'message' => 'Este comprobante tiene Nota(s) de Crédito asociada(s): ' . $ncs . '. Debe procesar la NC primero o anular la relación antes de ingresar la compra.'
+                ]);
+            }
+        }
+
+        // VALIDACIÓN 4: No ingresar si la unidad del producto ya no existe (en PRECIOS)
         $unidadesInvalidas = $ImportFactModel->verificar_unidades_validas($idfact);
         if (!empty($unidadesInvalidas)) {
             $nombres = array_column($unidadesInvalidas, 'DES_PROD');

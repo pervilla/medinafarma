@@ -50,7 +50,7 @@ class SireSunat extends BaseController
         return $tokenData;
     }
 
-    private function getApiResponse($url)
+    public function getApiResponse($url)
 {
     $tokenData = $this->getToken();
     if (!isset($tokenData['access_token'])) {
@@ -253,6 +253,10 @@ class SireSunat extends BaseController
             'ALL_NUMSER' => (int) preg_replace('/[^0-9]+/', '', $comprobante->numSerie),
             'ALL_NUMFACT' => $comprobante->numCpe,
             'TOTAL' => $valor,
+            'codCpe' => $comprobante->codCpe ?? null,
+            'numCpeRel' => $comprobante->numCpeRel ?? null,
+            'indEstadoCpe' => $comprobante->indEstadoCpe ?? null,
+            'indProcedencia' => $comprobante->indProcedencia ?? null,
             'ESTADO' => 0
         ];
 

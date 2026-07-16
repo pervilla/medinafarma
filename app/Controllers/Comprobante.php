@@ -54,7 +54,7 @@ class Comprobante extends BaseController
         if (count($Facart) > 0) {
 
             if ($local == 1 || $session->get('user_id') == 'ADMIN') {
-                $connector = new WindowsPrintConnector("smb://asesor:159357@ventas2/6-EPSON TM-T20III Receipt");
+                $connector = new WindowsPrintConnector("smb://asesor:159357@ventas2/6-EPSON TM-T20IV Receipt");
             } elseif ($local == 2) {
                 $connector = new WindowsPrintConnector("smb://asesor:159357@server02/6-EPSON TM-T20II Receipt");
             } elseif ($local == 3) {
@@ -192,7 +192,7 @@ class Comprobante extends BaseController
         if ($movimientos) {
 
             if ($local == 1 || $session->get('user_id') == 'ADMIN') {
-                $connector = new WindowsPrintConnector("smb://asesor:159357@ventas2/6-EPSON TM-T20III Receipt");
+                $connector = new WindowsPrintConnector("smb://asesor:159357@ventas2/6-EPSON TM-T20IV Receipt");
             } elseif ($local == 2) {
                 $connector = new WindowsPrintConnector("smb://asesor:159357@server02/6-EPSON TM-T20II Receipt");
             } elseif ($local == 3) {
@@ -251,7 +251,7 @@ class Comprobante extends BaseController
         if ($movimientos) {
 
             if ($local == 1 || $session->get('user_id') == 'ADMIN') {
-                $connector = new WindowsPrintConnector("smb://asesor:159357@ventas2/6-EPSON TM-T20III Receipt");
+                $connector = new WindowsPrintConnector("smb://asesor:159357@ventas2/6-EPSON TM-T20IV Receipt");
             } elseif ($local == 2) {
                 $connector = new WindowsPrintConnector("smb://asesor:159357@server02/6-EPSON TM-T20II Receipt");
             } elseif ($local == 3) {

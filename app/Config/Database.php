@@ -92,9 +92,38 @@ class Database extends Config
         'numberNative' => false,
     ];   
 
+    public $marymedGroup = 'marymed';
+    public $marymed = [
+        'DSN' => '',
+        'hostname' => '192.168.101.202',
+        'username' => 'sa',
+        'password' => '159357852456',
+        'database' => 'MARYMED',
+        'DBDriver' => 'sqlsrv',
+        'DBPrefix' => '',
+        'pConnect' => false,
+        'DBDebug' => (ENVIRONMENT !== 'production'),
+        'charset' => 'utf8',
+        'DBCollat' => 'utf8_general_ci',
+        'swapPre' => '',
+        'encrypt' => false,
+        'compress' => false,
+        'strictOn' => false,
+        'failover' => [],
+        'port' => 1433,
+        'numberNative' => false,
+    ];
+
     public function __construct()
     {
         parent::__construct();
+
+        // Increase the SQLSRV client buffer size to avoid
+        // "Memory limit exceeded for buffered query" errors on large result sets.
+        // 0 = unlimited (use cautiously on memory-constrained servers).
+        if (function_exists('sqlsrv_configure')) {
+            sqlsrv_configure('ClientBufferMaxSize', 0);
+        }
 
         // Ensure that we always set the database group to 'tests' if
         // we are currently running an automated test suite, so that

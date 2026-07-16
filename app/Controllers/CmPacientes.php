@@ -135,6 +135,8 @@ class CmPacientes extends BaseController
                 }
             }
             
+            $dir = trim($cli->CLI_CASA_DIREC);
+            $tel = trim($cli->CLI_TELEF1);
             $completo = !empty($fnac_html) && !empty($dir);
             
             return $this->response->setJSON([

@@ -40,6 +40,42 @@ class CmHistoria extends BaseController
         ]);
     }
     
+    public function imprimir_triaje($cita_id = null)
+    {
+        if (!$cita_id) return redirect()->to('cmCitas/listado');
+        
+        $db = \Config\Database::connect();
+        
+        // Obtener cita con datos del paciente
+        $cita = $db->query("
+            SELECT cc.*, P.id AS paciente_id, P.alergias, P.enfermedades_cronicas, P.observaciones_medicas, P.tipo_sangre, P.contacto_emergencia, P.telefono_emergencia,
+                   C.CLI_NOMBRE, C.CLI_RUC_ESPOSA AS DNI, C.CLI_TELEF1,
+                   C.CLI_FECHA_NAC, FLOOR(DATEDIFF(DAY, C.CLI_FECHA_NAC, GETDATE()) / 365.25) AS edad,
+                   H.fecha_especifica, (M.nombres + ' ' + M.apellidos) AS medico
+            FROM CM_CITAS cc
+            INNER JOIN CM_PACIENTES P ON P.id = cc.paciente_id
+            INNER JOIN CLIENTES C ON C.CLI_CODCLIE = P.cliente_id
+            INNER JOIN CM_MEDICOS_HORARIOS H ON H.id = cc.horario_id
+            LEFT JOIN CM_MEDICOS M ON M.id = H.medico_id
+            WHERE cc.id = ?
+        ", [$cita_id])->getRow();
+        
+        if (!$cita) return redirect()->to('cmCitas/listado');
+        
+        // Buscar o crear historia
+        $historia = $db->table('CM_HISTORIA')->where('cita_id', $cita_id)->get()->getRow();
+        if (!$historia) {
+            $db->query("INSERT INTO CM_HISTORIA (cita_id, paciente_id) VALUES (?, ?)", [$cita_id, $cita->paciente_id]);
+            $historia = $db->table('CM_HISTORIA')->where('cita_id', $cita_id)->get()->getRow();
+        }
+        
+        return view('cm_historia/imprimir_triaje', [
+            'cita' => $cita,
+            'historia' => $historia,
+            'titulo' => 'Hoja de Triaje - ' . $cita->CLI_NOMBRE
+        ]);
+    }
+
     public function guardar_triaje()
     {
         $db = \Config\Database::connect();

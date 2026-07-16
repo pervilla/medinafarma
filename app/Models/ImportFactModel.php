@@ -26,7 +26,7 @@ class ImportFactModel extends Model
         $query = $this->db->query($sql, [$ruc]);
         return $query->getRow();
     }
-    public function listarDocumentos($cliente, $startDate, $endDate)
+    public function listarDocumentos($cliente, $startDate, $endDate, $tipoDoc = null, $estadoDoc = null)
     {
         $params = [];
         $sql = 'SELECT * ';
@@ -38,6 +38,14 @@ class ImportFactModel extends Model
         if ($cliente) {
             $sql .= "AND T2.CLI_CODCLIE = ? ";
             $params[] = $cliente;
+        }
+        if ($tipoDoc !== null && $tipoDoc !== '') {
+            $sql .= "AND T1.codCpe = ? ";
+            $params[] = $tipoDoc;
+        }
+        if ($estadoDoc !== null && $estadoDoc !== '') {
+            $sql .= "AND T1.ESTADO = ? ";
+            $params[] = $estadoDoc;
         }
         $query = $this->db->query($sql, $params);
         return $query->getResult();
@@ -415,6 +423,7 @@ $data = $data->data; // Verificar si 'registros' existe y es un array
     }
     public function desc_promocion($idfact, $id1, $id2, $cant)
     {
+        $cant = (is_numeric($cant) && $cant !== '') ? floatval($cant) : 0;
         $sp = " DECLARE @COSPRO NUMERIC(11,4)
                 EXEC @COSPRO = [dbo].[sp_actualizar_costo_bonificacion] 
                 @ID_1 = ?,
@@ -495,6 +504,126 @@ $data = $data->data; // Verificar si 'registros' existe y es un array
                     AND P.PRE_EQUIV = FD.FAR_EQUIV
                 )";
         return $this->db->query($sql, [$idfact])->getResult();
+    }
+
+    // =============================================
+    // MÉTODOS PARA RELACIONAR NOTAS DE CRÉDITO
+    // =============================================
+
+    /**
+     * Obtiene información de relación entre una NC y su comprobante original,
+     * o entre un comprobante y sus NCs asociadas.
+     */
+    public function getRelacionNotaCredito($id)
+    {
+        $doc = $this->db->table('IMPORT_FACT')->where('ID', $id)->get()->getRow();
+        if (!$doc) return null;
+
+        if ($doc->codCpe == '07') {
+            // Es una NC: buscar el comprobante que referencia
+            if (empty($doc->numCpeRel)) {
+                return ['tipo' => 'nc_sin_ref', 'numCpeRel' => null, 'mensaje' => 'Sin referencia'];
+            }
+
+            $numRef = trim($doc->numCpeRel);
+
+            // Intentar match exacto (numCpeRel contiene el NRO_FACTURA completo)
+            $ref = $this->db->table('IMPORT_FACT')
+                ->where('NRO_FACTURA', $numRef)
+                ->get()
+                ->getRow();
+
+            // Si no, intentar por ALL_NUMFACT (numCpeRel es solo el correlativo)
+            if (!$ref && is_numeric($numRef)) {
+                $ref = $this->db->table('IMPORT_FACT')
+                    ->where('ALL_NUMFACT', (int)$numRef)
+                    ->get()
+                    ->getRow();
+            }
+
+            // Si no, LIKE
+            if (!$ref) {
+                $ref = $this->db->table('IMPORT_FACT')
+                    ->like('NRO_FACTURA', $numRef)
+                    ->get()
+                    ->getRow();
+            }
+
+            return [
+                'tipo' => 'nc',
+                'numCpeRel' => $doc->numCpeRel,
+                'ref_encontrada' => $ref ? true : false,
+                'ref_nro' => $ref ? $ref->NRO_FACTURA : null,
+                'ref_id' => $ref ? $ref->ID : null,
+                'ref_estado' => $ref ? $ref->ESTADO : null
+            ];
+        }
+
+        // Es factura/boleta: buscar NCs que la referencien
+        $parts = explode('-', $doc->NRO_FACTURA);
+        $numero = trim(end($parts));
+
+        $ncs = [];
+        // numCpeRel es columna INT, solo comparar con el correlativo numérico
+        if (is_numeric($numero)) {
+            $ncs = $this->db->table('IMPORT_FACT')
+                ->where('codCpe', '07')
+                ->where('numCpeRel', (int)$numero)
+                ->get()
+                ->getResult();
+        }
+
+        if (!empty($ncs)) {
+            $ncList = array_map(function ($nc) {
+                return $nc->NRO_FACTURA;
+            }, $ncs);
+            return [
+                'tipo' => 'factura',
+                'tiene_nc' => true,
+                'notas_credito' => $ncList,
+                'nc_count' => count($ncs),
+                'nc_ids' => array_map(function ($nc) {
+                    return $nc->ID;
+                }, $ncs)
+            ];
+        }
+
+        return null;
+    }
+
+    /**
+     * Actualiza la referencia de una NC con los datos obtenidos de SUNAT.
+     */
+    public function actualizarReferenciaNC($id, $numCpeRel)
+    {
+        return $this->db->table('IMPORT_FACT')
+            ->where('ID', $id)
+            ->update(['numCpeRel' => $numCpeRel]);
+    }
+
+    /**
+     * Obtiene la información del comprobante original referenciado por una NC
+     * para mostrarlo en el detalle (incluye datos del proveedor).
+     */
+    public function getDocumentoReferenciado($numCpeRel, $ruc)
+    {
+        if (empty($numCpeRel)) return null;
+
+        $sql = "SELECT T1.*, T2.CLI_NOMBRE
+                FROM dbo.IMPORT_FACT T1
+                LEFT JOIN dbo.clientes T2 ON (T1.RUC = T2.CLI_RUC_ESPOSO AND T2.cli_cp = 'P')
+                WHERE T1.NRO_FACTURA = ? AND T1.RUC = ?";
+        $query = $this->db->query($sql, [$numCpeRel, $ruc]);
+        $result = $query->getRow();
+        if ($result) return $result;
+
+        // Fallback: solo por NRO_FACTURA
+        $sql2 = "SELECT T1.*, T2.CLI_NOMBRE
+                FROM dbo.IMPORT_FACT T1
+                LEFT JOIN dbo.clientes T2 ON (T1.RUC = T2.CLI_RUC_ESPOSO AND T2.cli_cp = 'P')
+                WHERE T1.NRO_FACTURA = ?";
+        $query2 = $this->db->query($sql2, [$numCpeRel]);
+        return $query2->getRow();
     }
 
     // =============================================

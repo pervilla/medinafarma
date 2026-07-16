@@ -136,6 +136,19 @@ $routes->post('calendario/cerrar', 'Calendario::cerrar');
  */
 $routes->get('facturacion/monitor', 'FacturacionMonitor::index');
 
+// Rutas para el Módulo Facturador SUNAT
+$routes->get('sunat', 'SunatController::panel');
+$routes->get('sunat/historial', 'SunatController::historial');
+$routes->post('SunatController/api_pendientes', 'SunatController::api_pendientes');
+$routes->post('SunatController/generar_resumen', 'SunatController::generar_resumen');
+$routes->post('SunatController/consultar_ticket', 'SunatController::consultar_ticket');
+$routes->get('sunat/facturas', 'SunatController::facturas');
+$routes->post('SunatController/api_facturas_pendientes', 'SunatController::api_facturas_pendientes');
+$routes->post('SunatController/api_factura_detalles', 'SunatController::api_factura_detalles');
+$routes->post('SunatController/enviar_factura', 'SunatController::enviar_factura');
+$routes->get('sunat/comprobantes', 'SunatController::comprobantes');
+$routes->post('SunatController/cron_manual', 'SunatController::cron_manual');
+
 /*
  * -------------------------
  * RUTAS PAGOS A PROVEEDORES Y FLUJO DE CAJA

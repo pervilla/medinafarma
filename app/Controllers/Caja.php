@@ -453,7 +453,7 @@ public function get_cajas_dia(){
             $CajaMov = new CajaMovimientosModel();
             $movimientos = $CajaMov->get_movimientos($cajar[0]->ALL_CAJA_NRO?$cajar[0]->ALL_CAJA_NRO:0,$local);
             if($local==1 || $session->get('user_id')=='ADMIN'){
-                $connector = new WindowsPrintConnector("smb://asesor:159357@ventas2/6-EPSON TM-T20III Receipt");  
+                $connector = new WindowsPrintConnector("smb://asesor:159357@ventas2/6-EPSON TM-T20IV Receipt");  
                 $revisado = $session->get('user_id')=='ADMIN'?'**REVISADO**':'';              
             }elseif($local==2){                
                 $connector = new WindowsPrintConnector("smb://asesor:159357@server02/6-EPSON TM-T20II Receipt");

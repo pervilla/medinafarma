@@ -569,9 +569,16 @@ class Productos extends BaseController
             $turno_label = "GRUPO 2 (3PM - 11PM) - AYER " . date('d/m/Y', strtotime('-1 day'));
         }
 
+        $session = session();
+        $caja = $session->get('caja') ?: 1;
+        $locales = array('', 'CENTRO', 'JUANJUICILLO', 'PMEZA');
+        $local_label = isset($locales[$caja]) ? $locales[$caja] : '';
+        $turno_label .= " (" . $local_label . ")";
+
         $FacartModel = new FacartModel();
-        $data['productos'] = $FacartModel->get_productos_control_inventario($tipo, $fecha_busqueda, $hora_inicio, $hora_fin);
+        $data['productos'] = $FacartModel->get_productos_control_inventario($tipo, $fecha_busqueda, $hora_inicio, $hora_fin, $caja);
         $data['anio'] = $turno_label;
+        $data['caja'] = $caja;
 
         
         $dompdf = new Dompdf();

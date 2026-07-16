@@ -17,6 +17,12 @@ class CmCitas extends BaseController
         $dni = trim($this->request->getPost('dni'));
         $telefono = trim($this->request->getPost('telefono'));
         $fecha_nac = $this->request->getPost('fecha_nac');
+        $tipo_sangre = $this->request->getPost('tipo_sangre');
+        $contacto_emergencia = trim($this->request->getPost('contacto_emergencia') ?? '');
+        $telefono_emergencia = trim($this->request->getPost('telefono_emergencia') ?? '');
+        $alergias = trim($this->request->getPost('alergias') ?? '');
+        $enfermedades_cronicas = trim($this->request->getPost('enfermedades_cronicas') ?? '');
+        $observaciones_medicas = trim($this->request->getPost('observaciones_medicas') ?? '');
         
         if (!$cita_id || !$paciente_id || empty($nombre)) {
             return $this->response->setJSON(['status' => 'error', 'msg' => 'Datos incompletos']);
@@ -34,6 +40,9 @@ class CmCitas extends BaseController
         $db->query("UPDATE CLIENTES SET CLI_NOMBRE = ?, CLI_NOMBRE_ESPOSO = ?, CLI_RUC_ESPOSA = ?, CLI_RUC_ESPOSO = ?, CLI_TELEF1 = ?, CLI_FECHA_NAC = ? WHERE CLI_CODCLIE = ?",
             [substr($nombre, 0, 120), substr($nombre, 0, 120), $dnilen == 8 ? $dni : '', $dnilen == 11 ? $dni : '', substr($telefono, 0, 12), $fecha_nac ?: null, $cliente_id]);
         
+        $db->query("UPDATE CM_PACIENTES SET tipo_sangre=?, contacto_emergencia=?, telefono_emergencia=?, alergias=?, enfermedades_cronicas=?, observaciones_medicas=? WHERE id=?",
+            [$tipo_sangre, $contacto_emergencia, $telefono_emergencia, $alergias, $enfermedades_cronicas, $observaciones_medicas, $paciente_id]);
+        
         return $this->response->setJSON(['status' => 'success', 'msg' => 'Datos actualizados']);
     }
 
@@ -47,6 +56,7 @@ class CmCitas extends BaseController
             SELECT cc.*, P.id AS paciente_id, C.CLI_NOMBRE, C.CLI_RUC_ESPOSA AS DNI, C.CLI_TELEF1,
                    C.CLI_FECHA_NAC, FLOOR(DATEDIFF(DAY, C.CLI_FECHA_NAC, GETDATE()) / 365.25) AS edad,
                    H.fecha_especifica, (M.nombres + ' ' + M.apellidos) AS medico, M.especialidad,
+                   P.tipo_sangre, P.alergias, P.enfermedades_cronicas, P.contacto_emergencia, P.telefono_emergencia, P.observaciones_medicas,
                    CASE cc.estado WHEN 0 THEN 'Inscrito' WHEN 1 THEN 'Confirmado' WHEN 2 THEN 'Atendido' WHEN 3 THEN 'Anulado' END AS estado_nombre,
                    STUFF((SELECT ', ' + A.ART_NOMBRE FROM CM_CITAS_SERVICIOS CS INNER JOIN ARTI A ON A.ART_KEY = CS.art_key WHERE CS.cita_id = cc.id FOR XML PATH('')), 1, 2, '') AS servicios_extra
             FROM CM_CITAS cc
@@ -80,6 +90,10 @@ class CmCitas extends BaseController
         $estado = $this->request->getPost('estado');
         $fecha_desde = $this->request->getPost('fecha_desde');
         $fecha_hasta = $this->request->getPost('fecha_hasta');
+        
+        // Si es nulo (no enviado en la peticion), poner por defecto hoy
+        if ($fecha_desde === null) $fecha_desde = date('Y-m-d');
+        if ($fecha_hasta === null) $fecha_hasta = date('Y-m-d');
         
         $params = [];
         $sql = "SELECT cc.id, cc.paciente_id, cc.estado, cc.total, cc.saldo,
@@ -115,6 +129,9 @@ class CmCitas extends BaseController
         $fecha_desde = $this->request->getGet('fecha_desde');
         $fecha_hasta = $this->request->getGet('fecha_hasta');
         
+        if ($fecha_desde === null) $fecha_desde = date('Y-m-d');
+        if ($fecha_hasta === null) $fecha_hasta = date('Y-m-d');
+        
         $params = [];
         $sql = "SELECT cc.*, H.fecha_especifica, H.hora_inicio,
                        (M.nombres + ' ' + M.apellidos) AS medico, M.especialidad,
@@ -141,11 +158,21 @@ class CmCitas extends BaseController
         // Horarios para filtro
         $horarios = $db->query("SELECT H.id, H.fecha_especifica, (M.nombres + ' ' + M.apellidos) AS medico FROM CM_MEDICOS_HORARIOS H LEFT JOIN CM_MEDICOS M ON M.id = H.medico_id WHERE H.estado = 1 ORDER BY H.fecha_especifica DESC")->getResult();
         
+        // Series
+        $local_pago = session()->get('caja') ? str_pad(session()->get('caja'), 2, '0', STR_PAD_LEFT) : '01';
+        $series = [
+            '03' => $this->getSerieComprobante($db, $local_pago, 'B') ? $this->getSerieComprobante($db, $local_pago, 'B')->serie_actual : ($local_pago == '02' ? 20 : ($local_pago == '03' ? 22 : 21)),
+            '01' => $this->getSerieComprobante($db, $local_pago, 'F') ? $this->getSerieComprobante($db, $local_pago, 'F')->serie_actual : ($local_pago == '02' ? 20 : ($local_pago == '03' ? 22 : 21)),
+            '09' => $this->getSerieComprobante($db, $local_pago, 'G') ? $this->getSerieComprobante($db, $local_pago, 'G')->serie_actual : ($local_pago == '02' ? 20 : ($local_pago == '03' ? 22 : 21)),
+        ];
+
         return view('cm_citas/listado', [
             'citas' => $citas,
             'horarios' => $horarios,
             'filtros' => ['horario_id' => $horario_id, 'estado' => $estado, 'fecha_desde' => $fecha_desde, 'fecha_hasta' => $fecha_hasta],
             'titulo' => 'Todas las Citas',
+            'series' => $series,
+            'local_pago' => $local_pago,
             'menu' => ['p' => 40, 'i' => 50]
         ]);
     }
@@ -175,9 +202,18 @@ class CmCitas extends BaseController
         
         $campanias = $db->query($sql)->getResult();
 
+        $local_pago = session()->get('caja') ? str_pad(session()->get('caja'), 2, '0', STR_PAD_LEFT) : '01';
+        $series = [
+            '03' => $this->getSerieComprobante($db, $local_pago, 'B') ? $this->getSerieComprobante($db, $local_pago, 'B')->serie_actual : ($local_pago == '02' ? 20 : ($local_pago == '03' ? 22 : 21)),
+            '01' => $this->getSerieComprobante($db, $local_pago, 'F') ? $this->getSerieComprobante($db, $local_pago, 'F')->serie_actual : ($local_pago == '02' ? 20 : ($local_pago == '03' ? 22 : 21)),
+            '09' => $this->getSerieComprobante($db, $local_pago, 'G') ? $this->getSerieComprobante($db, $local_pago, 'G')->serie_actual : ($local_pago == '02' ? 20 : ($local_pago == '03' ? 22 : 21)),
+        ];
+
         $data = [
             'titulo' => 'Dashboard de Citas Médicas',
             'campanias' => $campanias,
+            'series' => $series,
+            'local_pago' => $local_pago,
             'menu' => ['p' => 40, 'i' => 46]
         ];
         
@@ -273,31 +309,45 @@ class CmCitas extends BaseController
         $monto_total += $total_extra;
         
         $tipo_comprobante = $this->request->getPost('tipo_comprobante') ?: '03';
-        $tipo_comp_letra = ($tipo_comprobante == '01') ? 'F' : 'B';
+        $tipo_comp_letra = $this->mapTipoComprobante($tipo_comprobante);
         $forma_pago = $this->request->getPost('forma_pago') ?? 'EFECTIVO';
         $local_pago = session()->get('caja') ? str_pad(session()->get('caja'), 2, '0', STR_PAD_LEFT) : '01';
         
-        // Ejecutar SP
+        // Ejecutar SP con @CitaId para que actualice CM_CITAS atomicamente (local/fallback)
         $sql = "DECLARE @NumFac INT, @NumSer INT, @Resultado VARCHAR(500);
                 EXEC SP_CM_GenerarComprobante 
                      @HorarioId = ?, @PacienteId = ?, @ClienteId = ?, @LocalPago = ?, 
                      @TipoComprobante = ?, @FormaPago = ?, @MontoTotal = ?,
-                     @CodArtServicio = ?,
+                     @CodArtServicio = ?, @CitaId = ?,
                      @NumFac = @NumFac OUTPUT, @NumSer = @NumSer OUTPUT, @Resultado = @Resultado OUTPUT;
                 SELECT @NumFac as NumFac, @NumSer as NumSer, @Resultado as Resultado;";
         
         $query = $db->query($sql, [
             $cita->horario_id, $cita->paciente_id, $cita->cliente_id,
-            $local_pago, $tipo_comp_letra, $forma_pago, $monto_total, $cod_art
+            $local_pago, $tipo_comp_letra, $forma_pago, $monto_total, $cod_art, $cita_id
         ]);
         $result = $query->getRow();
         
-        if (!$result || $result->Resultado != 'SUCCESS') {
+        if (!$result || strpos($result->Resultado, 'ERROR') === 0) {
             return $this->response->setJSON(['status' => 'error', 'msg' => 'Error en cobro: ' . ($result ? $result->Resultado : 'Error SQL')]);
         }
         
-        // Actualizar cita a confirmado
-        $db->query("UPDATE CM_CITAS SET estado = 1, total = ?, saldo = 0, updated_at = GETDATE() WHERE id = ?", [$monto_total, $cita_id]);
+        $ubicacion = '';
+        $sp_actualizo_cita = false;
+        if (strpos($result->Resultado, 'REMOTO') !== false) {
+            $ubicacion = ' (local ' . $local_pago . ')';
+        } elseif (strpos($result->Resultado, 'FALLBACK') !== false) {
+            $ubicacion = ' (local ' . $local_pago . ' no disponible, creado en principal)';
+            $sp_actualizo_cita = true;
+        } elseif (strpos($result->Resultado, 'LOCAL') !== false) {
+            $sp_actualizo_cita = true;
+        }
+        
+        // Si el SP NO actualizo CM_CITAS (caso remoto), lo hace PHP
+        if (!$sp_actualizo_cita) {
+            $ref = $tipo_comp_letra . '-' . $result->NumSer . '-' . $result->NumFac;
+            $db->query("UPDATE CM_CITAS SET estado = 1, total = ?, saldo = 0, observaciones = 'Pagado: " . $ref . $ubicacion . "', updated_at = GETDATE() WHERE id = ?", [$monto_total, $cita_id]);
+        }
         
         // Procesar servicios extra
         if (!empty($servicios_extra)) {
@@ -308,7 +358,7 @@ class CmCitas extends BaseController
         
         return $this->response->setJSON([
             'status' => 'success',
-            'msg' => $tipo_comp_letra . '-' . $result->NumSer . '-' . $result->NumFac . ' | S/ ' . number_format($monto_total, 2),
+            'msg' => $tipo_comp_letra . '-' . $result->NumSer . '-' . $result->NumFac . ' | S/ ' . number_format($monto_total, 2) . $ubicacion,
             'comprobante' => ['serie' => $result->NumSer, 'correlativo' => $result->NumFac, 'tipo' => $tipo_comp_letra]
         ]);
     }
@@ -333,7 +383,7 @@ class CmCitas extends BaseController
         $paciente = $db->table('CM_PACIENTES')->where('id', $cita->paciente_id)->get()->getRow();
         $local_pago = session()->get('caja') ? str_pad(session()->get('caja'), 2, '0', STR_PAD_LEFT) : '01';
         $tipo_comp = $this->request->getPost('tipo_comprobante') ?: '03';
-        $tipo_letra = ($tipo_comp == '01') ? 'F' : 'B';
+        $tipo_letra = $this->mapTipoComprobante($tipo_comp);
         
         // Generar comprobante
         $sql = "DECLARE @NumFac INT, @NumSer INT, @Resultado VARCHAR(500);
@@ -350,7 +400,7 @@ class CmCitas extends BaseController
         ]);
         $result = $query->getRow();
         
-        if (!$result || $result->Resultado != 'SUCCESS') {
+        if (!$result || strpos($result->Resultado, 'ERROR') === 0) {
             return $this->response->setJSON(['status' => 'error', 'msg' => 'Error: ' . ($result->Resultado ?? 'SP')]);
         }
         
@@ -506,7 +556,8 @@ class CmCitas extends BaseController
             $tipo_comprobante = $this->request->getPost('tipo_comprobante') ?: '03';
             $forma_pago = $this->request->getPost('forma_pago') ?? 'EFECTIVO';
             $local_pago = session()->get('caja') ? str_pad(session()->get('caja'), 2, '0', STR_PAD_LEFT) : '01';
-            $tipo_comp_letra = ($tipo_comprobante == '01') ? 'F' : 'B';
+            $tipo_comp_letra = $this->mapTipoComprobante($tipo_comprobante);
+            $serie_info = $this->getSerieComprobante($db, $local_pago, $tipo_comp_letra);
             
             $sql = "DECLARE @NumFac INT, @NumSer INT, @Resultado VARCHAR(500);
                     EXEC SP_CM_GenerarComprobante 
@@ -519,17 +570,26 @@ class CmCitas extends BaseController
             $query = $db->query($sql, [$horario_id, $paciente_id, $cliente_id, $local_pago, $tipo_comp_letra, $forma_pago, $monto_total, $cod_art_servicio]);
             $result = $query->getRow();
             
-            if (!$result || $result->Resultado != 'SUCCESS') {
+            if (!$result || strpos($result->Resultado, 'ERROR') === 0) {
                 return $this->response->setJSON(['status' => 'error', 'msg' => 'Error en cobro: ' . ($result ? $result->Resultado : 'Error SQL')]);
             }
             
             $estado = 1; // confirmado con pago
-            $msg = 'Reserva y cobro exitoso. ' . $tipo_comp_letra . '-' . $result->NumSer . '-' . $result->NumFac . ' | S/ ' . number_format($monto_total, 2);
+            $ubicacion = '';
+            if (strpos($result->Resultado, 'REMOTO') !== false) {
+                $ubicacion = ' (comprobante creado en local ' . $local_pago . ')';
+            } elseif (strpos($result->Resultado, 'FALLBACK') !== false) {
+                $ubicacion = ' (local ' . $local_pago . ' no disponible, creado en servidor principal)';
+            }
+            $msg = $tipo_comp_letra . '-' . $result->NumSer . '-' . $result->NumFac . ' | S/ ' . number_format($monto_total, 2) . $ubicacion;
             $comprobante = ['serie' => $result->NumSer, 'correlativo' => $result->NumFac, 'tipo' => $tipo_comp_letra, 'monto' => $monto_total];
+            $ref_comprobante = $tipo_comp_letra . '-' . $result->NumSer . '-' . $result->NumFac;
         } else {
             $estado = 0; // inscrito sin pago
             $msg = 'Reserva confirmada. Pago pendiente de S/ ' . number_format($monto_total, 2) . ' para el día de la consulta.';
             $comprobante = null;
+            $ref_comprobante = null;
+            $ubicacion = '';
         }
         
         // Registrar cita
@@ -542,7 +602,7 @@ class CmCitas extends BaseController
             'orden_atencion' => 0,
             'total'          => $pagar_ahora == '1' ? $monto_total : 0,
             'saldo'          => $pagar_ahora == '1' ? 0 : $monto_total,
-            'observaciones'  => $pagar_ahora == '1' ? 'Pagado al reservar' : 'Pago pendiente',
+            'observaciones'  => $pagar_ahora == '1' ? 'Pagado: ' . $ref_comprobante . $ubicacion : 'Pago pendiente',
             'local_origen'   => $local_pago ?? '01',
         ]);
 
@@ -592,6 +652,9 @@ class CmCitas extends BaseController
         // Lo ideal sería agregarlo a la tabla CM_MEDICOS_HORARIOS en el futuro
         $monto_total = 50.00; 
 
+        $tipo_comp_letra = $this->mapTipoComprobante($tipo_comprobante);
+        $serie_info = $this->getSerieComprobante($db, $local_pago, $tipo_comp_letra);
+
         // 3. Ejecutar el Stored Procedure SP_CM_GenerarComprobante
         $sql = "DECLARE @NumFac INT, @NumSer INT, @Resultado VARCHAR(500);
                 EXEC SP_CM_GenerarComprobante 
@@ -599,8 +662,6 @@ class CmCitas extends BaseController
                      @TipoComprobante = ?, @FormaPago = ?, @MontoTotal = ?, 
                      @NumFac = @NumFac OUTPUT, @NumSer = @NumSer OUTPUT, @Resultado = @Resultado OUTPUT;
                 SELECT @NumFac as NumFac, @NumSer as NumSer, @Resultado as Resultado;";
-        
-        $tipo_comp_letra = ($tipo_comprobante == '01') ? 'F' : 'B';
 
         $query = $db->query($sql, [
             $horario_id,
@@ -614,20 +675,26 @@ class CmCitas extends BaseController
 
         $result = $query->getRow();
 
-        if ($result && $result->Resultado == 'SUCCESS') {
+        if ($result && strpos($result->Resultado, 'ERROR') !== 0) {
             // 4. Registrar la cita en CM_CITAS
+            $ubicacion_cobro = '';
+            if (strpos($result->Resultado, 'REMOTO') !== false) {
+                $ubicacion_cobro = ' (local ' . $local_pago . ')';
+            } elseif (strpos($result->Resultado, 'FALLBACK') !== false) {
+                $ubicacion_cobro = ' (local ' . $local_pago . ' no disponible, creado en principal)';
+            }
             $db->table('CM_CITAS')->insert([
                 'paciente_id'      => $paciente_id,
                 'horario_id'       => $horario_id,
                 'cliente_id'       => $cliente_id,
-                'estado'           => 1, // confirmado
+                'estado'           => 1,
                 'orden'            => 0,
                 'orden_atencion'   => 0,
                 'total'            => $monto_total,
                 'saldo'            => 0,
                 'fecha'            => date('Y-m-d'),
                 'hora'             => date('H:i:s'),
-                'observaciones'    => 'Cobro generado via SP. Comprobante: ' . $tipo_comp_letra . '-' . $result->NumSer . '-' . $result->NumFac,
+                'observaciones'    => 'Pagado: ' . $tipo_comp_letra . '-' . $result->NumSer . '-' . $result->NumFac . $ubicacion_cobro,
                 'local_origen'     => $local_pago,
                 'created_at'       => date('Y-m-d H:i:s'),
             ]);
@@ -640,10 +707,16 @@ class CmCitas extends BaseController
 
             return $this->response->setJSON([
                 'status' => 'success', 
-                'msg' => 'Comprobante generado. Serie: ' . $result->NumSer . ' - Correlativo: ' . $result->NumFac,
+                'msg' => 'Comprobante generado. ' . $tipo_comp_letra . '-' . $result->NumSer . '-' . $result->NumFac,
                 'comprobante' => [
                     'serie' => $result->NumSer,
                     'correlativo' => $result->NumFac,
+                    'tipo' => $tipo_comp_letra
+                ],
+                'referencia' => [
+                    'local' => $local_pago,
+                    'serie' => $result->NumSer,
+                    'numero' => $result->NumFac,
                     'tipo' => $tipo_comp_letra
                 ]
             ]);
@@ -653,5 +726,21 @@ class CmCitas extends BaseController
                 'msg' => 'Error al generar comprobante: ' . ($result ? $result->Resultado : 'Error SQL')
             ]);
         }
+    }
+
+    private function mapTipoComprobante($tipo)
+    {
+        if ($tipo == '01') return 'F';
+        if ($tipo == '09') return 'G';
+        return 'B';
+    }
+
+    private function getSerieComprobante($db, $local_id, $fbg)
+    {
+        if ($fbg == 'F')      $tipo_doc = '01';
+        elseif ($fbg == 'G')  $tipo_doc = '09';
+        else                  $tipo_doc = '03';
+        $serie = $db->query("SELECT TOP 1 prefijo, serie_actual FROM CM_SERIE_DOCUMENTOS WHERE local_id = ? AND tipo_documento = ? AND tipo_servicio = 'CONSULTORIO' AND estado = 1", [intval($local_id), $tipo_doc])->getRow();
+        return $serie ?: null;
     }
 }

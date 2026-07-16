@@ -55,7 +55,11 @@
                         <?php endif; ?>
                         
                         <?php if(!empty($recetas)): ?>
-                        <hr><h5>Recetas</h5>
+                        <hr>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Recetas</h5>
+                            <a href="<?= site_url('cmHistoria/receta/' . $cita->id) ?>" target="_blank" class="btn btn-outline-danger btn-sm"><i class="fas fa-print mr-1"></i> Imprimir</a>
+                        </div>
                         <table class="table table-sm table-bordered"><thead><tr><th>Artículo</th><th>Cant</th><th>Días</th><th>Indicaciones</th></tr></thead>
                             <tbody>
                                 <?php foreach($recetas as $r): ?>

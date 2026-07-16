@@ -432,8 +432,13 @@ class FacartModel extends Model
         return $query->getResult();
     }
 
-      public function get_productos_control_inventario($tipo, $fecha, $horaInicio, $horaFin)
+      public function get_productos_control_inventario($tipo, $fecha, $horaInicio, $horaFin, $caja = 1)
     {
+        $db = $this->db;
+        if ($caja != 1) {
+            $db = $this->dbjj;
+        }
+
         if ($tipo == '01') {
             // Opción 01: De los 200 productos que mayor rotación en un año, que los haya vendido el grupo anterior.
             $sql = "SELECT * FROM (
@@ -443,11 +448,16 @@ class FacartModel extends Model
                     T.TAB_NOMLARGO AS Familia,
                     P.PRE_UNIDAD AS Unidad,
                     P.PRE_EQUIV AS Equivalencia,
-                    SUM(F_ALL.FAR_CANTIDAD) AS Total_Vendido_Anual
+                    SUM(F_ALL.FAR_CANTIDAD) AS Total_Vendido_Anual,
+                    CASE WHEN P.PRE_EQUIV = 1 THEN CAST(FLOOR(ART.ARM_STOCK) AS varchar)
+                         ELSE CAST(FLOOR(ART.ARM_STOCK/NULLIF(P.PRE_EQUIV, 0)) AS varchar) + '/' + CAST(FLOOR(ART.ARM_STOCK%NULLIF(P.PRE_EQUIV, 0)) AS varchar) END AS Stock
                 FROM FACART F_ALL
                 INNER JOIN ARTI A 
                     ON F_ALL.FAR_CODART = A.ART_KEY 
                    AND F_ALL.FAR_CODCIA = A.ART_CODCIA
+                INNER JOIN ARTICULO ART
+                    ON A.ART_KEY = ART.ARM_CODART
+                   AND A.ART_CODCIA = ART.ARM_CODCIA
                 LEFT JOIN TABLAS T
                     ON A.ART_CODCIA = T.TAB_CODCIA
                    AND A.ART_FAMILIA = T.TAB_NUMTAB
@@ -461,7 +471,7 @@ class FacartModel extends Model
                   AND F_ALL.FAR_ESTADO2 <> 'L'
                   AND A.ART_CODCIA = 25
                   AND F_ALL.FAR_FECHA BETWEEN DATEADD(year, -1, GETDATE()) AND GETDATE()
-                GROUP BY A.ART_KEY, A.ART_NOMBRE, T.TAB_NOMLARGO, P.PRE_UNIDAD, P.PRE_EQUIV
+                GROUP BY A.ART_KEY, A.ART_NOMBRE, T.TAB_NOMLARGO, P.PRE_UNIDAD, P.PRE_EQUIV, ART.ARM_STOCK
                 ORDER BY SUM(F_ALL.FAR_CANTIDAD) DESC
             ) AS TopAnual
             WHERE Codigo_Articulo IN (
@@ -481,11 +491,16 @@ class FacartModel extends Model
                 T.TAB_NOMLARGO AS Familia,
                 P.PRE_UNIDAD AS Unidad,
                 P.PRE_EQUIV AS Equivalencia,
-                SUM((F.FAR_CANTIDAD / CASE WHEN F.FAR_EQUIV = 0 THEN 1 ELSE F.FAR_EQUIV END) * F.FAR_COSPRO) AS Costo_Venta
+                SUM((F.FAR_CANTIDAD / CASE WHEN F.FAR_EQUIV = 0 THEN 1 ELSE F.FAR_EQUIV END) * F.FAR_COSPRO) AS Costo_Venta,
+                CASE WHEN P.PRE_EQUIV = 1 THEN CAST(FLOOR(ART.ARM_STOCK) AS varchar)
+                     ELSE CAST(FLOOR(ART.ARM_STOCK/NULLIF(P.PRE_EQUIV, 0)) AS varchar) + '/' + CAST(FLOOR(ART.ARM_STOCK%NULLIF(P.PRE_EQUIV, 0)) AS varchar) END AS Stock
             FROM FACART F
             INNER JOIN ARTI A 
                 ON F.FAR_CODART = A.ART_KEY 
                AND F.FAR_CODCIA = A.ART_CODCIA
+            INNER JOIN ARTICULO ART
+                ON A.ART_KEY = ART.ARM_CODART
+               AND A.ART_CODCIA = ART.ARM_CODCIA
             LEFT JOIN TABLAS T
                 ON A.ART_CODCIA = T.TAB_CODCIA
                AND A.ART_FAMILIA = T.TAB_NUMTAB
@@ -500,11 +515,11 @@ class FacartModel extends Model
               AND A.ART_CODCIA = 25
               AND F.FAR_FECHA = '$fecha'
               AND ((CAST(CASE WHEN ISNUMERIC(LEFT(F.FAR_HORA, 2))=1 THEN LEFT(F.FAR_HORA, 2) ELSE '0' END AS INT) % 12) + (CASE WHEN FAR_HORA LIKE '%p.%' THEN 12 ELSE 0 END)) BETWEEN $horaInicio AND $horaFin
-            GROUP BY A.ART_KEY, A.ART_NOMBRE, T.TAB_NOMLARGO, P.PRE_UNIDAD, P.PRE_EQUIV
+            GROUP BY A.ART_KEY, A.ART_NOMBRE, T.TAB_NOMLARGO, P.PRE_UNIDAD, P.PRE_EQUIV, ART.ARM_STOCK
             ORDER BY SUM((F.FAR_CANTIDAD / CASE WHEN F.FAR_EQUIV = 0 THEN 1 ELSE F.FAR_EQUIV END) * F.FAR_COSPRO) DESC";
         }
 
-        $query = $this->db->query($sql);
+        $query = $db->query($sql);
         return $query->getResult();
     }
 

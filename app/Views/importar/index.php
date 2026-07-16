@@ -144,6 +144,16 @@
         text-align: right;
     }
     
+    /* Relationship Column */
+    .btn-xs {
+        padding: 2px 6px;
+        font-size: 0.7rem;
+        line-height: 1.2;
+    }
+    td .small a.btn-go-to-ref:hover {
+        text-decoration: underline !important;
+    }
+
     /* Empty State */
     #empty_detail_state {
         display: flex;
@@ -166,44 +176,60 @@
     <div class="row">
         <div class="col-12">
             <div id="caja_documentos" class="card shadow">
-                <div class="card-header">
-                    <div class="row align-items-center w-100 mx-0">
-                        <!-- Título -->
-                        <div class="col-md-3">
-                            <h3 class="card-title mb-0 font-weight-bold text-primary"><i class="fas fa-list-ul"></i> LISTADO FACTURAS</h3>
-                        </div>
-                        <!-- Grupo de herramientas -->
-                        <div class="col-md-9">
-                            <div class="card-tools float-right w-100">
-                                <div class="input-group input-group-sm justify-content-end">
-                                    <!-- Rango de Fechas -->
-                                    <div id="reportrange" class="form-control form-control-sm shadow-sm" style="max-width: 220px;" aria-label="Rango de Fechas" role="button" title="Seleccionar Rango de Fechas">
-                                        <i class="fa fa-calendar text-primary"></i>&nbsp;
-                                        <span></span> <i class="fa fa-caret-down"></i>
-                                    </div>
+                <div class="card-header py-2">
+                    <!-- Fila 1: Título y Filtros -->
+                    <div class="d-flex flex-wrap align-items-center mb-2">
+                        <h3 class="card-title mb-0 mr-3 font-weight-bold text-primary" style="white-space: nowrap;">
+                            <i class="fas fa-list-ul"></i> FACTURAS
+                        </h3>
 
-                                    <!-- Select Proveedor -->
-                                    <select id="b_cliente" name="b_cliente" class="form-control form-control-sm ml-1 shadow-sm" style="max-width: 250px;" data-placeholder="Buscar Proveedor" data-allow-clear="1" title="Seleccionar Proveedor"></select>
-
-                                    <!-- Botones de Acción -->
-                                    <div class="input-group-append">
-                                        <button id="bListarDoc" class="btn btn-danger shadow-sm ml-1 px-3 font-weight-bold" type="button">
-                                            <i class="fas fa-search"></i> BUSCAR
-                                        </button>
-                                        
-                                        <div class="mx-2 border-left" style="height: 24px; margin-top: 4px;"></div>
-                                        
-                                        <button class="btn btn-dark shadow-sm" type="button" data-toggle="modal" data-target="#modal-transit-search" title="Buscar productos en facturas pendientes">
-                                            <i class="fas fa-truck-loading"></i> <span class="d-none d-lg-inline">En Tránsito</span>
-                                        </button>
-                                        <button class="btn btn-primary ml-1" id="bimport" type="button" data-toggle="modal" data-target="#uploadModal">XML</button>
-                                        <button class="btn btn-info ml-1" id="bsire" type="button" data-toggle="modal" data-target="#importarSireModal">Sire</button>
-                                        <button class="btn btn-success ml-1" id="btn_sync_manual" type="button" title="Sincronizar facturas ya ingresadas manualmente">
-                                            <i class="fas fa-sync-alt"></i> <span class="d-none d-md-inline">Sincronizar Manuales</span>
-                                        </button>
-                                    </div>
-                                </div>
+                        <div class="d-flex flex-wrap align-items-center flex-grow-1" style="gap: 6px;">
+                            <!-- Rango de Fechas -->
+                            <div id="reportrange" class="btn btn-default btn-sm border shadow-sm" style="min-width: 200px;" aria-label="Rango de Fechas" role="button" title="Seleccionar Rango de Fechas">
+                                <i class="fa fa-calendar text-primary"></i>&nbsp;
+                                <span></span> <i class="fa fa-caret-down"></i>
                             </div>
+
+                            <!-- Proveedor -->
+                            <select id="b_cliente" name="b_cliente" class="form-control form-control-sm shadow-sm" style="width: 300px; height: 31px;" data-placeholder="Buscar Proveedor" data-allow-clear="1" title="Seleccionar Proveedor"></select>
+
+                            <!-- Tipo Documento -->
+                            <select id="f_tipo_doc" name="f_tipo_doc" class="form-control form-control-sm shadow-sm" style="width: 140px; height: 31px;" title="Tipo Documento">
+                                <option value="">Todo Tipo</option>
+                                <option value="01">Factura</option>
+                                <option value="03">Boleta</option>
+                                <option value="07">Nota Crédito</option>
+                            </select>
+
+                            <!-- Estado Documento -->
+                            <select id="f_estado_doc" name="f_estado_doc" class="form-control form-control-sm shadow-sm" style="width: 140px; height: 31px;" title="Estado Documento">
+                                <option value="">Todo Estado</option>
+                                <option value="0">Pendiente</option>
+                                <option value="1">Procesado</option>
+                                <option value="10">Pend. Sire</option>
+                            </select>
+
+                            <!-- Botón Buscar -->
+                            <button id="bListarDoc" class="btn btn-danger btn-sm shadow-sm px-3 font-weight-bold" type="button">
+                                <i class="fas fa-search"></i> BUSCAR
+                            </button>
+                        </div>
+
+                        <!-- Botones de Acción (derecha) -->
+                        <div class="d-flex align-items-center ml-auto" style="gap: 4px;">
+                            <div class="border-left mx-1 d-none d-lg-block" style="height: 24px;"></div>
+                            <button class="btn btn-dark btn-sm shadow-sm" type="button" data-toggle="modal" data-target="#modal-transit-search" title="Buscar productos en facturas pendientes">
+                                <i class="fas fa-truck-loading"></i> <span class="d-none d-xl-inline">Tránsito</span>
+                            </button>
+                            <button class="btn btn-primary btn-sm shadow-sm" id="bimport" type="button" data-toggle="modal" data-target="#uploadModal">
+                                <i class="fas fa-file-code"></i> XML
+                            </button>
+                            <button class="btn btn-info btn-sm shadow-sm" id="bsire" type="button" data-toggle="modal" data-target="#importarSireModal">
+                                <i class="fas fa-cloud-download-alt"></i> Sire
+                            </button>
+                            <button class="btn btn-success btn-sm shadow-sm" id="btn_sync_manual" type="button" title="Sincronizar facturas ya ingresadas manualmente">
+                                <i class="fas fa-sync-alt"></i> <span class="d-none d-xl-inline">Sincronizar</span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -217,6 +243,7 @@
                                 <th>NRO_FACTURA</th>
                                 <th>FECHA</th>
                                 <th>TOTAL</th>
+                                <th>RELACIÓN</th>
                                 <th>GUIA</th>
                                 <th></th>
                             </tr>
@@ -340,42 +367,73 @@
 
 
 <div class="modal fade" id="importarSireModal" style="display: none;" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content bg-primary">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
             <div class="overlay" style="display: none;">
                 <i class="fas fa-2x fa-sync fa-spin"></i>
             </div>
-            <div class="modal-header">
-                <h4 class="modal-title">Importar Comprobantes</br>desde Sire</h4>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">×</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="input-group mb-3">
-                    <div class="input-group-prepend">
-                        <span class="input-group-text"><i class="fas fa-file"></i></span>
+            <!-- Header con gradiente -->
+            <div class="modal-header border-0 text-white py-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <div class="d-flex align-items-center">
+                    <div class="mr-3" style="width: 45px; height: 45px; background: rgba(255,255,255,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-cloud-download-alt fa-lg"></i>
                     </div>
-                    <label for="codEstado" class="sr-only">Estado</label>
-                    <input type="text" class="form-control col-1" id="codEstado" name="codEstado" value="0" disabled title="Estado">
-                    <label for="codDocIde" class="sr-only">Doc. Identidad</label>
-                    <input type="text" class="form-control col-1" id="codDocIde" name="codDocIde" value="6" disabled title="Documento Identidad">
-                    <label for="tipoDoc" class="sr-only">Tipo Documento</label>
-                    <select class="form-control col-2" id="tipoDoc" name="tipoDoc" title="Tipo Documento">
-                        <option value="01">01 - FACTURA</option>
-                        <option value="F7">F7 - NOTA DE CREDITO</option>
-                    </select>
-                    <div id="reportrange3" class="form-control">
-                        <i class="fa fa-calendar"></i>&nbsp;
-                        <span></span> <i class="fa fa-caret-down"></i>
-                    </div>
-                    <div class="input-group-append">
-                        <button class="btn btn-danger" id="bimpsire" type="button">Importar</button>
+                    <div>
+                        <h5 class="modal-title font-weight-bold mb-0">Importar desde SIRE</h5>
+                        <small class="d-block" style="opacity: 0.85;">Descarga comprobantes de SUNAT</small>
                     </div>
                 </div>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" style="opacity: 0.8;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <!-- Body -->
+            <div class="modal-body px-4 py-4" style="background: #f8f9fa;">
+                <!-- Campos ocultos -->
+                <input type="hidden" id="codEstado" name="codEstado" value="0">
+                <input type="hidden" id="codDocIde" name="codDocIde" value="6">
+
+                <!-- Tipo de Documento -->
+                <div class="form-group mb-3">
+                    <label for="tipoDoc" class="small font-weight-bold text-uppercase text-muted mb-1">
+                        <i class="fas fa-file-invoice mr-1"></i> Tipo de Comprobante
+                    </label>
+                    <select class="form-control shadow-sm" id="tipoDoc" name="tipoDoc" style="border-radius: 8px; height: 42px; border-color: #dee2e6;">
+                        <option value="01">📄 Factura</option>
+                        <option value="F7">📋 Nota de Crédito</option>
+                    </select>
+                </div>
+
+                <!-- Período -->
+                <div class="form-group mb-3">
+                    <label class="small font-weight-bold text-uppercase text-muted mb-1">
+                        <i class="fas fa-calendar-alt mr-1"></i> Período
+                    </label>
+                    <div id="reportrange3" class="form-control shadow-sm d-flex align-items-center justify-content-between" style="border-radius: 8px; height: 42px; cursor: pointer; border-color: #dee2e6;">
+                        <div>
+                            <i class="fa fa-calendar text-primary mr-1"></i>
+                            <span class="font-weight-bold"></span>
+                        </div>
+                        <i class="fa fa-caret-down text-muted"></i>
+                    </div>
+                </div>
+
+                <!-- Info -->
+                <div class="small text-muted mb-0 p-2 rounded" style="background: #e9ecef;">
+                    <i class="fas fa-info-circle text-info mr-1"></i>
+                    Se importarán todos los comprobantes del período seleccionado desde el portal SIRE de SUNAT.
+                </div>
+            </div>
+            <!-- Footer -->
+            <div class="modal-footer border-0 px-4 pb-4 pt-0" style="background: #f8f9fa;">
+                <button type="button" class="btn btn-light px-4" data-dismiss="modal" style="border-radius: 8px;">
+                    Cancelar
+                </button>
+                <button class="btn text-white px-4 font-weight-bold" id="bimpsire" type="button" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; border: none;">
+                    <i class="fas fa-cloud-download-alt mr-1"></i> Importar Comprobantes
+                </button>
             </div>
         </div>
-        <!-- /.modal-content -->
     </div>
 </div>
 
@@ -885,6 +943,12 @@
                     },
                     endDate: function() {
                         return moment($('#reportrange').data('daterangepicker').endDate).format('DD/MM/YYYY');
+                    },
+                    tipoDoc: function() {
+                        return $("select#f_tipo_doc option:checked").val();
+                    },
+                    estadoDoc: function() {
+                        return $("select#f_estado_doc option:checked").val();
                     }
                 }
             },
@@ -921,6 +985,46 @@
                     data: 'TOTAL'
                 },
                 {
+                    data: 'RELACION',
+                    render: function(data, type, row) {
+                        if (!data) return '<span class="text-muted small">-</span>';
+
+                        if (data.tipo === 'nc') {
+                            // NC con referencia
+                            if (data.ref_encontrada) {
+                                let estRef = data.ref_estado;
+                                let badgeColor = estRef === 1 ? 'success' : (estRef === 0 ? 'warning' : 'secondary');
+                                return '<span class="small">' +
+                                    '<i class="fas fa-link text-info" title="NC referencia"></i> ' +
+                                    '<a href="javascript:void(0)" class="text-info font-weight-bold btn-go-to-ref" data-ref-id="' + (data.ref_id || '') + '" style="text-decoration:none;">' +
+                                    data.ref_nro +
+                                    '</a> ' +
+                                    '<span class="badge badge-' + badgeColor + '" style="font-size:0.6rem;">E' + (estRef ?? '?') + '</span>' +
+                                    '</span>';
+                            }
+                            // NC sin referencia encontrada en BD
+                            if (data.numCpeRel) {
+                                return '<span class="small text-muted"><i class="fas fa-link"></i> ' + data.numCpeRel + ' <span class="badge badge-secondary" style="font-size:0.6rem;">ext</span></span>';
+                            }
+                            // NC sin referencia
+                            return '<button class="btn btn-outline-info btn-xs btn-vincular-nc" data-id="' + row.ID + '" title="Obtener referencia desde SUNAT"><i class="fas fa-link"></i> Vincular</button>';
+                        }
+
+                        if (data.tipo === 'factura' && data.tiene_nc) {
+                            return '<span class="small">' +
+                                '<i class="fas fa-exclamation-triangle text-warning"></i> ' +
+                                '<span class="text-warning font-weight-bold">' + data.nc_count + ' NC</span>' +
+                                '</span>';
+                        }
+
+                        if (data.tipo === 'nc_sin_ref') {
+                            return '<button class="btn btn-outline-info btn-xs btn-vincular-nc" data-id="' + row.ID + '" title="Obtener referencia desde SUNAT"><i class="fas fa-link"></i> Vincular</button>';
+                        }
+
+                        return '<span class="text-muted small">-</span>';
+                    }
+                },
+                {
                     data: 'NRO_GUIA'
                 },
 
@@ -944,6 +1048,14 @@
                 }
                 if (aData.ESTADO == 0) {
                     $(nRow).addClass('bg-warning');
+                }
+                // Resaltar NCs con fondo lavanda
+                if (aData.codCpe == '07') {
+                    $(nRow).css('background-color', '#e8daf5');
+                }
+                // Marcar facturas con NC asociada con fondo naranja claro
+                if (aData.RELACION && aData.RELACION.tipo === 'factura' && aData.RELACION.tiene_nc) {
+                    $(nRow).css('background-color', '#fff3cd');
                 }
                 return nRow;
             },
@@ -1853,6 +1965,52 @@ if (response.status === 200) {
                 icon: 'info',
                 title: 'Filtrado por factura: ' + nroFact
             });
+        });
+
+        // Evento para vincular NC (obtener referencia desde SUNAT)
+        $(document).on('click', '.btn-vincular-nc', function() {
+            var id = $(this).data('id');
+            var $btn = $(this);
+            $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+
+            $.post('importar/obtenerReferenciaNC', { id: id }, function(response) {
+                if (response.status === 200) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Referencia obtenida',
+                        text: response.message,
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000
+                    });
+                    if (typeof tablePrinFact !== 'undefined' && tablePrinFact) {
+                        tablePrinFact.ajax.reload(null, false);
+                    }
+                } else {
+                    Swal.fire('Error', response.message, 'error');
+                    $btn.prop('disabled', false).html('<i class="fas fa-link"></i> Vincular');
+                }
+            }).fail(function() {
+                Swal.fire('Error', 'Error de conexión con el servidor', 'error');
+                $btn.prop('disabled', false).html('<i class="fas fa-link"></i> Vincular');
+            });
+        });
+
+        // Evento para ir al comprobante referenciado (delegación global)
+        $(document).on('click', '.btn-go-to-ref', function() {
+            var refNro = $(this).text().trim();
+            if (typeof tablePrinFact !== 'undefined' && tablePrinFact) {
+                tablePrinFact.search(refNro).draw();
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 2000,
+                    icon: 'info',
+                    title: 'Buscando: ' + refNro
+                });
+            }
         });
 
         // Evento para sincronizar facturas manuales (Delegación global)

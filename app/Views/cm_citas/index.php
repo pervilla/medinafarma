@@ -1,4 +1,4 @@
-﻿<?= $this->extend('templates/admin_template'); ?>
+<?= $this->extend('templates/admin_template'); ?>
 <?= $this->section('content'); ?>
 
 <style>
@@ -88,11 +88,15 @@
                         <div class="d-flex mt-2">
                             <div class="custom-control custom-radio mr-4">
                                 <input class="custom-control-input" type="radio" id="pagoBol" name="tipo_comprobante" value="03" checked>
-                                <label for="pagoBol" class="custom-control-label">Boleta</label>
+                                <label for="pagoBol" class="custom-control-label">Boleta <small class="text-muted">(Serie <?= esc($series['03'] ?? '21') ?>)</small></label>
+                            </div>
+                            <div class="custom-control custom-radio mr-4">
+                                <input class="custom-control-input" type="radio" id="pagoFac" name="tipo_comprobante" value="01">
+                                <label for="pagoFac" class="custom-control-label">Factura <small class="text-muted">(Serie <?= esc($series['01'] ?? '21') ?>)</small></label>
                             </div>
                             <div class="custom-control custom-radio">
-                                <input class="custom-control-input" type="radio" id="pagoFac" name="tipo_comprobante" value="01">
-                                <label for="pagoFac" class="custom-control-label">Factura</label>
+                                <input class="custom-control-input" type="radio" id="pagoGuia" name="tipo_comprobante" value="09">
+                                <label for="pagoGuia" class="custom-control-label">Guía <small class="text-muted">(Serie <?= esc($series['09'] ?? '21') ?>)</small></label>
                             </div>
                         </div>
                     </div>
@@ -105,7 +109,7 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-outline-primary" id="btnSoloReservar">
-                    <i class="fas fa-calendar-check mr-1"></i> Solo Reservar (Sin Pago)
+                    <i class="fas fa-calendar-check mr-1"></i> Solo Reservar
                 </button>
                 <button type="button" class="btn btn-success" id="btnCobrarYReservar">
                     <i class="fas fa-cash-register mr-1"></i> Cobrar y Reservar

@@ -91,35 +91,29 @@ class ArticuloModel extends Model
 
         $condiciones_str = implode(' AND ', $condiciones);
 
-        $sql = "SELECT 
+        $sql = "SELECT TOP 150
                 RTRIM(LTRIM(T4.TAB_NOMLARGO)) AS TAB_NOMLARGO, 
                 T1.ARM_CODART, 
                 T2.ART_SUBGRU, 
                 RTRIM(LTRIM(TABLAS2.TAB_CONTABLE2)) AS CNTLD, 
                 RTRIM(LTRIM(T2.ART_NOMBRE)) AS ART_NOMBRE, 
-                MAX(T3.PRE_EQUIV) AS EQUIVALENCIA,
-                MAX(T3.PRE_EQUIV) AS CANT, 
-                MAX(T3.PRE_PRE1) AS PRE_CAJA,  
-                MIN(T3.PRE_PRE1) AS PRE_UND,
-                MAX(T3.PRE_PRE2) AS PRE_CAJA_2,  
-                MIN(T3.PRE_PRE2) AS PRE_UND_2,
+                T3.PRE_EQUIV AS EQUIVALENCIA,
+                T3.PRE_EQUIV AS CANT, 
+                T3.PRE_PRE1_MAX AS PRE_CAJA,  
+                T3.PRE_PRE1_MIN AS PRE_UND,
+                T3.PRE_PRE2_MAX AS PRE_CAJA_2,  
+                T3.PRE_PRE2_MIN AS PRE_UND_2,
                 AVG(T1.ARM_STOCK) AS StockGen,
-                (AVG(T1.ARM_STOCK) % NULLIF(MAX(T3.PRE_EQUIV),0)) AS ART_UNID,
-                FLOOR(AVG(T1.ARM_STOCK) / NULLIF(MAX(T3.PRE_EQUIV),0)) AS ART_PQT,
+                (AVG(T1.ARM_STOCK) % NULLIF(T3.PRE_EQUIV,0)) AS ART_UNID,
+                FLOOR(AVG(T1.ARM_STOCK) / NULLIF(T3.PRE_EQUIV,0)) AS ART_PQT,
                 CASE 
-                    WHEN MAX(T3.PRE_EQUIV) = 1 
+                    WHEN T3.PRE_EQUIV = 1 
                         THEN CAST(FLOOR(AVG(T1.ARM_STOCK)) AS VARCHAR)
-                    ELSE CAST(FLOOR(AVG(T1.ARM_STOCK) / NULLIF(MAX(T3.PRE_EQUIV),0)) AS VARCHAR) 
-                         + '/' + CAST(FLOOR(AVG(T1.ARM_STOCK) % NULLIF(MAX(T3.PRE_EQUIV),0)) AS VARCHAR) 
+                    ELSE CAST(FLOOR(AVG(T1.ARM_STOCK) / NULLIF(T3.PRE_EQUIV,0)) AS VARCHAR) 
+                         + '/' + CAST(FLOOR(AVG(T1.ARM_STOCK) % NULLIF(T3.PRE_EQUIV,0)) AS VARCHAR) 
                 END AS STOCK,
-                STUFF((SELECT ',' + RTRIM(LTRIM(b.PRE_UNIDAD)) 
-                       FROM PRECIOS b
-                       WHERE b.PRE_CODART = T1.ARM_CODART AND b.PRE_CODCIA = '25'
-                       FOR XML PATH('')), 1, 1, '') AS UNIDADES,
-                (SELECT TOP 1 D.Nom_IFA 
-                 FROM PRECIOS_DET_DIGEMID_MEDINA R 
-                 INNER JOIN PRECIOS_DIGEMID D ON R.Cod_Prod = D.Cod_Prod 
-                 WHERE R.PRE_CODART = T1.ARM_CODART AND R.ESTADO = 1) AS Nom_IFA
+                T3.UNIDADES,
+                DG.Nom_IFA
             FROM dbo.ARTICULO AS T1
             INNER JOIN DBO.ARTI AS T2 
                 ON T1.ARM_CODART = T2.ART_KEY AND T1.ARM_CODCIA = T2.ART_CODCIA
@@ -127,8 +121,28 @@ class ArticuloModel extends Model
                 ON T2.ART_FAMILIA = T4.TAB_NUMTAB 
                    AND T4.TAB_CODCIA = 25 
                    AND T4.TAB_TIPREG = 122
-            LEFT JOIN PRECIOS AS T3 
-                ON T3.PRE_CODART = T2.ART_KEY AND T3.PRE_CODCIA = '25'
+            LEFT JOIN (
+                SELECT 
+                    PRE_CODART,
+                    MAX(PRE_EQUIV) AS PRE_EQUIV,
+                    MAX(PRE_PRE1) AS PRE_PRE1_MAX,
+                    MIN(PRE_PRE1) AS PRE_PRE1_MIN,
+                    MAX(PRE_PRE2) AS PRE_PRE2_MAX,
+                    MIN(PRE_PRE2) AS PRE_PRE2_MIN,
+                    STUFF((SELECT ',' + RTRIM(LTRIM(b2.PRE_UNIDAD)) 
+                           FROM PRECIOS b2
+                           WHERE b2.PRE_CODART = PRECIOS.PRE_CODART AND b2.PRE_CODCIA = '25'
+                           FOR XML PATH('')), 1, 1, '') AS UNIDADES
+                FROM PRECIOS
+                WHERE PRE_CODCIA = '25'
+                GROUP BY PRE_CODART
+            ) AS T3 ON T3.PRE_CODART = T2.ART_KEY
+            OUTER APPLY (
+                SELECT TOP 1 D.Nom_IFA
+                FROM PRECIOS_DET_DIGEMID_MEDINA R 
+                INNER JOIN PRECIOS_DIGEMID D ON R.Cod_Prod = D.Cod_Prod 
+                WHERE R.PRE_CODART = T2.ART_KEY AND R.ESTADO = 1
+            ) AS DG
             LEFT JOIN dbo.TABLAS TABLAS2 
                 ON T2.ART_CODCIA = TABLAS2.TAB_CODCIA 
                    AND TABLAS2.TAB_TIPREG = 129 
@@ -141,7 +155,14 @@ class ArticuloModel extends Model
                 T1.ARM_CODART, 
                 T2.ART_SUBGRU, 
                 TABLAS2.TAB_CONTABLE2, 
-                T2.ART_NOMBRE
+                T2.ART_NOMBRE,
+                T3.PRE_EQUIV,
+                T3.PRE_PRE1_MAX,
+                T3.PRE_PRE1_MIN,
+                T3.PRE_PRE2_MAX,
+                T3.PRE_PRE2_MIN,
+                T3.UNIDADES,
+                DG.Nom_IFA
             ORDER BY 
                 CASE WHEN T2.ART_NOMBRE LIKE ? THEN 0 ELSE 1 END,
                 T2.ART_NOMBRE ASC";

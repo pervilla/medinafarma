@@ -48,7 +48,7 @@ class Facturador extends BaseController {
 
         public function resumen(){
                 /*$see = new See();
-                $see->setCertificate(file_get_contents(__DIR__ . '\..\..\writable\certificado\certificate.pem'));
+                $see->setCertificate(file_get_contents(__DIR__ . '\..\..\writable\certificado\inversiones2025_cert_out.pem'));
                 $see->setService(SunatEndpoints::FE_BETA);
                 $see->setClaveSOL('20450337839', 'INVSAN18', 'facsanmar18');
 */
@@ -163,7 +163,7 @@ echo "<br>FIM<br>";
     public function index2() {
 
         $see = new See();
-        $see->setCertificate(file_get_contents(__DIR__ . '\..\..\writable\certificado\certificate.pem'));
+        $see->setCertificate(file_get_contents(__DIR__ . '\..\..\writable\certificado\inversiones2025_cert_out.pem'));
         $see->setService(SunatEndpoints::FE_BETA);
         $see->setClaveSOL('20000000001', 'MODDATOS', 'moddatos');
         
@@ -416,7 +416,7 @@ file_put_contents('C:/Doscar/' .$invoice->getName() . '.xml', $see->getFactory()
     public function index() {
 
         $see = new See();
-        $see->setCertificate(file_get_contents(__DIR__ . '\..\..\writable\certificado\certificate.pem'));
+        $see->setCertificate(file_get_contents(__DIR__ . '\..\..\writable\certificado\inversiones2025_cert_out.pem'));
         $see->setService(SunatEndpoints::FE_BETA);
         $see->setClaveSOL('20000000001', 'MODDATOS', 'moddatos');
 
