@@ -73,20 +73,21 @@ class GreenterService
     }
 
     /**
-     * Send individual invoice (Factura) to SUNAT
+     * Send individual invoice (Factura/Boleta) to SUNAT
      * 
      * @param array $headerData Invoice header from ALLOG
      * @param array $detailsData Invoice details from facart
+     * @param string $tipoDoc Tipo documento: '01' Factura, '03' Boleta
      * @return \Greenter\Model\Response\SunatResponse
      */
-    public function enviarFactura($headerData, $detailsData)
+    public function enviarFactura($headerData, $detailsData, $tipoDoc = '01')
     {
         $invoice = new \Greenter\Model\Sale\Invoice();
         
         // Set basic info
         $invoice->setUblVersion('2.1')
             ->setTipoOperacion('0101') // Venta interna
-            ->setTipoDoc('01') // Factura
+            ->setTipoDoc($tipoDoc)
             ->setSerie($headerData['Serie'])
             ->setCorrelativo($headerData['Numero'])
             ->setFechaEmision(new \DateTime($headerData['Fecha']))

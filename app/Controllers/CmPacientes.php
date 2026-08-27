@@ -30,7 +30,8 @@ class CmPacientes extends BaseController
                        c.CLI_NOMBRE, c.CLI_RUC_ESPOSA as DNI
                 FROM CM_PACIENTES p
                 INNER JOIN CLIENTES c ON c.CLI_CODCLIE = p.cliente_id
-                WHERE 1=1 ";
+                WHERE 1=1
+                  AND c.CLI_CP = 'C' ";
         
         if (!empty($busqueda)) {
             $sql .= "AND (c.CLI_NOMBRE LIKE ? OR c.CLI_RUC_ESPOSA LIKE ? OR c.CLI_RUC_ESPOSO LIKE ?) ";

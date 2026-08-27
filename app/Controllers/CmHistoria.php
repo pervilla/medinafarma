@@ -138,18 +138,27 @@ class CmHistoria extends BaseController
         $db = \Config\Database::connect();
         $historia_id = $this->request->getPost('historia_id');
         $cita_id = $this->request->getPost('cita_id');
-        $finalizar = $this->request->getPost('finalizar') == '1';
+        // resultado_atencion: guardar | atendido | pendiente
+        $resultado = $this->request->getPost('resultado_atencion') ?: 'guardar';
         
+        $historia_estado = ($resultado == 'guardar') ? 1 : 2;
         $db->query("UPDATE CM_HISTORIA SET examen_clinico=?, plan_trabajo=?, indicaciones=?, estado=?, updated_at=GETDATE() WHERE id=?",
             [$this->request->getPost('examen_clinico'), $this->request->getPost('plan_trabajo'),
-             $this->request->getPost('indicaciones'), $finalizar ? 2 : 1, $historia_id]);
+             $this->request->getPost('indicaciones'), $historia_estado, $historia_id]);
         
-        if ($finalizar) {
-            // Si finaliza, marcar cita como atendida
-            $db->query("UPDATE CM_CITAS SET estado = 2, updated_at = GETDATE() WHERE id = ?", [$cita_id]);
+        $cita_estado = null;
+        if ($resultado == 'atendido') {
+            $cita_estado = 2;
             $msg = 'Atención finalizada. Cita marcada como atendida.';
+        } elseif ($resultado == 'pendiente') {
+            $cita_estado = 4;
+            $msg = 'Atención guardada con exámenes pendientes. La cita podrá cerrarse cuando se completen.';
         } else {
-            $msg = 'Atención guardada como pendiente. Puede continuar después.';
+            $msg = 'Atención guardada. Puede continuar después.';
+        }
+        
+        if ($cita_estado !== null) {
+            $db->query("UPDATE CM_CITAS SET estado = ?, updated_at = GETDATE() WHERE id = ?", [$cita_estado, $cita_id]);
         }
         
         return redirect()->to('cmHistoria/atencion/' . $cita_id)->with('msg', $msg);

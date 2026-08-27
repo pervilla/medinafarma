@@ -147,9 +147,9 @@ class ClientesModel extends Model
     }
     public function get_max_id()
     {
+        // Considera TODOS los registros (C y P) para evitar colisiones de CLI_CODCLIE
         $sql = ' SELECT MAX(CLI_CODCLIE)+1 as CLI_CODCLIE FROM CLIENTES ';
-        $sql .= "WHERE CLI_CP = 'C' ";
-        $sql .= "AND CLI_CODCIA = 25 ";
+        $sql .= "WHERE CLI_CODCIA = 25 ";
         $query =  $this->db->query($sql);
         return $query->getRow()->CLI_CODCLIE;
     }

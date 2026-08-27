@@ -11,7 +11,8 @@
         .box { border: 1px solid #ccc; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
         .box-title { font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; font-size: 16px;}
         .data-row { margin-bottom: 8px; }
-        .data-label { font-weight: bold; width: 130px; display: inline-block; }
+        .data-label-80 { font-weight: bold; width: 80px; display: inline-block; }
+        .data-label { font-weight: bold; width: 120px; display: inline-block; }
         .lines { border-bottom: 1px dashed #999; height: 30px; margin-top: 20px; }
         @media print {
             body { background: #fff; }
@@ -37,10 +38,10 @@
             <div class="box-title">DATOS DEL PACIENTE</div>
             <div class="row">
                 <div class="col-sm-12 data-row"><span class="data-label">Paciente:</span> <?= esc($cita->CLI_NOMBRE) ?></div>
-                <div class="col-sm-4 data-row"><span class="data-label">DNI:</span> <?= esc($cita->DNI ?: '-') ?></div>
-                <div class="col-sm-4 data-row"><span class="data-label">Edad:</span> <?= esc($cita->edad ? $cita->edad . ' años' : '-') ?></div>
-                <div class="col-sm-4 data-row"><span class="data-label">Teléfono:</span> <?= esc($cita->CLI_TELEF1 ?: '-') ?></div>
-                <div class="col-sm-4 data-row"><span class="data-label">Tipo Sangre:</span> <?= esc($cita->tipo_sangre ?: 'No registrado') ?></div>
+                <div class="col-sm-3 data-row"><span class="data-label-80">DNI:</span> <?= esc($cita->DNI ?: '-') ?></div>
+                <div class="col-sm-3 data-row"><span class="data-label-80">Edad:</span> <?= esc($cita->edad ? $cita->edad . ' años' : '-') ?></div>
+                <div class="col-sm-3 data-row"><span class="data-label-80">Teléfono:</span> <?= esc($cita->CLI_TELEF1 ?: '-') ?></div>
+                <div class="col-sm-3 data-row"><span class="data-label">Tipo Sangre:</span> <?= esc($cita->tipo_sangre ?: '-') ?></div>
                 <div class="col-sm-12 data-row mt-2"><span class="data-label">Alergias:</span> <?= esc($cita->alergias ?: 'Ninguna declarada') ?></div>
                 <div class="col-sm-12 data-row"><span class="data-label">Enfermedades:</span> <?= esc($cita->enfermedades_cronicas ?: 'Ninguna declarada') ?></div>
             </div>

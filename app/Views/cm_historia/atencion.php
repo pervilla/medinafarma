@@ -8,8 +8,11 @@
                 <h1 class="m-0 text-dark"><i class="fas fa-stethoscope text-success mr-2"></i> <?= esc($titulo) ?></h1>
             </div>
             <div class="col-sm-6 text-right">
-                <?php $estadoBadge = $historia->estado == 2 ? 'badge-success' : 'badge-warning'; ?>
-                <span class="badge <?= $estadoBadge ?> mr-2"><?= $historia->estado == 2 ? 'Finalizado' : 'Pendiente' ?></span>
+                <?php
+                    $citaBadge = $cita->estado == 4 ? 'badge-warning' : ($cita->estado == 2 ? 'badge-success' : 'badge-info');
+                    $citaLabel = $cita->estado == 4 ? 'Pendiente (exámenes)' : ($cita->estado == 2 ? 'Atendido' : 'En atención');
+                ?>
+                <span class="badge <?= $citaBadge ?> mr-2"><?= $citaLabel ?></span>
                 <a href="<?= site_url('cmHistoria/triaje/' . $cita->id) ?>" class="btn btn-outline-warning btn-sm"><i class="fas fa-heartbeat mr-1"></i> Triaje</a>
                 <a href="<?= site_url('cmHistoria/ver/' . $cita->id) ?>" class="btn btn-outline-info btn-sm ml-1"><i class="fas fa-file-medical mr-1"></i> Ver Historia</a>
                 <a href="<?= site_url('cmHistoria/receta/' . $cita->id) ?>" class="btn btn-outline-secondary btn-sm ml-1" target="_blank"><i class="fas fa-print mr-1"></i> Imprimir Receta</a>
@@ -68,8 +71,11 @@
                             <div class="form-group"><label>Indicaciones</label>
                                 <textarea name="indicaciones" class="form-control" rows="2"><?= esc($historia->indicaciones ?? '') ?></textarea></div>
                             <div class="btn-group">
-                                <button type="submit" name="finalizar" value="0" class="btn btn-warning"><i class="fas fa-save mr-1"></i> Guardar Pendiente</button>
-                                <button type="submit" name="finalizar" value="1" class="btn btn-success"><i class="fas fa-check-circle mr-1"></i> Finalizar Atención</button>
+                                <button type="submit" name="resultado_atencion" value="guardar" class="btn btn-warning"><i class="fas fa-save mr-1"></i> Guardar</button>
+                                <?php if ($cita->estado != 4): ?>
+                                <button type="submit" name="resultado_atencion" value="pendiente" class="btn btn-info"><i class="fas fa-clock mr-1"></i> Dejar en Pendiente</button>
+                                <?php endif; ?>
+                                <button type="submit" name="resultado_atencion" value="atendido" class="btn btn-success"><i class="fas fa-check-circle mr-1"></i> <?= $cita->estado == 4 ? 'Cerrar (Atendido)' : 'Finalizar Atención' ?></button>
                             </div>
                         </form>
                     </div>
@@ -271,6 +277,7 @@ $(function() {
             indicaciones: $('#receta_ind').val()
         }, function() { location.reload(); });
     });
+
 });
 </script>
 <?= $this->endSection(); ?>

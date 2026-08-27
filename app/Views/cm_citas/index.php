@@ -17,6 +17,7 @@
                 <a href="<?= site_url('cmMedicos') ?>" class="btn btn-outline-primary btn-sm mr-1"><i class="fas fa-user-md mr-1"></i> Médicos</a>
                 <a href="<?= site_url('cmHorarios') ?>" class="btn btn-outline-primary btn-sm mr-1"><i class="fas fa-calendar-alt mr-1"></i> Horarios</a>
                 <a href="<?= site_url('cmPacientes') ?>" class="btn btn-outline-info btn-sm"><i class="fas fa-users mr-1"></i> Pacientes</a>
+                <a href="<?= site_url('cmCitas/reporte') ?>" class="btn btn-outline-danger btn-sm"><i class="fas fa-chart-bar mr-1"></i> Reporte</a>
                 <a href="<?= site_url('cmCitas/listado') ?>" class="btn btn-outline-secondary btn-sm ml-1"><i class="fas fa-list mr-1"></i> Ver Todas</a>
             </div>
         </div>
@@ -150,16 +151,15 @@ function cargarInscritos(horario_id) {
         let html = '';
         if (data.length > 0) {
             data.forEach(function(p, i) {
-                let eb = p.estado == 1 ? 'badge-success' : (p.estado == 2 ? 'badge-info' : 'badge-warning');
+                let eb = p.estado == 1 ? 'badge-success' : (p.estado == 2 ? 'badge-info' : (p.estado == 4 ? 'badge-warning' : 'badge-warning'));
                 let accion = '';
                 if (p.estado == 0) {
                     accion = '<button class="btn btn-sm btn-success cobrar-pendiente mr-1" data-cita="'+p.id+'"><i class="fas fa-cash-register"></i> Cobrar</button>' +
                              '<button class="btn btn-sm btn-danger anular-cita" data-cita="'+p.id+'"><i class="fas fa-times"></i></button>';
                 } else if (p.estado == 1) {
                     accion = '<button class="btn btn-sm btn-info atender-cita mr-1" data-cita="'+p.id+'"><i class="fas fa-check-circle"></i> Atender</button>' +
-                             '<button class="btn btn-sm btn-outline-info procedimiento-cita mr-1" data-cita="'+p.id+'"><i class="fas fa-syringe"></i> Proced.</button>' +
-                             '<button class="btn btn-sm btn-outline-danger anular-cita" data-cita="'+p.id+'"><i class="fas fa-times"></i></button>';
-                } else if (p.estado == 2) {
+                             '<button class="btn btn-sm btn-outline-info procedimiento-cita mr-1" data-cita="'+p.id+'"><i class="fas fa-syringe"></i> Proced.</button>';
+                } else if (p.estado == 2 || p.estado == 4) {
                     accion = '<button class="btn btn-sm btn-outline-info procedimiento-cita" data-cita="'+p.id+'"><i class="fas fa-syringe"></i> Proced.</button>';
                 }
                 html += '<tr><td>'+(i+1)+'</td><td><strong>'+p.CLI_NOMBRE+'</strong></td><td>'+(p.DNI||'-')+'</td><td>'+(p.CLI_TELEF1||'-')+'</td>' +
@@ -361,7 +361,20 @@ $(document).ready(function() {
         let extra = $("#inscritos_servicios_extra").val() || [];
         let btn = $(this); btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
         $.post("<?= site_url('CmCitas/cobrar_pendiente') ?>", {cita_id:cita_id, servicios_extra:extra}, function(res) {
-if (res.status === 'success') { notify(res.msg, 'success'); cargarInscritos($('.ver-inscritos').last().data('horario')); }
+            if (res.status === 'success') {
+                if (res.ticket && res.ticket.nro) {
+                    Swal.fire({
+                        icon: 'success', title: 'Pago registrado',
+                        html: 'Ticket: <strong>'+res.ticket.nro+'</strong><br>Monto: S/ '+parseFloat(res.ticket.monto).toFixed(2),
+                        showCancelButton: true, confirmButtonText: '<i class="fas fa-print"></i> Imprimir Ticket', cancelButtonText: 'Cerrar'
+                    }).then((r) => {
+                        if (r.isConfirmed) window.open("<?= site_url('cmCitas/ticket/') ?>"+res.ticket.pago_id, '_blank');
+                        cargarInscritos($('.ver-inscritos').last().data('horario'));
+                    });
+                } else {
+                    notify(res.msg, 'success'); cargarInscritos($('.ver-inscritos').last().data('horario'));
+                }
+            }
             else { notify(res.msg, 'error'); btn.prop('disabled', false).html('<i class="fas fa-cash-register"></i> Cobrar'); }
         });
     });
@@ -378,10 +391,10 @@ if (res.status === 'success') { notify(res.msg, 'success'); cargarInscritos($('.
 
     $(document).on('click', '.anular-cita', function() {
         let cita_id = $(this).data('cita');
-        Swal.fire({ title: '¿Anular esta cita?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Sí, anular', confirmButtonColor: '#dc3545' }).then((r) => {
+        Swal.fire({ title: '¿Anular esta reserva sin pago?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Sí, anular', cancelButtonText: 'Cancelar', confirmButtonColor: '#dc3545' }).then((r) => {
             if (!r.isConfirmed) return;
             $.post("<?= site_url('CmCitas/cambiar_estado') ?>", {cita_id:cita_id, estado:'3'}, function(res) {
-                notify(res.msg, 'info'); cargarInscritos($('.ver-inscritos').last().data('horario'));
+                notify(res.msg, res.status === 'success' ? 'success' : 'error'); cargarInscritos($('.ver-inscritos').last().data('horario'));
             });
         });
     });
@@ -413,7 +426,21 @@ if (res.status === 'success') { notify(res.msg, 'success'); cargarInscritos($('.
         if (!art_key || !precio || parseFloat(precio) <= 0) { notify('Selecciona un servicio y define el precio', 'warning'); return; }
         let btn = $(this); btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
         $.post("<?= site_url('CmCitas/cobrar_procedimiento') ?>", {cita_id:cita_id, art_key:art_key, precio:precio, observacion:obs}, function(res) {
-            if (res.status === 'success') { notify(res.msg, 'success'); $('#modalProcedimiento').modal('hide'); cargarInscritos($('.ver-inscritos').last().data('horario')); }
+            if (res.status === 'success') {
+                $('#modalProcedimiento').modal('hide');
+                if (res.ticket && res.ticket.nro) {
+                    Swal.fire({
+                        icon: 'success', title: 'Pago registrado',
+                        html: 'Ticket: <strong>'+res.ticket.nro+'</strong><br>Monto: S/ '+parseFloat(res.ticket.monto).toFixed(2),
+                        showCancelButton: true, confirmButtonText: '<i class="fas fa-print"></i> Imprimir Ticket', cancelButtonText: 'Cerrar'
+                    }).then((r) => {
+                        if (r.isConfirmed) window.open("<?= site_url('cmCitas/ticket/') ?>"+res.ticket.pago_id, '_blank');
+                        cargarInscritos($('.ver-inscritos').last().data('horario'));
+                    });
+                } else {
+                    notify(res.msg, 'success'); cargarInscritos($('.ver-inscritos').last().data('horario'));
+                }
+            }
             else { notify(res.msg, 'error'); }
             btn.prop('disabled', false).html('<i class="fas fa-cash-register mr-1"></i> Cobrar Procedimiento');
         });
@@ -443,7 +470,21 @@ if (res.status === 'success') { notify(res.msg, 'success'); cargarInscritos($('.
             paciente_id: pid, horario_id: hid, pagar_ahora:'1', tipo_comprobante:tc, servicios_extra:extra,
             cliente_id: sel.cliente_id || ''
         }, function(res) {
-            if(res.status==='success') { notify(res.msg, 'success'); $("#modalReservar").modal('hide'); location.reload(); }
+            if(res.status==='success') {
+                $("#modalReservar").modal('hide');
+                if (res.ticket && res.ticket.nro) {
+                    Swal.fire({
+                        icon: 'success', title: 'Pago registrado',
+                        html: 'Ticket: <strong>'+res.ticket.nro+'</strong><br>Monto: S/ '+parseFloat(res.ticket.monto).toFixed(2),
+                        showCancelButton: true, confirmButtonText: '<i class="fas fa-print"></i> Imprimir Ticket', cancelButtonText: 'Cerrar'
+                    }).then((r) => {
+                        if (r.isConfirmed) window.open("<?= site_url('cmCitas/ticket/') ?>"+res.ticket.pago_id, '_blank');
+                        location.reload();
+                    });
+                } else {
+                    notify(res.msg, 'success'); location.reload();
+                }
+            }
             else { notify(res.msg, 'error'); }
             btn.prop('disabled', false).html('<i class="fas fa-cash-register mr-1"></i> Cobrar y Reservar');
         });
