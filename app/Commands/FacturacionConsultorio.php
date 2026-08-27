@@ -34,9 +34,14 @@ class FacturacionConsultorio extends BaseCommand
             INNER JOIN CM_CITAS CT ON CT.id = CC.cita_id
             INNER JOIN CM_PACIENTES PC ON PC.id = CT.paciente_id
             INNER JOIN CLIENTES C ON C.CLI_CODCLIE = PC.cliente_id
-            WHERE CC.estado_sunat = 0
+            WHERE CC.estado_sunat = 0 AND CC.tipo_documento IN ('B', 'F')
             ORDER BY CC.id
         ")->getResult();
+
+        $guias = $db->query("SELECT COUNT(*) AS n FROM CM_COMPROBANTES WHERE estado_sunat = 0 AND tipo_documento = 'G'")->getRow();
+        if ($guias && $guias->n > 0) {
+            CLI::write($guias->n . ' guia(s) pendientes: no se envian por este canal (requieren el servicio de guias de remision).', 'yellow');
+        }
 
         if (empty($pendientes)) {
             CLI::write('No hay comprobantes pendientes.', 'light_gray');
@@ -99,8 +104,8 @@ class FacturacionConsultorio extends BaseCommand
                 $totalBase += $d['BaseImponible'];
             }
 
-            // Convertir serie para Greenter (serie + correlativo)
-            $serieGreenter = strtoupper($comp->tipo_documento) . substr(str_pad($comp->serie, 3, '0', STR_PAD_LEFT), -2);
+            // La serie se guarda ya en formato SUNAT (B001 / F001) al emitir el comprobante
+            $serieGreenter = strtoupper(trim($comp->serie));
             $tipoDocGreenter = ($comp->tipo_documento == 'F') ? '01' : '03';
 
             $headerData = [
@@ -126,10 +131,21 @@ class FacturacionConsultorio extends BaseCommand
                 return;
             }
 
-            // Exito: guardar ticket
-            $ticket = $result->getTicket();
-            CLI::write("  Enviado OK. Ticket: $ticket", 'green');
-            $this->marcarEnviado($db, $comp->id, $ticket);
+            // Exito: guardar el CDR y el estado que devuelve SUNAT
+            $cdr = $result->getCdrResponse();
+            $codigo = $cdr ? $cdr->getCode() : '';
+            $descripcion = $cdr ? $cdr->getDescription() : '';
+
+            $this->guardarCdr($comp, $serieGreenter, $result->getCdrZip());
+
+            if (!$cdr || !$cdr->isAccepted()) {
+                CLI::error("  Rechazado por SUNAT: $codigo - $descripcion");
+                $this->marcarRechazado($db, $comp->id, substr(trim("$codigo - $descripcion"), 0, 200));
+                return;
+            }
+
+            CLI::write("  Aceptado por SUNAT: $codigo - $descripcion", 'green');
+            $this->marcarAceptado($db, $comp->id, $codigo, $descripcion, $cdr->getNotes() ?? []);
 
         } catch (\Throwable $e) {
             CLI::error('  Excepcion: ' . $e->getMessage());
@@ -137,9 +153,24 @@ class FacturacionConsultorio extends BaseCommand
         }
     }
 
-    private function marcarEnviado($db, $id, $ticket)
+    private function guardarCdr($comp, $serie, $cdrZip)
     {
-        $db->query("UPDATE CM_COMPROBANTES SET estado_sunat = 1, cdr_ticket = ?, fecha_envio = GETDATE() WHERE id = ?", [$ticket, $id]);
+        if (empty($cdrZip)) {
+            return;
+        }
+        $fecha = strtotime($comp->fecha_emision);
+        $dir = WRITEPATH . 'consultorio/' . date('Y', $fecha) . '/' . date('m', $fecha);
+        if (!is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+        file_put_contents($dir . '/' . $serie . '-' . str_pad($comp->correlativo, 8, '0', STR_PAD_LEFT) . '.zip', $cdrZip);
+    }
+
+    private function marcarAceptado($db, $id, $codigo, $descripcion, $notas)
+    {
+        $obs = trim($descripcion . (empty($notas) ? '' : ' | ' . implode(' | ', $notas)));
+        $db->query("UPDATE CM_COMPROBANTES SET estado_sunat = 2, cdr_ticket = ?, observaciones = ?, fecha_envio = GETDATE() WHERE id = ?",
+            [substr((string) $codigo, 0, 50), substr($obs, 0, 250), $id]);
     }
 
     private function marcarRechazado($db, $id, $obs)
