@@ -16,9 +16,21 @@
 -- emitir. Revisar los prefijos del backfill antes de usarlos en
 -- produccion.
 -- ==========================================================
+-- Opciones requeridas para crear indices filtrados (SSMS/VB6 pueden traer
+-- ARITHABORT OFF, lo que hace fallar el CREATE INDEX ... WHERE)
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
+GO
+SET ANSI_PADDING ON
+GO
+SET ANSI_WARNINGS ON
+GO
+SET ARITHABORT ON
+GO
+SET CONCAT_NULL_YIELDS_NULL ON
+GO
+SET NUMERIC_ROUNDABORT OFF
 GO
 
 -- 1. Correlativo independiente de la serie
@@ -50,13 +62,22 @@ WHERE S.tipo_servicio = 'CONSULTORIO' AND S.correlativo_actual = 0
 GO
 
 -- ==========================================================
--- 4. Unicidad: evita tickets y correlativos duplicados si dos
---    cajas emiten al mismo tiempo
+-- 4. Unicidad: evita correlativos duplicados si dos cajas
+--    emiten al mismo tiempo
 -- ==========================================================
-IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'UX_CM_PAGOS_TICKET' AND object_id = OBJECT_ID(N'[dbo].[CM_PAGOS]'))
-CREATE UNIQUE INDEX [UX_CM_PAGOS_TICKET] ON [dbo].[CM_PAGOS]([ticket_nro]) WHERE [ticket_nro] IS NOT NULL
-GO
-
 IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'UX_CM_COMPROBANTES_SERIE_CORR' AND object_id = OBJECT_ID(N'[dbo].[CM_COMPROBANTES]'))
 CREATE UNIQUE INDEX [UX_CM_COMPROBANTES_SERIE_CORR] ON [dbo].[CM_COMPROBANTES]([tipo_documento], [serie], [correlativo])
 GO
+
+-- ==========================================================
+-- 5. OPCIONAL: unicidad del numero de ticket.
+--    Es un indice FILTRADO: cualquier cliente que inserte en CM_PAGOS
+--    (incluido VB6 por ODBC) debe tener ARITHABORT ON, o sus INSERT
+--    fallaran. Si VB6 empieza a dar error al cobrar, ejecutar:
+--        DROP INDEX [UX_CM_PAGOS_TICKET] ON [dbo].[CM_PAGOS]
+--    El ticket ya se deriva del IDENTITY del pago, asi que este indice
+--    solo sirve como red de seguridad.
+-- ==========================================================
+-- IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'UX_CM_PAGOS_TICKET' AND object_id = OBJECT_ID(N'[dbo].[CM_PAGOS]'))
+-- CREATE UNIQUE INDEX [UX_CM_PAGOS_TICKET] ON [dbo].[CM_PAGOS]([ticket_nro]) WHERE [ticket_nro] IS NOT NULL
+-- GO
