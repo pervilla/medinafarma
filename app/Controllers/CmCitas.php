@@ -458,6 +458,7 @@ class CmCitas extends BaseController
 
     private function printCabecera($printer, $local)
     {
+        $local=4;
         $fac = config('Facturacion');
         $marca = $this->getMarca($local);
         try {
@@ -472,7 +473,7 @@ class CmCitas extends BaseController
         $printer->setJustification(Printer::JUSTIFY_CENTER);
         $printer->text($marca['nombre'] . "\n");
         $printer->text("RUC: " . $fac->ruc . "\n");
-        $printer->text("Jr. Huallaga Nro 601 - Juanjuí - Mcal Cacéres - San Martín\n");
+        $printer->text("Jr. Miguel Grau Nro 334 - Juanjuicillo - Mcal Cacéres - San Martín\n");
         $printer->setJustification(Printer::JUSTIFY_LEFT);
         $printer->text("----------------------------------------------------------------\n");
     }
