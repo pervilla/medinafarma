@@ -138,6 +138,19 @@ function notify(msg, type) {
     }
 }
 
+// Imprime el ticket en la ticketera (paciente + deposito si aplica)
+function imprimirTicketTermico(pago_id) {
+    if (!pago_id) return;
+    Swal.fire({ title: 'Enviando a la ticketera...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    $.post("<?= site_url('CmCitas/imprimir_ticket_termico') ?>", { pago_id: pago_id }, function(res) {
+        if (res.status === 'success') {
+            Swal.fire({ icon: 'success', title: 'Ticket enviado', text: res.msg, timer: 2000, showConfirmButton: false });
+        } else {
+            Swal.fire({ icon: 'error', title: 'No se pudo imprimir', text: res.msg });
+        }
+    });
+}
+
 function abrirReserva(horario_id, precio, medico) {
     $("#reserva_horario_id").val(horario_id);
     $("#btnCobrarYReservar").html('<i class="fas fa-cash-register mr-1"></i> Cobrar S/ ' + parseFloat(precio).toFixed(2) + ' y Reservar');
@@ -368,7 +381,7 @@ $(document).ready(function() {
                         html: 'Ticket: <strong>'+res.ticket.nro+'</strong><br>Monto: S/ '+parseFloat(res.ticket.monto).toFixed(2),
                         showCancelButton: true, confirmButtonText: '<i class="fas fa-print"></i> Imprimir Ticket', cancelButtonText: 'Cerrar'
                     }).then((r) => {
-                        if (r.isConfirmed) window.open("<?= site_url('cmCitas/ticket/') ?>"+res.ticket.pago_id, '_blank');
+                        if (r.isConfirmed) imprimirTicketTermico(res.ticket.pago_id);
                         cargarInscritos($('.ver-inscritos').last().data('horario'));
                     });
                 } else {
@@ -434,7 +447,7 @@ $(document).ready(function() {
                         html: 'Ticket: <strong>'+res.ticket.nro+'</strong><br>Monto: S/ '+parseFloat(res.ticket.monto).toFixed(2),
                         showCancelButton: true, confirmButtonText: '<i class="fas fa-print"></i> Imprimir Ticket', cancelButtonText: 'Cerrar'
                     }).then((r) => {
-                        if (r.isConfirmed) window.open("<?= site_url('cmCitas/ticket/') ?>"+res.ticket.pago_id, '_blank');
+                        if (r.isConfirmed) imprimirTicketTermico(res.ticket.pago_id);
                         cargarInscritos($('.ver-inscritos').last().data('horario'));
                     });
                 } else {
@@ -478,7 +491,7 @@ $(document).ready(function() {
                         html: 'Ticket: <strong>'+res.ticket.nro+'</strong><br>Monto: S/ '+parseFloat(res.ticket.monto).toFixed(2),
                         showCancelButton: true, confirmButtonText: '<i class="fas fa-print"></i> Imprimir Ticket', cancelButtonText: 'Cerrar'
                     }).then((r) => {
-                        if (r.isConfirmed) window.open("<?= site_url('cmCitas/ticket/') ?>"+res.ticket.pago_id, '_blank');
+                        if (r.isConfirmed) imprimirTicketTermico(res.ticket.pago_id);
                         location.reload();
                     });
                 } else {

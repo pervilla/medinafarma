@@ -5,6 +5,8 @@ namespace App\Controllers;
 use App\Models\CmPacientesModel;
 use App\Models\CmMedicosModel;
 use App\Models\CmMedicosHorariosModel;
+use Mike42\Escpos\PrintConnectors\WindowsPrintConnector;
+use Mike42\Escpos\Printer;
 
 class CmCitas extends BaseController
 {
@@ -389,8 +391,51 @@ class CmCitas extends BaseController
     {
         if (!$pago_id) return redirect()->to('cmCitas/listado');
         $db = \Config\Database::connect();
-        $pago = $db->query("
-            SELECT P.*, C.CLI_NOMBRE, H.fecha_especifica, (M.nombres + ' ' + M.apellidos) AS medico, CC.estado AS cita_estado
+        $pago = $this->getPagoData($db, $pago_id);
+        if (!$pago) return redirect()->to('cmCitas/listado');
+        return view('cm_citas/ticket', ['pago' => $pago]);
+    }
+
+    public function imprimir_ticket_termico($pago_id = null)
+    {
+        if (!$pago_id) return $this->response->setJSON(['status' => 'error', 'msg' => 'Falta pago']);
+        $db = \Config\Database::connect();
+        $pago = $this->getPagoData($db, $pago_id);
+        if (!$pago) return $this->response->setJSON(['status' => 'error', 'msg' => 'Pago no encontrado']);
+
+        $local = intval($pago->local_pago);
+        if ($local == 0) $local = 1;
+
+        $imp = config('Impresoras');
+        $ruta = $imp->ticketeras[$local] ?? null;
+        if (!$ruta) {
+            return $this->response->setJSON(['status' => 'error', 'msg' => 'No hay ticketera configurada para el local ' . $local]);
+        }
+
+        try {
+            $connector = new WindowsPrintConnector($ruta);
+            $printer = new Printer($connector);
+
+            // Ticket para el paciente (constancia de pago)
+            $this->printTicketPaciente($printer, $pago);
+
+            // Ticket de depósito de dinero (solo si el pago fue adelantado en otro local)
+            if ($local != 4) {
+                $this->printTicketDeposito($printer, $pago, $imp->locales[$local] ?? 'LOCAL');
+            }
+
+            $printer->close();
+            return $this->response->setJSON(['status' => 'success', 'msg' => 'Ticket enviado a la ticketera']);
+        } catch (\Exception $e) {
+            return $this->response->setJSON(['status' => 'error', 'msg' => 'Error al imprimir: ' . $e->getMessage()]);
+        }
+    }
+
+    private function getPagoData($db, $pago_id)
+    {
+        return $db->query("
+            SELECT P.*, C.CLI_NOMBRE, C.CLI_RUC_ESPOSA AS DNI, H.fecha_especifica, H.hora_inicio,
+                   (M.nombres + ' ' + M.apellidos) AS medico, CC.estado AS cita_estado
             FROM CM_PAGOS P
             INNER JOIN CM_CITAS CC ON CC.id = P.cita_id
             INNER JOIN CM_PACIENTES PC ON PC.id = CC.paciente_id
@@ -399,8 +444,61 @@ class CmCitas extends BaseController
             LEFT JOIN CM_MEDICOS M ON M.id = H.medico_id
             WHERE P.id = ?
         ", [$pago_id])->getRow();
-        if (!$pago) return redirect()->to('cmCitas/listado');
-        return view('cm_citas/ticket', ['pago' => $pago]);
+    }
+
+    private function printTicketPaciente($printer, $pago)
+    {
+        $empresa = "MEDINAFARMA";
+        $printer->setFont(Printer::FONT_B);
+        $printer->setJustification(Printer::JUSTIFY_CENTER);
+        $printer->text($empresa . "\n");
+        $printer->text("CONSTANCIA DE PAGO\n");
+        $printer->setJustification(Printer::JUSTIFY_LEFT);
+        $printer->text("--------------------------------\n");
+        $printer->text("TICKET Nro: " . ($pago->ticket_nro ?: 'PAGO-' . $pago->id) . "\n");
+        $printer->text("Fecha: " . date('d/m/Y H:i', strtotime($pago->fecha_pago)) . "\n");
+        $printer->text("--------------------------------\n");
+        $printer->text("Paciente: " . trim($pago->CLI_NOMBRE) . "\n");
+        if (!empty($pago->DNI)) $printer->text("DNI: " . trim($pago->DNI) . "\n");
+        $printer->text("Medico: " . trim($pago->medico ?: '-') . "\n");
+        if ($pago->fecha_especifica) $printer->text("Fecha cita: " . date('d/m/Y', strtotime($pago->fecha_especifica)) . "\n");
+        if ($pago->hora_inicio) $printer->text("Hora cita: " . substr($pago->hora_inicio, 0, 5) . "\n");
+        $printer->text("Forma pago: " . trim($pago->forma_pago) . "\n");
+        $printer->text("--------------------------------\n");
+        $printer->setTextSize(2, 2);
+        $printer->text("MONTO: S/ " . number_format($pago->monto, 2) . "\n");
+        $printer->setTextSize(1, 1);
+        $printer->text("--------------------------------\n");
+        $printer->setJustification(Printer::JUSTIFY_CENTER);
+        $printer->text("Este ticket es solo una constancia.\n");
+        $printer->text("El comprobante (Boleta/Factura)\nse emitira el dia de la cita.\n");
+        $printer->feed(3);
+        $printer->cut();
+        $printer->pulse();
+    }
+
+    private function printTicketDeposito($printer, $pago, $nombreLocal)
+    {
+        $printer->setFont(Printer::FONT_B);
+        $printer->setJustification(Printer::JUSTIFY_CENTER);
+        $printer->text("DEPOSITO DE DINERO\n");
+        $printer->setTextSize(3, 3);
+        $printer->text($nombreLocal . "\n");
+        $printer->setTextSize(1, 1);
+        $printer->setJustification(Printer::JUSTIFY_LEFT);
+        $printer->text("Fecha: " . date('d-m-Y', strtotime($pago->fecha_pago)) . "\n");
+        $printer->text("Responsable: " . trim($pago->usuario_cajero ?: 'CAJERO') . "\n");
+        $printer->text("Ticket origen: " . ($pago->ticket_nro ?: '') . "\n");
+        $printer->text("--------------------------------\n");
+        $printer->text("CONCEPTO: PAGO ADELANTADO CITA MEDICA\n");
+        $printer->text("IMPORTE TOTAL : S/ ");
+        $printer->setTextSize(2, 2);
+        $printer->text(number_format($pago->monto, 2) . "\n");
+        $printer->setTextSize(1, 1);
+        $printer->text("--------------------------------\n");
+        $printer->feed(3);
+        $printer->cut();
+        $printer->pulse();
     }
 
     public function cambiar_estado()

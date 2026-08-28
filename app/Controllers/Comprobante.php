@@ -50,16 +50,9 @@ class Comprobante extends BaseController
         $Facart = new FacartModel();
         $Facart = $Facart->get_comprobante($numser, $numfac, $tipmov, date('d/m/Y', strtotime($fecha)), $local);
 
-        $locales = array(1 => "CENTRO", 2 => "JUANJUICILLO", 3 => "PEÑAMEZA");
         if (count($Facart) > 0) {
 
-            if ($local == 1 || $session->get('user_id') == 'ADMIN') {
-                $connector = new WindowsPrintConnector("smb://asesor:159357@ventas2/6-EPSON TM-T20IV Receipt");
-            } elseif ($local == 2) {
-                $connector = new WindowsPrintConnector("smb://asesor:159357@server02/6-EPSON TM-T20II Receipt");
-            } elseif ($local == 3) {
-                $connector = new WindowsPrintConnector("smb://asesor:159357@medinaimpresora/6-EPSON TM-T20II Receipt5");
-            }
+            $connector = $this->getConnector($local, $session);
             if ($Facart[0]->FAR_FBG == 'B') {
                 $documento = "BOLETA : BO";
                 $tipoDoc = empty(trim($Facart[0]->CLI_RUC_ESPOSA)) ? '' : 'DNI:' . $Facart[0]->CLI_RUC_ESPOSA . "\n";
@@ -184,23 +177,14 @@ class Comprobante extends BaseController
         $CajaMov = new CajaMovimientosModel();
         $movimientos = $CajaMov->get_movimiento($nromov,$local);   
 
-        $locales = array(1 => "CENTRO", 2 => "JUANJUICILLO", 3 => "PEÑAMEZA");
+        $locales = array(1 => "CENTRO", 2 => "JUANJUICILLO", 3 => "PEÑAMEZA", 4 => "CONSULTORIO");
         
         // Ensure $local is a valid key in $locales
         $nombreLocal = $locales[$local] ?? "LOCAL DESCONOCIDO ($local)";
 
         if ($movimientos) {
 
-            if ($local == 1 || $session->get('user_id') == 'ADMIN') {
-                $connector = new WindowsPrintConnector("smb://asesor:159357@ventas2/6-EPSON TM-T20IV Receipt");
-            } elseif ($local == 2) {
-                $connector = new WindowsPrintConnector("smb://asesor:159357@server02/6-EPSON TM-T20II Receipt");
-            } elseif ($local == 3) {
-                $connector = new WindowsPrintConnector("smb://asesor:159357@medinaimpresora/6-EPSON TM-T20II Receipt5");
-            } else {
-                // Return error if no connector for this local
-                return $this->response->setJSON(['status' => 'error', 'message' => 'No hay impresora configurada para el local: ' . $nombreLocal]);
-            }
+            $connector = $this->getConnector($local, $session);
 
             $printer = new Printer($connector);
             $printer->setFont(Printer::FONT_B);
@@ -247,16 +231,10 @@ class Comprobante extends BaseController
         
         $articulo = new ArticuloModel;
         $bebidas = $articulo->get_stock_articulos(0,$local,'articulo','caja',array('466, 526, 537, 257'));
-        $locales = array(1 => "CENTRO", 2 => "JUANJUICILLO", 3 => "PEÑAMEZA");
+        $locales = array(1 => "CENTRO", 2 => "JUANJUICILLO", 3 => "PEÑAMEZA", 4 => "CONSULTORIO");
         if ($movimientos) {
 
-            if ($local == 1 || $session->get('user_id') == 'ADMIN') {
-                $connector = new WindowsPrintConnector("smb://asesor:159357@ventas2/6-EPSON TM-T20IV Receipt");
-            } elseif ($local == 2) {
-                $connector = new WindowsPrintConnector("smb://asesor:159357@server02/6-EPSON TM-T20II Receipt");
-            } elseif ($local == 3) {
-                $connector = new WindowsPrintConnector("smb://asesor:159357@medinaimpresora/6-EPSON TM-T20II Receipt5");
-            }
+            $connector = $this->getConnector($local, $session);
 
             $printer = new Printer($connector);
             $printer->setFont(Printer::FONT_B);
@@ -346,5 +324,26 @@ class Comprobante extends BaseController
         $dompdf->setPaper('A4', 'portrait');
         $dompdf->render();
         $dompdf->stream($nro_Boleta);/**/
+    }
+
+    /**
+     * Obtiene el connector de la ticketera segun el local.
+     * El ADMIN imprime en la ticketera del local 1 (CENTRO).
+     */
+    private function getConnector($local, $session = null)
+    {
+        $imp = config('Impresoras');
+
+        if ($session && $session->get('user_id') == 'ADMIN') {
+            $local = 1;
+        }
+
+        $ruta = $imp->ticketeras[$local] ?? null;
+        if (!$ruta) {
+            $nombre = $imp->locales[$local] ?? 'LOCAL DESCONOCIDO';
+            throw new \Exception('No hay impresora configurada para el local: ' . $nombre . ' (' . $local . ')');
+        }
+
+        return new WindowsPrintConnector($ruta);
     }
 }
