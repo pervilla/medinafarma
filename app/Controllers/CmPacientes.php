@@ -210,7 +210,8 @@ class CmPacientes extends BaseController
         ]);
         
         $db->query("INSERT INTO CM_PACIENTES (cliente_id, estado) VALUES (?, 1)", [$cod]);
-        $paciente_id = $db->insertID();
+        $r = $db->query("SELECT @@IDENTITY AS id")->getRow();
+        $paciente_id = $r ? intval($r->id) : 0;
         
         // Convertir a YYYY-MM-DD para HTML
         $fnac_html = null;
@@ -328,7 +329,8 @@ class CmPacientes extends BaseController
         $paciente = $db->table('CM_PACIENTES')->where('cliente_id', $codigo)->get()->getRow();
         if (!$paciente) {
             $db->query("INSERT INTO CM_PACIENTES (cliente_id, estado) VALUES (?, 1)", [$codigo]);
-            $paciente_id = $db->insertID();
+            $r = $db->query("SELECT @@IDENTITY AS id")->getRow();
+            $paciente_id = $r ? intval($r->id) : 0;
         } else {
             $paciente_id = $paciente->id;
         }

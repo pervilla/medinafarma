@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Models\CmPacientesModel;
 use App\Models\CmMedicosModel;
 use App\Models\CmMedicosHorariosModel;
+use Mike42\Escpos\EscposImage;
 use Mike42\Escpos\PrintConnectors\WindowsPrintConnector;
 use Mike42\Escpos\Printer;
 
@@ -308,6 +309,8 @@ class CmCitas extends BaseController
         
         $forma_pago = $this->request->getPost('forma_pago') ?? 'EFECTIVO';
         $local_pago = session()->get('caja') ? str_pad(session()->get('caja'), 2, '0', STR_PAD_LEFT) : '01';
+        $tipo_comp = $this->request->getPost('tipo_comprobante') ?: 'B';
+        $tipo_nombre = $tipo_comp == 'F' ? 'FACTURA' : ($tipo_comp == 'G' ? 'GUIA' : 'BOLETA');
         
         // Nuevo flujo: SOLO marcar pagado + registrar en CM_PAGOS (sin comprobante SUNAT)
         $db->transStart();
@@ -315,7 +318,7 @@ class CmCitas extends BaseController
         $pago = $this->registrarPago($db, $cita_id, $monto_total, $forma_pago, $local_pago);
         
         $obs_actual = $cita->observaciones ? trim($cita->observaciones) : '';
-        $nueva_obs = trim($obs_actual . ' | Pagado. Ticket: ' . $pago['ticket'], ' |');
+        $nueva_obs = trim($obs_actual . ' | Pagado. Ticket: ' . $pago['ticket'] . ' - Comprobante: ' . $tipo_nombre, ' |');
         $db->query("UPDATE CM_CITAS SET estado = 1, total = ?, saldo = 0, observaciones = ?, updated_at = GETDATE() WHERE id = ?", [$monto_total, substr($nueva_obs, 0, 500), $cita_id]);
         
         // Procesar servicios extra (solo CM_CITAS_SERVICIOS, sin FACART)
@@ -398,6 +401,7 @@ class CmCitas extends BaseController
 
     public function imprimir_ticket_termico($pago_id = null)
     {
+        $pago_id = $pago_id ?? $this->request->getPost('pago_id');
         if (!$pago_id) return $this->response->setJSON(['status' => 'error', 'msg' => 'Falta pago']);
         $db = \Config\Database::connect();
         $pago = $this->getPagoData($db, $pago_id);
@@ -417,11 +421,11 @@ class CmCitas extends BaseController
             $printer = new Printer($connector);
 
             // Ticket para el paciente (constancia de pago)
-            $this->printTicketPaciente($printer, $pago);
+            $this->printTicketPaciente($printer, $pago, $local);
 
             // Ticket de depósito de dinero (solo si el pago fue adelantado en otro local)
             if ($local != 4) {
-                $this->printTicketDeposito($printer, $pago, $imp->locales[$local] ?? 'LOCAL');
+                $this->printTicketDeposito($printer, $pago, $local);
             }
 
             $printer->close();
@@ -446,29 +450,56 @@ class CmCitas extends BaseController
         ", [$pago_id])->getRow();
     }
 
-    private function printTicketPaciente($printer, $pago)
+    private function getMarca($local)
     {
-        $empresa = "MEDINAFARMA";
+        $imp = config('Impresoras');
+        return $imp->marcas[$local] ?? $imp->marcas[1];
+    }
+
+    private function printCabecera($printer, $local)
+    {
+        $fac = config('Facturacion');
+        $marca = $this->getMarca($local);
+        try {
+            $logo = EscposImage::load(FCPATH . 'dist/img/' . $marca['logo'], false);
+            $printer->setJustification(Printer::JUSTIFY_CENTER);
+            $printer->graphics($logo);
+            $printer->feed();
+        } catch (\Exception $e) {
+            // logo no disponible, continuar sin imagen
+        }
         $printer->setFont(Printer::FONT_B);
         $printer->setJustification(Printer::JUSTIFY_CENTER);
-        $printer->text($empresa . "\n");
+        $printer->text($marca['nombre'] . "\n");
+        $printer->text("RUC: " . $fac->ruc . "\n");
+        $printer->text("Jr. Huallaga Nro 601 - Juanjuí - Mcal Cacéres - San Martín\n");
+        $printer->setJustification(Printer::JUSTIFY_LEFT);
+        $printer->text("----------------------------------------------------------------\n");
+    }
+
+    private function printTicketPaciente($printer, $pago, $local)
+    {
+        $this->printCabecera($printer, $local);
+        $printer->setFont(Printer::FONT_B);
+        $printer->setJustification(Printer::JUSTIFY_CENTER);
+        $printer->setTextSize(1, 1);
         $printer->text("CONSTANCIA DE PAGO\n");
         $printer->setJustification(Printer::JUSTIFY_LEFT);
-        $printer->text("--------------------------------\n");
-        $printer->text("TICKET Nro: " . ($pago->ticket_nro ?: 'PAGO-' . $pago->id) . "\n");
-        $printer->text("Fecha: " . date('d/m/Y H:i', strtotime($pago->fecha_pago)) . "\n");
-        $printer->text("--------------------------------\n");
-        $printer->text("Paciente: " . trim($pago->CLI_NOMBRE) . "\n");
-        if (!empty($pago->DNI)) $printer->text("DNI: " . trim($pago->DNI) . "\n");
-        $printer->text("Medico: " . trim($pago->medico ?: '-') . "\n");
-        if ($pago->fecha_especifica) $printer->text("Fecha cita: " . date('d/m/Y', strtotime($pago->fecha_especifica)) . "\n");
-        if ($pago->hora_inicio) $printer->text("Hora cita: " . substr($pago->hora_inicio, 0, 5) . "\n");
-        $printer->text("Forma pago: " . trim($pago->forma_pago) . "\n");
-        $printer->text("--------------------------------\n");
+        $printer->text("----------------------------------------------------------------\n");
+        $printer->text("TICKET Nro  : " . ($pago->ticket_nro ?: 'PAGO-' . $pago->id) . "\n");
+        $printer->text("Fecha       : " . date('d/m/Y H:i', strtotime($pago->fecha_pago)) . "\n");
+        $printer->text("----------------------------------------------------------------\n");
+        $printer->text("Paciente    : " . trim($pago->CLI_NOMBRE) . "\n");
+        if (!empty($pago->DNI)) $printer->text("DNI         : " . trim($pago->DNI) . "\n");
+        $printer->text("Medico      : " . trim($pago->medico ?: '-') . "\n");
+        if ($pago->fecha_especifica) $printer->text("Fecha cita  : " . date('d/m/Y', strtotime($pago->fecha_especifica)) . "\n");
+        if ($pago->hora_inicio) $printer->text("Hora cita   : " . substr($pago->hora_inicio, 0, 5) . "\n");
+        $printer->text("Forma pago  : " . trim($pago->forma_pago) . "\n");
+        $printer->text("----------------------------------------------------------------\n");
         $printer->setTextSize(2, 2);
         $printer->text("MONTO: S/ " . number_format($pago->monto, 2) . "\n");
         $printer->setTextSize(1, 1);
-        $printer->text("--------------------------------\n");
+        $printer->text("----------------------------------------------------------------\n");
         $printer->setJustification(Printer::JUSTIFY_CENTER);
         $printer->text("Este ticket es solo una constancia.\n");
         $printer->text("El comprobante (Boleta/Factura)\nse emitira el dia de la cita.\n");
@@ -477,8 +508,11 @@ class CmCitas extends BaseController
         $printer->pulse();
     }
 
-    private function printTicketDeposito($printer, $pago, $nombreLocal)
+    private function printTicketDeposito($printer, $pago, $local)
     {
+        $imp = config('Impresoras');
+        $nombreLocal = $imp->locales[$local] ?? 'LOCAL';
+        $this->printCabecera($printer, $local);
         $printer->setFont(Printer::FONT_B);
         $printer->setJustification(Printer::JUSTIFY_CENTER);
         $printer->text("DEPOSITO DE DINERO\n");
@@ -486,16 +520,17 @@ class CmCitas extends BaseController
         $printer->text($nombreLocal . "\n");
         $printer->setTextSize(1, 1);
         $printer->setJustification(Printer::JUSTIFY_LEFT);
-        $printer->text("Fecha: " . date('d-m-Y', strtotime($pago->fecha_pago)) . "\n");
-        $printer->text("Responsable: " . trim($pago->usuario_cajero ?: 'CAJERO') . "\n");
-        $printer->text("Ticket origen: " . ($pago->ticket_nro ?: '') . "\n");
-        $printer->text("--------------------------------\n");
-        $printer->text("CONCEPTO: PAGO ADELANTADO CITA MEDICA\n");
+        $printer->text("----------------------------------------------------------------\n");
+        $printer->text("Fecha       : " . date('d-m-Y', strtotime($pago->fecha_pago)) . "\n");
+        $printer->text("Responsable : " . trim($pago->usuario_cajero ?: 'CAJERO') . "\n");
+        $printer->text("Ticket orig.: " . ($pago->ticket_nro ?: '') . "\n");
+        $printer->text("----------------------------------------------------------------\n");
+        $printer->text("CONCEPTO    : PAGO ADELANTADO CITA MEDICA\n");
         $printer->text("IMPORTE TOTAL : S/ ");
         $printer->setTextSize(2, 2);
         $printer->text(number_format($pago->monto, 2) . "\n");
         $printer->setTextSize(1, 1);
-        $printer->text("--------------------------------\n");
+        $printer->text("----------------------------------------------------------------\n");
         $printer->feed(3);
         $printer->cut();
         $printer->pulse();
@@ -597,7 +632,7 @@ class CmCitas extends BaseController
             'usuario_cajero' => $usuario,
             'estado'       => 1,
         ]);
-        $pago_id = $db->insertID();
+        $pago_id = $this->getLastInsertId($db);
         $ticket_nro = 'TKT-' . str_pad($pago_id, 6, '0', STR_PAD_LEFT);
         $db->table('CM_PAGOS')->where('id', $pago_id)->update(['ticket_nro' => $ticket_nro]);
 
@@ -623,7 +658,7 @@ class CmCitas extends BaseController
                 return $this->response->setJSON(['status' => 'error', 'msg' => 'Falta cliente_id para crear paciente']);
             }
             $db->query("INSERT INTO CM_PACIENTES (cliente_id, estado) VALUES (?, 1)", [$cliente_id]);
-            $paciente_id = $db->insertID();
+            $paciente_id = $this->getLastInsertId($db);
         }
         
         // Obtener paciente
@@ -693,7 +728,7 @@ class CmCitas extends BaseController
             'local_origen'   => $local_pago,
         ]);
 
-        $cita_id = $db->insertID();
+        $cita_id = $this->getLastInsertId($db);
         
         // Registrar pago en CM_PAGOS si pagó (ticket de constancia para el cajero)
         if ($pagar_ahora == '1') {
@@ -844,10 +879,11 @@ class CmCitas extends BaseController
             if ($tiene_comp == 0) {
                 $base = $db->query("
                     SELECT H.cod_art_servicio AS art_key, ISNULL(A.ART_NOMBRE, 'CONSULTA MEDICA') AS descripcion,
-                           ISNULL(CC.total, 0) AS precio
+                           ISNULL(NULLIF(CC.total, 0), ISNULL(P.PRE_PRE1, 0)) AS precio
                     FROM CM_CITAS CC
                     INNER JOIN CM_MEDICOS_HORARIOS H ON H.id = CC.horario_id
                     LEFT JOIN ARTI A ON A.ART_KEY = H.cod_art_servicio
+                    LEFT JOIN PRECIOS P ON P.PRE_CODART = H.cod_art_servicio AND P.PRE_FLAG_UNIDAD = 'A' AND P.PRE_CODCIA = 25
                     WHERE CC.id = ?
                 ", [$cita_id])->getRow();
                 if ($base && $base->precio > 0) {
@@ -892,18 +928,20 @@ class CmCitas extends BaseController
         
         $db->transStart();
         
-        // Reservar el correlativo de forma atomica: el UPDATE bloquea la fila y devuelve el nuevo valor
-        $correlativo_row = $db->query("
-            UPDATE CM_SERIE_DOCUMENTOS SET correlativo_actual = correlativo_actual + 1
-            OUTPUT inserted.correlativo_actual AS correlativo
-            WHERE id = ?
-        ", [$serie_cfg->id])->getRow();
-        
-        if (!$correlativo_row) {
+        // Reservar el correlativo: el UPDATE bloquea la fila hasta el COMMIT,
+        // evitando correlativos duplicados entre cajas concurrentes
+        $upd = $db->query("UPDATE CM_SERIE_DOCUMENTOS SET correlativo_actual = correlativo_actual + 1 WHERE id = ?", [$serie_cfg->id]);
+        if ($upd === false) {
             $db->transComplete();
-            return $this->response->setJSON(['status' => 'error', 'msg' => 'No se pudo reservar el correlativo del comprobante']);
+            $err = $db->error();
+            return $this->response->setJSON(['status' => 'error', 'msg' => 'No se pudo reservar el correlativo. Detalle: ' . ($err['message'] ?? 'Error SQL')]);
         }
-        $correlativo = intval($correlativo_row->correlativo);
+        $corrRow = $db->query("SELECT correlativo_actual FROM CM_SERIE_DOCUMENTOS WHERE id = ?", [$serie_cfg->id])->getRow();
+        if (!$corrRow) {
+            $db->transComplete();
+            return $this->response->setJSON(['status' => 'error', 'msg' => 'No se pudo leer el correlativo del comprobante']);
+        }
+        $correlativo = intval($corrRow->correlativo_actual);
         
         $db->table('CM_COMPROBANTES')->insert([
             'cita_id'          => $cita_id,
@@ -912,7 +950,6 @@ class CmCitas extends BaseController
             'serie'            => $serie,
             'correlativo'      => $correlativo,
             'monto'            => $monto,
-            'fecha_emision'    => date('Y-m-d H:i:s'),
             'local_id'         => $local_id,
             'usuario_asistente'=> session()->get('nombre') ?? session()->get('usuario') ?? '',
             'cliente_nombre'   => substr($cliente_nombre, 0, 120),
@@ -921,7 +958,7 @@ class CmCitas extends BaseController
             'estado_sunat'     => 0,
         ]);
         
-        $comprobante_id = $db->insertID();
+        $comprobante_id = $this->getLastInsertId($db);
         
         // Insertar detalles del comprobante
         foreach ($servicios as $s) {
@@ -959,6 +996,9 @@ class CmCitas extends BaseController
             return $this->response->setJSON(['status' => 'error', 'msg' => 'Error al emitir comprobante']);
         }
         
+        // Imprimir el comprobante en la ticketera (best effort, no interrumpe el guardado)
+        $this->imprimirComprobanteTermico($comprobante_id);
+        
         return $this->response->setJSON([
             'status' => 'success',
             'msg' => 'Comprobante emitido: ' . $ref_comp . ' | S/ ' . number_format($monto, 2),
@@ -972,17 +1012,104 @@ class CmCitas extends BaseController
         ]);
     }
 
+    private function imprimirComprobanteTermico($comprobante_id)
+    {
+        try {
+            $db = \Config\Database::connect();
+            $comp = $db->query("SELECT * FROM CM_COMPROBANTES WHERE id = ?", [$comprobante_id])->getRow();
+            if (!$comp) return false;
+            $detalles = $db->query("SELECT * FROM CM_COMPROBANTE_DETALLE WHERE comprobante_id = ? ORDER BY id", [$comprobante_id])->getResult();
+
+            $local = intval($comp->local_id);
+            if ($local == 0) $local = 1;
+            $imp = config('Impresoras');
+            $ruta = $imp->ticketeras[$local] ?? null;
+            if (!$ruta) return false;
+
+            $connector = new WindowsPrintConnector($ruta);
+            $printer = new Printer($connector);
+
+            $tipoNombre = $comp->tipo_documento == 'F' ? 'FACTURA' : ($comp->tipo_documento == 'G' ? 'GUIA' : 'BOLETA');
+
+            $this->printCabecera($printer, $local);
+
+            $printer->setFont(Printer::FONT_B);
+            $printer->setJustification(Printer::JUSTIFY_LEFT);
+            $printer->text($tipoNombre . "\n");
+            $printer->text(trim($comp->serie) . "-" . str_pad($comp->correlativo, 8, '0', STR_PAD_LEFT) . "\n");
+            $printer->text("Fecha Emisión: " . date('d/m/Y H:i', strtotime($comp->fecha_emision)) . "\n");
+            $printer->text("Responsable : " . trim($comp->usuario_asistente ?: 'CONSULTORIO') . "\n");
+            $printer->text("----------------------------------------------------------------\n");
+            $printer->text("Cliente: " . trim($comp->cliente_nombre ?: '') . "\n");
+            if ($comp->tipo_documento == 'F') {
+                $printer->text("RUC : " . trim($comp->cliente_num_doc ?: '') . "\n");
+            } elseif ($comp->tipo_documento == 'B' && !empty($comp->cliente_num_doc)) {
+                $printer->text("DNI : " . trim($comp->cliente_num_doc) . "\n");
+            }
+            $printer->text("----------------------------------------------------------------\n");
+            $printer->text("DESCRIPCION                       CANT.     P.U.     IMPORTE\n");
+            foreach ($detalles as $d) {
+                $printer->text(substr(trim($d->descripcion), 0, 32) . "\n");
+                $printer->text(str_pad($d->cantidad, 26, ' ', STR_PAD_LEFT) . str_pad(number_format($d->precio, 2), 9, ' ', STR_PAD_LEFT) . str_pad(number_format($d->subtotal, 2), 11, ' ', STR_PAD_LEFT) . "\n");
+            }
+            $printer->text("----------------------------------------------------------------\n");
+            $printer->text(str_pad("TOTAL :", 46, ' ', STR_PAD_LEFT) . " S/. ");
+            $printer->setTextSize(2, 2);
+            $printer->text(number_format($comp->monto, 2) . "\n");
+            $printer->setTextSize(1, 1);
+            $formatter = new \Luecano\NumeroALetras\NumeroALetras();
+            $printer->text("SON: " . $formatter->toMoney($comp->monto, 2, 'SOLES', 'CENTIMOS') . "\n");
+            $printer->text("----------------------------------------------------------------\n");
+            $printer->setJustification(Printer::JUSTIFY_CENTER);
+            $printer->text("GRACIAS POR SU VISITA !\n");
+            $printer->feed(3);
+            $printer->cut();
+            $printer->pulse();
+            $printer->close();
+            return true;
+        } catch (\Exception $e) {
+            log_message('error', 'Error imprimiendo comprobante termico: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function imprimir_comprobante($comprobante_id = null)
+    {
+        $comprobante_id = $comprobante_id ?? $this->request->getPost('comprobante_id');
+        if (!$comprobante_id) return $this->response->setJSON(['status' => 'error', 'msg' => 'Falta comprobante']);
+        $ok = $this->imprimirComprobanteTermico($comprobante_id);
+        if ($ok) {
+            return $this->response->setJSON(['status' => 'success', 'msg' => 'Comprobante enviado a la ticketera']);
+        }
+        return $this->response->setJSON(['status' => 'error', 'msg' => 'No se pudo imprimir el comprobante']);
+    }
+
     public function get_pagos_cita()
     {
         $cita_id = $this->request->getPost('cita_id');
         if (!$cita_id) return $this->response->setJSON([]);
         $db = \Config\Database::connect();
         $pagos = $db->query("
-            SELECT P.*, CASE P.estado WHEN 1 THEN 'Pagado' WHEN 2 THEN 'Comprobante emitido' WHEN 3 THEN 'Anulado' END AS estado_nombre
+            SELECT P.*, CASE P.estado WHEN 1 THEN 'Pagado' WHEN 2 THEN 'Comprobante emitido' WHEN 3 THEN 'Anulado' END AS estado_nombre,
+                   ISNULL(A.ART_NOMBRE, 'CITA MEDICA') AS concepto
             FROM CM_PAGOS P
+            LEFT JOIN CM_CITAS CC ON CC.id = P.cita_id
+            LEFT JOIN CM_MEDICOS_HORARIOS H ON H.id = CC.horario_id
+            LEFT JOIN ARTI A ON A.ART_KEY = H.cod_art_servicio
             WHERE P.cita_id = ?
             ORDER BY P.fecha_pago DESC
         ", [$cita_id])->getResult();
+
+        // Adjuntar los comprobantes emitidos para cada pago
+        foreach ($pagos as $p) {
+            $p->comprobantes = $db->query("
+                SELECT id, tipo_documento, serie, correlativo, monto
+                FROM CM_COMPROBANTES
+                WHERE cita_id = ? AND pago_id = ?
+                ORDER BY id
+            ", [$cita_id, $p->id])->getResult();
+        }
+
         return $this->response->setJSON($pagos);
     }
 
@@ -1007,10 +1134,11 @@ class CmCitas extends BaseController
             if ($tiene_comp == 0) {
                 $base = $db->query("
                     SELECT H.cod_art_servicio AS art_key, ISNULL(A.ART_NOMBRE, 'CONSULTA MEDICA') AS descripcion,
-                           ISNULL(CC.total, 0) AS precio
+                           ISNULL(NULLIF(CC.total, 0), ISNULL(P.PRE_PRE1, 0)) AS precio
                     FROM CM_CITAS CC
                     INNER JOIN CM_MEDICOS_HORARIOS H ON H.id = CC.horario_id
                     LEFT JOIN ARTI A ON A.ART_KEY = H.cod_art_servicio
+                    LEFT JOIN PRECIOS P ON P.PRE_CODART = H.cod_art_servicio AND P.PRE_FLAG_UNIDAD = 'A' AND P.PRE_CODCIA = 25
                     WHERE CC.id = ?
                 ", [$cita_id])->getRow();
                 if ($base && $base->precio > 0) {
@@ -1065,5 +1193,16 @@ class CmCitas extends BaseController
                            ROW_NUMBER() OVER (PARTITION BY CLI_CODCLIE ORDER BY CASE WHEN CLI_CP = 'C' THEN 0 ELSE 1 END, CLI_CODCLIE) AS rn
                     FROM CLIENTES
                 ) C ON C.CLI_CODCLIE = {$aliasP}.cliente_id AND C.rn = 1";
+    }
+
+    /**
+     * Obtiene el último IDENTITY insertado en la sesión.
+     * El driver SQLSRV de CI4 usa SCOPE_IDENTITY() en un batch separado (devuelve 0),
+     * por eso se usa @@IDENTITY, que es de ámbito de sesión.
+     */
+    private function getLastInsertId($db)
+    {
+        $row = $db->query("SELECT @@IDENTITY AS id")->getRow();
+        return $row ? intval($row->id) : 0;
     }
 }

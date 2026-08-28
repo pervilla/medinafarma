@@ -289,7 +289,7 @@
         </div>
         <div class="modal-body">
             <table class="table table-sm table-bordered">
-                <thead class="thead-light"><tr><th>Ticket</th><th>Fecha</th><th>Concepto</th><th>Forma Pago</th><th>Monto</th><th>Estado</th><th>Imprimir</th></tr></thead>
+                <thead class="thead-light"><tr><th>Ticket</th><th>Fecha</th><th>Concepto</th><th>Forma Pago</th><th>Monto</th><th>Comprobante</th><th>Imprimir</th></tr></thead>
                 <tbody id="tickets_body"><tr><td colspan="7" class="text-center text-muted">Cargando...</td></tr></tbody>
             </table>
         </div>
@@ -516,30 +516,44 @@ $(document).ready(function() {
     $(document).on('click', '.cobrar-ajax', function() {
         let cita_id = $(this).data('cita');
         let btn = $(this);
-        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
-        $.post("<?= site_url('CmCitas/cobrar_pendiente') ?>", { cita_id: cita_id }, function(res) {
-            if (res.status === 'success') {
-                if (res.ticket && res.ticket.nro) {
-                    Swal.fire({
-                        icon: 'success', title: 'Pago registrado',
-                        html: 'Ticket: <strong>'+res.ticket.nro+'</strong><br>Monto: S/ '+parseFloat(res.ticket.monto).toFixed(2),
-                        showCancelButton: true, confirmButtonColor: '#28a745',
-                        confirmButtonText: '<i class="fas fa-print"></i> Imprimir Ticket',
-                        cancelButtonText: '<i class="fas fa-file-invoice-dollar"></i> Emitir Comprobante'
-                    }).then((r) => {
-                        if (r.isConfirmed) {
-                            imprimirTicketTermico(res.ticket.pago_id);
-                        } else if (r.dismiss === Swal.DismissReason.cancel) {
-                            abrirEmitirComprobante(cita_id);
-                        }
-                        tabla.ajax.reload();
-                    });
+        Swal.fire({
+            title: '¿Cobrar la consulta?',
+            html: '<div class="text-left">Tipo de comprobante a generar el día de la cita:</div>' +
+                  '<select id="swal_tipo_comp" class="form-control mt-2">' +
+                  '<option value="B">Boleta</option><option value="F">Factura</option><option value="G">Guía</option></select>',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: '<i class="fas fa-cash-register"></i> Cobrar',
+            cancelButtonText: 'Cancelar'
+        }).then((r) => {
+            if (!r.isConfirmed) return;
+            let tipo = $('#swal_tipo_comp').val();
+            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+            $.post("<?= site_url('CmCitas/cobrar_pendiente') ?>", { cita_id: cita_id, tipo_comprobante: tipo }, function(res) {
+                if (res.status === 'success') {
+                    if (res.ticket && res.ticket.nro) {
+                        Swal.fire({
+                            icon: 'success', title: 'Pago registrado',
+                            html: 'Ticket: <strong>'+res.ticket.nro+'</strong><br>Monto: S/ '+parseFloat(res.ticket.monto).toFixed(2),
+                            showCancelButton: true, confirmButtonColor: '#28a745',
+                            confirmButtonText: '<i class="fas fa-print"></i> Imprimir Ticket',
+                            cancelButtonText: '<i class="fas fa-file-invoice-dollar"></i> Emitir Comprobante'
+                        }).then((r) => {
+                            if (r.isConfirmed) {
+                                imprimirTicketTermico(res.ticket.pago_id);
+                            } else if (r.dismiss === Swal.DismissReason.cancel) {
+                                abrirEmitirComprobante(cita_id);
+                            }
+                            tabla.ajax.reload();
+                        });
+                    } else {
+                        Swal.fire({ icon: 'success', title: res.msg }); tabla.ajax.reload();
+                    }
                 } else {
-                    Swal.fire({ icon: 'success', title: res.msg }); tabla.ajax.reload();
+                    Swal.fire({ icon: 'error', title: res.msg });
                 }
-            } else {
-                Swal.fire({ icon: 'error', title: res.msg });
-            }
+                btn.prop('disabled', false).html('<i class="fas fa-cash-register"></i>');
+            });
         });
     });
 
@@ -807,12 +821,39 @@ $(document).ready(function() {
             }
             let html = '';
             pagos.forEach(function(p) {
-                html += '<tr><td><strong>'+p.ticket_nro+'</strong></td><td>'+p.fecha_pago.substring(0,10)+'</td><td>'+p.monto+'</td>' +
+                let compCell = '<span class="text-muted">-</span>';
+                let imprCell = '<button class="btn btn-outline-secondary btn-xs btn-imprimir-pago" data-pago="'+p.id+'" title="Imprimir ticket"><i class="fas fa-receipt"></i></button>';
+                if (p.comprobantes && p.comprobantes.length > 0) {
+                    let compHtml = '';
+                    p.comprobantes.forEach(function(c) {
+                        let t = c.tipo_documento == 'F' ? 'FA' : (c.tipo_documento == 'G' ? 'GU' : 'BO');
+                        compHtml += '<span class="badge badge-info">'+t+'-'+c.serie+'-'+String(c.correlativo).padStart(8,'0')+'</span> ';
+                    });
+                    compCell = compHtml;
+                    imprCell = '<button class="btn btn-success btn-xs btn-imprimir-comp" data-comp="'+p.comprobantes[0].id+'" title="Imprimir comprobante"><i class="fas fa-file-invoice-dollar"></i></button>';
+                }
+                html += '<tr><td><strong>'+p.ticket_nro+'</strong></td><td>'+p.fecha_pago.substring(0,10)+'</td><td>'+p.concepto+'</td>' +
                     '<td>'+p.forma_pago+'</td><td>S/ '+parseFloat(p.monto).toFixed(2)+'</td>' +
-                    '<td><span class="badge badge-'+ (p.estado == 2 ? 'info' : 'success') +'">'+p.estado_nombre+'</span></td>' +
-                    '<td><a href="<?= site_url('cmCitas/ticket/') ?>'+p.id+'" target="_blank" class="btn btn-outline-secondary btn-xs" title="Imprimir"><i class="fas fa-print"></i></a></td></tr>';
+                    '<td>'+compCell+'</td>' +
+                    '<td>'+imprCell+'</td></tr>';
             });
             $('#tickets_body').html(html);
+        });
+    });
+
+    $(document).on('click', '.btn-imprimir-pago', function() {
+        imprimirTicketTermico($(this).data('pago'));
+    });
+
+    $(document).on('click', '.btn-imprimir-comp', function() {
+        let comp_id = $(this).data('comp');
+        Swal.fire({ title: 'Enviando a la ticketera...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        $.post("<?= site_url('CmCitas/imprimir_comprobante') ?>", { comprobante_id: comp_id }, function(res) {
+            if (res.status === 'success') {
+                Swal.fire({ icon: 'success', title: res.msg, timer: 2000, showConfirmButton: false });
+            } else {
+                Swal.fire({ icon: 'error', title: res.msg });
+            }
         });
     });
 

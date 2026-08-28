@@ -372,23 +372,37 @@ $(document).ready(function() {
     $(document).on('click', '.cobrar-pendiente', function() {
         let cita_id = $(this).data('cita');
         let extra = $("#inscritos_servicios_extra").val() || [];
-        let btn = $(this); btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
-        $.post("<?= site_url('CmCitas/cobrar_pendiente') ?>", {cita_id:cita_id, servicios_extra:extra}, function(res) {
-            if (res.status === 'success') {
-                if (res.ticket && res.ticket.nro) {
-                    Swal.fire({
-                        icon: 'success', title: 'Pago registrado',
-                        html: 'Ticket: <strong>'+res.ticket.nro+'</strong><br>Monto: S/ '+parseFloat(res.ticket.monto).toFixed(2),
-                        showCancelButton: true, confirmButtonText: '<i class="fas fa-print"></i> Imprimir Ticket', cancelButtonText: 'Cerrar'
-                    }).then((r) => {
-                        if (r.isConfirmed) imprimirTicketTermico(res.ticket.pago_id);
-                        cargarInscritos($('.ver-inscritos').last().data('horario'));
-                    });
-                } else {
-                    notify(res.msg, 'success'); cargarInscritos($('.ver-inscritos').last().data('horario'));
+        let btn = $(this);
+        Swal.fire({
+            title: '¿Cobrar la consulta?',
+            html: '<div class="text-left">Tipo de comprobante a generar el día de la cita:</div>' +
+                  '<select id="swal_tipo_comp2" class="form-control mt-2">' +
+                  '<option value="B">Boleta</option><option value="F">Factura</option><option value="G">Guía</option></select>',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: '<i class="fas fa-cash-register"></i> Cobrar',
+            cancelButtonText: 'Cancelar'
+        }).then((r) => {
+            if (!r.isConfirmed) return;
+            let tipo = $('#swal_tipo_comp2').val();
+            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+            $.post("<?= site_url('CmCitas/cobrar_pendiente') ?>", {cita_id:cita_id, servicios_extra:extra, tipo_comprobante:tipo}, function(res) {
+                if (res.status === 'success') {
+                    if (res.ticket && res.ticket.nro) {
+                        Swal.fire({
+                            icon: 'success', title: 'Pago registrado',
+                            html: 'Ticket: <strong>'+res.ticket.nro+'</strong><br>Monto: S/ '+parseFloat(res.ticket.monto).toFixed(2),
+                            showCancelButton: true, confirmButtonText: '<i class="fas fa-print"></i> Imprimir Ticket', cancelButtonText: 'Cerrar'
+                        }).then((r) => {
+                            if (r.isConfirmed) imprimirTicketTermico(res.ticket.pago_id);
+                            cargarInscritos($('.ver-inscritos').last().data('horario'));
+                        });
+                    } else {
+                        notify(res.msg, 'success'); cargarInscritos($('.ver-inscritos').last().data('horario'));
+                    }
                 }
-            }
-            else { notify(res.msg, 'error'); btn.prop('disabled', false).html('<i class="fas fa-cash-register"></i> Cobrar'); }
+                else { notify(res.msg, 'error'); btn.prop('disabled', false).html('<i class="fas fa-cash-register"></i> Cobrar'); }
+            });
         });
     });
 

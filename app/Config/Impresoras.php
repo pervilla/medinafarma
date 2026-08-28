@@ -21,4 +21,12 @@ class Impresoras extends BaseConfig
         3 => 'smb://asesor:159357@medinaimpresora/6-EPSON TM-T20II Receipt5',
         4 => 'smb://asesor:159357@vitalia/6-EPSON TM-T20III Receipt',
     ];
+
+    // Identidad / marca por local (logo y nombre comercial para impresión)
+    public $marcas = [
+        1 => ['nombre' => 'INVERSIONES SAN MARTIN S.C.R.L.', 'logo' => 'medinafarma-black.jpg'],
+        2 => ['nombre' => 'INVERSIONES SAN MARTIN S.C.R.L.', 'logo' => 'medinafarma-black.jpg'],
+        3 => ['nombre' => 'INVERSIONES SAN MARTIN S.C.R.L.', 'logo' => 'medinafarma-black.jpg'],
+        4 => ['nombre' => 'VITALIA',                          'logo' => 'vitalia-black.jpg'],
+    ];
 }
