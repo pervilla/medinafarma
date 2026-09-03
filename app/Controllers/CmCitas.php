@@ -40,8 +40,11 @@ class CmCitas extends BaseController
         $cliente_id = $paciente->cliente_id;
         $dnilen = strlen($dni);
         
+        // Fecha en yyyymmdd: evita error de conversion por dateformat de SQL Server
+        $fecha_nac_sql = $fecha_nac ? str_replace('-', '', $fecha_nac) : null;
+        
         $db->query("UPDATE CLIENTES SET CLI_NOMBRE = ?, CLI_NOMBRE_ESPOSO = ?, CLI_RUC_ESPOSA = ?, CLI_RUC_ESPOSO = ?, CLI_TELEF1 = ?, CLI_FECHA_NAC = ? WHERE CLI_CODCLIE = ?",
-            [substr($nombre, 0, 120), substr($nombre, 0, 120), $dnilen == 8 ? $dni : '', $dnilen == 11 ? $dni : '', substr($telefono, 0, 12), $fecha_nac ?: null, $cliente_id]);
+            [substr($nombre, 0, 120), substr($nombre, 0, 120), $dnilen == 8 ? $dni : '', $dnilen == 11 ? $dni : '', substr($telefono, 0, 12), $fecha_nac_sql, $cliente_id]);
         
         $db->query("UPDATE CM_PACIENTES SET tipo_sangre=?, contacto_emergencia=?, telefono_emergencia=?, alergias=?, enfermedades_cronicas=?, observaciones_medicas=? WHERE id=?",
             [$tipo_sangre, $contacto_emergencia, $telefono_emergencia, $alergias, $enfermedades_cronicas, $observaciones_medicas, $paciente_id]);

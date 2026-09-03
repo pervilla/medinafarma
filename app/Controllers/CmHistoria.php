@@ -92,7 +92,10 @@ class CmHistoria extends BaseController
              $this->request->getPost('saturacion'), $this->request->getPost('frec_cardiaca'),
              $this->request->getPost('frec_respiratoria'), $historia_id]);
         
-        return redirect()->to('cmHistoria/atencion/' . $cita_id)->with('msg', 'Triaje guardado');
+        // El triaje lo realiza la asistente. Se vuelve a la vista de triaje con
+        // opciones (Imprimir Triaje / Volver al Listado). La historia clínica
+        // (atencion) la llena el médico desde su propio boton.
+        return redirect()->to('cmHistoria/triaje/' . $cita_id)->with('triaje_guardado', $cita_id);
     }
     
     public function atencion($cita_id = null)
