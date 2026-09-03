@@ -8,7 +8,15 @@
                 <h1 class="m-0 text-dark"><i class="fas fa-list text-primary mr-2"></i> <?= esc($titulo) ?></h1>
             </div>
             <div class="col-sm-6 text-right">
+                <label class="small text-muted mb-0 mr-1">Local:</label>
+                <select id="select_local" class="form-control form-control-sm d-inline-block mr-2" style="width: 140px;">
+                    <option value="1" <?= intval($local_pago)==1 ? 'selected' : '' ?>>Centro</option>
+                    <option value="2" <?= intval($local_pago)==2 ? 'selected' : '' ?>>Juanjuicillo</option>
+                    <option value="3" <?= intval($local_pago)==3 ? 'selected' : '' ?>>Peñameza</option>
+                    <option value="4" <?= intval($local_pago)==4 ? 'selected' : '' ?>>Consultorio</option>
+                </select>
                 <a href="<?= site_url('cmCitas') ?>" class="btn btn-outline-primary btn-sm"><i class="fas fa-calendar-alt mr-1"></i> Dashboard</a>
+                <a href="<?= site_url('cmCitas/balance') ?>" class="btn btn-outline-success btn-sm"><i class="fas fa-chart-line mr-1"></i> Balance</a>
             </div>
         </div>
     </div>
@@ -73,7 +81,7 @@
                 <table id="tabla_citas" class="table table-bordered table-hover table-sm w-100">
                     <thead class="thead-light">
                         <tr>
-                            <th>ID</th>
+                            <th>N°</th>
                             <th>Paciente</th>
                             <th>DNI</th>
                             <th>Teléfono</th>
@@ -455,7 +463,10 @@ $(document).ready(function() {
             }
         },
         columns: [
-            { data: 'id' },
+            { data: 'nro', render: function(d, t, r) {
+                if (r.estado == 3) return '<span class="text-muted">-</span>';
+                return '<span class="badge badge-dark" style="font-size:1rem;">' + (d || '-') + '</span>';
+            }},
             { data: 'CLI_NOMBRE', render: function(d, t, r) {
                 let badge = '';
                 if (r.estado == 0) badge = ' <span class="badge badge-warning float-right">SIN PAGO</span>';
@@ -502,7 +513,10 @@ $(document).ready(function() {
                 return btn;
             }},
         ],
-        order: [[0, 'desc']],
+        order: [],
+        columnDefs: [
+            { orderable: false, targets: [0] }
+        ],
         language: { url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json' },
         pageLength: 25,
         responsive: true,
@@ -512,29 +526,110 @@ $(document).ready(function() {
 
     $('#btnFiltrar').click(function() { tabla.ajax.reload(); });
 
-    // Cobrar ajax: al cobrar ofrece imprimir ticket y emitir comprobante
-    $(document).on('click', '.cobrar-ajax', function() {
+    // Cambio de local
+    $('#select_local').change(function() {
+        let local = $(this).val();
+        $.post("<?= site_url('caja/set_caja') ?>", { caja: local, opci: 'caja' }, function() {
+            location.reload();
+        });
+    });
+
+    // Cobrar ajax: cobra y emite el comprobante automáticamente
+        $(document).on('click', '.cobrar-ajax', function() {
         let cita_id = $(this).data('cita');
         let btn = $(this);
+        let formaVal = 'EFECTIVO', nroOpVal = '';
         Swal.fire({
             title: '¿Cobrar la consulta?',
-            html: '<div class="text-left">Tipo de comprobante a generar el día de la cita:</div>' +
-                  '<select id="swal_tipo_comp" class="form-control mt-2">' +
-                  '<option value="B">Boleta</option><option value="F">Factura</option><option value="G">Guía</option></select>',
+            html:
+                '<div class="text-left">Forma de Pago:</div>' +
+                '<select id="swal_forma" class="form-control mt-1">' +
+                '<option value="EFECTIVO">EFECTIVO</option>' +
+                '<option value="YAPE">YAPE</option>' +
+                '<option value="PLIN">PLIN</option>' +
+                '<option value="TARJETA">TARJETA</option>' +
+                '<option value="TRANSFERENCIA">TRANSFERENCIA</option>' +
+                '</select>' +
+                '<div id="swal_nroop_box" class="mt-2 d-none">' +
+                '<div class="text-left">N° Operación (obligatorio en YAPE):</div>' +
+                '<input type="text" id="swal_nroop" class="form-control mt-1" maxlength="30" placeholder="Ej: 1234567890">' +
+                '</div>' +
+                '<hr class="my-2">' +
+                '<div class="text-left">Tipo de comprobante:</div>' +
+                '<select id="swal_tipo_comp" class="form-control mt-1">' +
+                '<option value="B">Boleta</option><option value="F">Factura</option><option value="G">Guía</option></select>' +
+                '<div id="swal_fact_box" class="d-none">' +
+                '<div class="text-left mt-2">RUC (11 dígitos):</div>' +
+                '<div class="input-group">' +
+                '<input type="text" id="swal_ruc" class="form-control" maxlength="11" placeholder="20600000000">' +
+                '<div class="input-group-append"><button type="button" id="swal_buscar_ruc" class="btn btn-outline-secondary"><i class="fas fa-search"></i></button></div>' +
+                '</div>' +
+                '<div class="text-left mt-2">Razón Social:</div>' +
+                '<input type="text" id="swal_razon" class="form-control" placeholder="Nombre o empresa">' +
+                '</div>',
             icon: 'question',
             showCancelButton: true,
             confirmButtonText: '<i class="fas fa-cash-register"></i> Cobrar',
-            cancelButtonText: 'Cancelar'
+            cancelButtonText: 'Cancelar',
+            didOpen: function() {
+                $('#swal_forma').on('change', function() {
+                    formaVal = $(this).val();
+                    if (formaVal === 'YAPE') $('#swal_nroop_box').removeClass('d-none');
+                    else { $('#swal_nroop_box').addClass('d-none'); nroOpVal = ''; $('#swal_nroop').val(''); }
+                });
+                $('#swal_tipo_comp').on('change', function() {
+                    if ($(this).val() == 'F') $('#swal_fact_box').removeClass('d-none');
+                    else $('#swal_fact_box').addClass('d-none');
+                });
+                $('#swal_buscar_ruc').on('click', function() {
+                    let ruc = $('#swal_ruc').val().replace(/\D/g, '');
+                    if (ruc.length != 11) { Swal.fire({ icon: 'warning', title: 'RUC debe tener 11 dígitos' }); return; }
+                    $.post("<?= site_url('personas/get_persona_sunat') ?>", { ruc: ruc }, function(res) {
+                        if (res.status === 'exists' || res.status === 'success') {
+                            $('#swal_razon').val(res.data.nombre || '');
+                        } else {
+                            $('#swal_razon').val(''); Swal.fire({ icon: 'info', title: res.message || 'RUC no encontrado' });
+                        }
+                    });
+                });
+            }
         }).then((r) => {
             if (!r.isConfirmed) return;
+            formaVal = $('#swal_forma').val();
+            nroOpVal = ($('#swal_nroop').val() || '').trim();
+            if (formaVal === 'YAPE' && !nroOpVal) {
+                Swal.fire({ icon: 'warning', title: 'Para pagos con YAPE es obligatorio el N° de operación' });
+                return;
+            }
             let tipo = $('#swal_tipo_comp').val();
+            let data = { cita_id: cita_id, tipo_comprobante: tipo, forma_pago: formaVal };
+            if (nroOpVal) data.nro_operacion = nroOpVal;
+            if (tipo == 'F') {
+                data.cliente_num_doc = $('#swal_ruc').val();
+                data.cliente_nombre = $('#swal_razon').val();
+            }
             btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
-            $.post("<?= site_url('CmCitas/cobrar_pendiente') ?>", { cita_id: cita_id, tipo_comprobante: tipo }, function(res) {
+            $.post("<?= site_url('CmCitas/cobrar_pendiente') ?>", data, function(res) {
                 if (res.status === 'success') {
-                    if (res.ticket && res.ticket.nro) {
+                    if (res.comprobante && res.comprobante.ref) {
+                        Swal.fire({
+                            icon: 'success', title: 'Pago y comprobante registrados',
+                            html: 'Ticket: <strong>'+res.ticket.nro+'</strong><br>Comprobante: <strong>'+res.comprobante.ref+'</strong><br>Monto: S/ '+parseFloat(res.ticket.monto).toFixed(2),
+                            showCancelButton: true, confirmButtonColor: '#28a745',
+                            confirmButtonText: '<i class="fas fa-print"></i> Imprimir Comprobante',
+                            cancelButtonText: 'Cerrar'
+                        }).then((r) => {
+                            if (r.isConfirmed) {
+                                $.post("<?= site_url('CmCitas/imprimir_comprobante') ?>", { comprobante_id: res.comprobante.id }, function(){});
+                            }
+                            tabla.ajax.reload();
+                        });
+                    } else {
+                        let msg = 'Ticket: <strong>'+res.ticket.nro+'</strong><br>Monto: S/ '+parseFloat(res.ticket.monto).toFixed(2);
+                        if (res.comp_error) msg += '<br><small class="text-danger">Comprobante: '+res.comp_error+'</small>';
                         Swal.fire({
                             icon: 'success', title: 'Pago registrado',
-                            html: 'Ticket: <strong>'+res.ticket.nro+'</strong><br>Monto: S/ '+parseFloat(res.ticket.monto).toFixed(2),
+                            html: msg,
                             showCancelButton: true, confirmButtonColor: '#28a745',
                             confirmButtonText: '<i class="fas fa-print"></i> Imprimir Ticket',
                             cancelButtonText: '<i class="fas fa-file-invoice-dollar"></i> Emitir Comprobante'
@@ -546,8 +641,6 @@ $(document).ready(function() {
                             }
                             tabla.ajax.reload();
                         });
-                    } else {
-                        Swal.fire({ icon: 'success', title: res.msg }); tabla.ajax.reload();
                     }
                 } else {
                     Swal.fire({ icon: 'error', title: res.msg });
@@ -556,7 +649,6 @@ $(document).ready(function() {
             });
         });
     });
-
     // Atender / Cerrar pendiente
     $(document).on('click', '.atender-ajax', function() {
         let cita_id = $(this).data('cita');
@@ -832,8 +924,10 @@ $(document).ready(function() {
                     compCell = compHtml;
                     imprCell = '<button class="btn btn-success btn-xs btn-imprimir-comp" data-comp="'+p.comprobantes[0].id+'" title="Imprimir comprobante"><i class="fas fa-file-invoice-dollar"></i></button>';
                 }
+                let formaCell = p.forma_pago || '';
+                if (p.nro_operacion) formaCell += '<br><small class="text-muted">Op. ' + p.nro_operacion + '</small>';
                 html += '<tr><td><strong>'+p.ticket_nro+'</strong></td><td>'+p.fecha_pago.substring(0,10)+'</td><td>'+p.concepto+'</td>' +
-                    '<td>'+p.forma_pago+'</td><td>S/ '+parseFloat(p.monto).toFixed(2)+'</td>' +
+                    '<td>'+formaCell+'</td><td>S/ '+parseFloat(p.monto).toFixed(2)+'</td>' +
                     '<td>'+compCell+'</td>' +
                     '<td>'+imprCell+'</td></tr>';
             });

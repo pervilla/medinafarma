@@ -95,26 +95,33 @@ class CmCitas extends BaseController
         $fecha_hasta = $this->request->getPost('fecha_hasta');
         
         $params = [];
-        $sql = "SELECT cc.id, cc.paciente_id, cc.estado, cc.total, cc.saldo,
-                       H.fecha_especifica, (M.nombres + ' ' + M.apellidos) AS medico,
-                       C.CLI_NOMBRE, C.CLI_RUC_ESPOSA AS DNI, C.CLI_TELEF1, C.CLI_FECHA_NAC,
-                       FLOOR(DATEDIFF(DAY, C.CLI_FECHA_NAC, GETDATE()) / 365.25) AS edad,
-                       CASE cc.estado WHEN 0 THEN 'Inscrito' WHEN 1 THEN 'Confirmado' WHEN 4 THEN 'Pendiente' WHEN 2 THEN 'Atendido' WHEN 3 THEN 'Anulado' END AS estado_nombre
-                FROM CM_CITAS cc
-                INNER JOIN CM_PACIENTES P ON P.id = cc.paciente_id
-                " . $this->joinClientesDedup() . "
-                INNER JOIN CM_MEDICOS_HORARIOS H ON H.id = cc.horario_id
-                LEFT JOIN CM_MEDICOS M ON M.id = H.medico_id
-                WHERE 1=1
-                  AND H.fecha_especifica >= CAST(GETDATE() AS DATE)";
+        // N° correlativo dinamico por campaña (según orden de inscripción).
+        // Los anulados (estado 3) no ocupan número: si se anula uno, los demás se renumeran.
+        $sql = "SELECT t.*, CASE WHEN t.estado <> 3 THEN t.nro ELSE NULL END AS nro
+                FROM (
+                    SELECT cc.id, cc.horario_id, cc.paciente_id, cc.estado, cc.total, cc.saldo, cc.created_at,
+                           H.fecha_especifica, (M.nombres + ' ' + M.apellidos) AS medico,
+                           C.CLI_NOMBRE, C.CLI_RUC_ESPOSA AS DNI, C.CLI_TELEF1, C.CLI_FECHA_NAC,
+                           FLOOR(DATEDIFF(DAY, C.CLI_FECHA_NAC, GETDATE()) / 365.25) AS edad,
+                           CASE cc.estado WHEN 0 THEN 'Inscrito' WHEN 1 THEN 'Confirmado' WHEN 4 THEN 'Pendiente' WHEN 2 THEN 'Atendido' WHEN 3 THEN 'Anulado' END AS estado_nombre,
+                           ROW_NUMBER() OVER (PARTITION BY cc.horario_id, CASE WHEN cc.estado = 3 THEN 1 ELSE 0 END ORDER BY cc.created_at, cc.id) AS nro
+                    FROM CM_CITAS cc
+                    INNER JOIN CM_PACIENTES P ON P.id = cc.paciente_id
+                    " . $this->joinClientesDedup() . "
+                    INNER JOIN CM_MEDICOS_HORARIOS H ON H.id = cc.horario_id
+                    LEFT JOIN CM_MEDICOS M ON M.id = H.medico_id
+                    WHERE 1=1
+                      AND H.fecha_especifica >= CAST(GETDATE() AS DATE)
+                ) t
+                WHERE 1=1";
         
-        if ($horario_id) { $sql .= " AND cc.horario_id = ?"; $params[] = $horario_id; }
-        if ($estado !== null && $estado !== '') { $sql .= " AND cc.estado = ?"; $params[] = intval($estado); }
-        // Filtro por fecha de inscripcion (CC.created_at): vacio = todos
-        if ($fecha_desde) { $sql .= " AND cc.created_at >= ?"; $params[] = $fecha_desde; }
-        if ($fecha_hasta) { $sql .= " AND cc.created_at < DATEADD(DAY, 1, ?)"; $params[] = $fecha_hasta; }
+        if ($horario_id) { $sql .= " AND t.horario_id = ?"; $params[] = $horario_id; }
+        if ($estado !== null && $estado !== '') { $sql .= " AND t.estado = ?"; $params[] = intval($estado); }
+        // Filtro por fecha de inscripcion (created_at): vacio = todos
+        if ($fecha_desde) { $sql .= " AND t.created_at >= ?"; $params[] = $fecha_desde; }
+        if ($fecha_hasta) { $sql .= " AND t.created_at < DATEADD(DAY, 1, ?)"; $params[] = $fecha_hasta; }
         
-        $sql .= " ORDER BY cc.id DESC";
+        $sql .= " ORDER BY t.fecha_especifica DESC, t.created_at ASC, t.id ASC";
         
         $citas = $db->query($sql, $params)->getResult();
         return $this->response->setJSON($citas);
@@ -177,8 +184,7 @@ class CmCitas extends BaseController
     {
         $db = \Config\Database::connect();
         
-        // Traer horarios activos con médicos y conteo de citas migradas
-        $sql = "SELECT h.*, m.nombres, m.apellidos, m.especialidad,
+        $sql = "SELECT h.*, m.nombres, m.apellidos, m.especialidad, m.cliente_id,
                        ISNULL(cc.citas_count, 0) AS pacientes_inscritos,
                        ISNULL(P.PRE_PRE1, 0) AS precio,
                        A.ART_NOMBRE AS servicio_nombre
@@ -307,18 +313,24 @@ class CmCitas extends BaseController
             $monto_total += $p ? floatval($p->precio) : 0;
         }
         
-        $forma_pago = $this->request->getPost('forma_pago') ?? 'EFECTIVO';
+        $forma_pago = strtoupper(trim($this->request->getPost('forma_pago') ?? 'EFECTIVO'));
+        $nro_operacion = trim($this->request->getPost('nro_operacion') ?? '');
+
+        if ($forma_pago == 'YAPE' && $nro_operacion === '') {
+            return $this->response->setJSON(['status' => 'error', 'msg' => 'Para pagos con YAPE es obligatorio registrar el N° de operación.']);
+        }
+
         $local_pago = session()->get('caja') ? str_pad(session()->get('caja'), 2, '0', STR_PAD_LEFT) : '01';
         $tipo_comp = $this->request->getPost('tipo_comprobante') ?: 'B';
-        $tipo_nombre = $tipo_comp == 'F' ? 'FACTURA' : ($tipo_comp == 'G' ? 'GUIA' : 'BOLETA');
-        
-        // Nuevo flujo: SOLO marcar pagado + registrar en CM_PAGOS (sin comprobante SUNAT)
+        $cliente_num_doc = trim($this->request->getPost('cliente_num_doc') ?? '');
+        $cliente_nombre = trim($this->request->getPost('cliente_nombre') ?? '');
+
+        // Registrar pago (ticket de constancia)
         $db->transStart();
-        
-        $pago = $this->registrarPago($db, $cita_id, $monto_total, $forma_pago, $local_pago);
-        
+
+        $pago = $this->registrarPago($db, $cita_id, $monto_total, $forma_pago, $local_pago, $nro_operacion);        
         $obs_actual = $cita->observaciones ? trim($cita->observaciones) : '';
-        $nueva_obs = trim($obs_actual . ' | Pagado. Ticket: ' . $pago['ticket'] . ' - Comprobante: ' . $tipo_nombre, ' |');
+        $nueva_obs = trim($obs_actual . ' | Pagado. Ticket: ' . $pago['ticket'], ' |');
         $db->query("UPDATE CM_CITAS SET estado = 1, total = ?, saldo = 0, observaciones = ?, updated_at = GETDATE() WHERE id = ?", [$monto_total, substr($nueva_obs, 0, 500), $cita_id]);
         
         // Procesar servicios extra (solo CM_CITAS_SERVICIOS, sin FACART)
@@ -332,10 +344,30 @@ class CmCitas extends BaseController
             return $this->response->setJSON(['status' => 'error', 'msg' => 'Error al registrar el pago']);
         }
         
+        // Emitir el comprobante automáticamente con el tipo elegido
+        $comprobante = null;
+        $comp_error = null;
+        $comp_result = $this->generarComprobante($db, $cita_id, $tipo_comp, $local_pago, [], $cliente_nombre, '', $cliente_num_doc);
+        if ($comp_result['status'] === 'success') {
+            $this->imprimirComprobanteTermico($comp_result['comprobante_id']);
+            $comprobante = [
+                'id' => $comp_result['comprobante_id'],
+                'tipo' => $comp_result['tipo_doc'],
+                'serie' => $comp_result['serie'],
+                'correlativo' => $comp_result['correlativo'],
+                'monto' => $comp_result['monto'],
+                'ref' => $comp_result['ref_comp']
+            ];
+        } else {
+            $comp_error = $comp_result['msg'];
+        }
+        
         return $this->response->setJSON([
             'status' => 'success',
             'msg' => 'Pago registrado. Ticket: ' . $pago['ticket'] . ' | S/ ' . number_format($monto_total, 2),
-            'ticket' => ['nro' => $pago['ticket'], 'monto' => $monto_total, 'pago_id' => $pago['id'], 'cita_id' => $cita_id]
+            'ticket' => ['nro' => $pago['ticket'], 'monto' => $monto_total, 'pago_id' => $pago['id'], 'cita_id' => $cita_id],
+            'comprobante' => $comprobante,
+            'comp_error' => $comp_error
         ]);
     }
 
@@ -407,7 +439,7 @@ class CmCitas extends BaseController
         $pago = $this->getPagoData($db, $pago_id);
         if (!$pago) return $this->response->setJSON(['status' => 'error', 'msg' => 'Pago no encontrado']);
 
-        $local = intval($pago->local_pago);
+        $local = session()->get('caja') ? intval(session()->get('caja')) : intval($pago->local_pago);
         if ($local == 0) $local = 1;
 
         $imp = config('Impresoras');
@@ -496,6 +528,7 @@ class CmCitas extends BaseController
         if ($pago->fecha_especifica) $printer->text("Fecha cita  : " . date('d/m/Y', strtotime($pago->fecha_especifica)) . "\n");
         if ($pago->hora_inicio) $printer->text("Hora cita   : " . substr($pago->hora_inicio, 0, 5) . "\n");
         $printer->text("Forma pago  : " . trim($pago->forma_pago) . "\n");
+        if (!empty($pago->nro_operacion)) $printer->text("Nro Operac  : " . trim($pago->nro_operacion) . "\n");
         $printer->text("----------------------------------------------------------------\n");
         $printer->setTextSize(2, 2);
         $printer->text("MONTO: S/ " . number_format($pago->monto, 2) . "\n");
@@ -622,17 +655,21 @@ class CmCitas extends BaseController
      *
      * @return array{id:int, ticket:string}
      */
-    private function registrarPago($db, $cita_id, $monto, $forma_pago, $local_pago)
+    private function registrarPago($db, $cita_id, $monto, $forma_pago, $local_pago, $nro_operacion = null)
     {
         $usuario = session()->get('nombre') ?? session()->get('usuario') ?? 'CAJERO';
-        $db->table('CM_PAGOS')->insert([
-            'cita_id'      => $cita_id,
-            'monto'        => $monto,
-            'forma_pago'   => $forma_pago,
-            'local_pago'   => $local_pago,
+        $data = [
+            'cita_id'        => $cita_id,
+            'monto'          => $monto,
+            'forma_pago'     => $forma_pago,
+            'local_pago'     => $local_pago,
             'usuario_cajero' => $usuario,
-            'estado'       => 1,
-        ]);
+            'estado'         => 1,
+        ];
+        if ($nro_operacion !== null && trim($nro_operacion) !== '') {
+            $data['nro_operacion'] = trim($nro_operacion);
+        }
+        $db->table('CM_PAGOS')->insert($data);
         $pago_id = $this->getLastInsertId($db);
         $ticket_nro = 'TKT-' . str_pad($pago_id, 6, '0', STR_PAD_LEFT);
         $db->table('CM_PAGOS')->where('id', $pago_id)->update(['ticket_nro' => $ticket_nro]);
@@ -763,85 +800,150 @@ class CmCitas extends BaseController
             'ticket'       => ['nro' => $ticket_nro, 'monto' => $monto_total, 'pago_id' => $pago_id, 'cita_id' => $cita_id],
         ]);
     }
-
-    public function reporte()
+    public function balance()
     {
         $db = \Config\Database::connect();
-        $mes = $this->request->getGet('mes') ?: date('m');
-        $anio = $this->request->getGet('anio') ?: date('Y');
 
-        $pagos = $db->query("
-            SELECT P.*, C.CLI_NOMBRE, H.fecha_especifica, (M.nombres + ' ' + M.apellidos) AS medico,
-                   CASE P.estado WHEN 1 THEN 'Pagado' WHEN 2 THEN 'Comprobante emitido' WHEN 3 THEN 'Anulado' END AS estado_nombre
-            FROM CM_PAGOS P
-            INNER JOIN CM_CITAS CC ON CC.id = P.cita_id
-            INNER JOIN CM_PACIENTES PC ON PC.id = CC.paciente_id
-            " . $this->joinClientesDedup('PC') . "
-            INNER JOIN CM_MEDICOS_HORARIOS H ON H.id = CC.horario_id
-            LEFT JOIN CM_MEDICOS M ON M.id = H.medico_id
-            WHERE YEAR(P.fecha_pago) = ? AND MONTH(P.fecha_pago) = ?
-            ORDER BY P.fecha_pago DESC
-        ", [$anio, $mes])->getResult();
+        $tipo   = $this->request->getGet('tipo') ?: 'dia';   // 'dia' | 'campania'
+        $desde  = $this->request->getGet('desde') ?: date('Y-m-d');
+        $hasta  = $this->request->getGet('hasta') ?: date('Y-m-d');
 
-        $comprobantes = $db->query("
-            SELECT CM.*, C.CLI_NOMBRE,
-                   CASE CM.estado_sunat WHEN 0 THEN 'Pendiente' WHEN 1 THEN 'Enviado' WHEN 2 THEN 'Aceptado' WHEN 3 THEN 'Rechazado' WHEN 4 THEN 'Anulado' END AS sunat_nombre
-            FROM CM_COMPROBANTES CM
-            INNER JOIN CM_CITAS CC ON CC.id = CM.cita_id
-            INNER JOIN CM_PACIENTES PC ON PC.id = CC.paciente_id
-            " . $this->joinClientesDedup('PC') . "
-            WHERE YEAR(CM.fecha_emision) = ? AND MONTH(CM.fecha_emision) = ?
-            ORDER BY CM.fecha_emision DESC
-        ", [$anio, $mes])->getResult();
+        // Fechas en yyyymmdd: evita error de conversion por dateformat de SQL Server
+        $sqlDesde = str_replace('-', '', $desde);
+        $sqlHasta = str_replace('-', '', $hasta);
 
-        $total_pagos = 0;
-        foreach ($pagos as $p) $total_pagos += $p->monto;
+        // Local: si no se envió parámetro usa la caja en sesión; '' = Todos
+        $localSel = $this->request->getGet('local');
+        if ($localSel === null) {
+            $caja = session()->get('caja');
+            $local = $caja ? str_pad($caja, 2, '0', STR_PAD_LEFT) : '';
+        } else {
+            $local = $localSel;
+        }
+        $horario_id = $this->request->getGet('horario_id');   // campaña opcional
+
+        $params = [$sqlDesde, $sqlHasta];
+        $sql = "SELECT P.id, P.ticket_nro, P.fecha_pago, P.monto, P.forma_pago, P.local_pago,
+                       P.estado, P.nro_operacion,
+                       H.id AS horario_id, H.fecha_especifica,
+                       (M.nombres + ' ' + M.apellidos) AS medico,
+                       C.CLI_NOMBRE, C.CLI_RUC_ESPOSA AS DNI
+                FROM CM_PAGOS P
+                INNER JOIN CM_CITAS CC ON CC.id = P.cita_id
+                INNER JOIN CM_PACIENTES PC ON PC.id = CC.paciente_id
+                " . $this->joinClientesDedup('PC') . "
+                INNER JOIN CM_MEDICOS_HORARIOS H ON H.id = CC.horario_id
+                LEFT JOIN CM_MEDICOS M ON M.id = H.medico_id
+                WHERE P.estado IN (1,2)
+                  AND P.fecha_pago >= ? AND P.fecha_pago < DATEADD(DAY, 1, ?)";
+        if ($local)     { $sql .= " AND P.local_pago = ?"; $params[] = $local; }
+        if ($horario_id){ $sql .= " AND H.id = ?";         $params[] = intval($horario_id); }
+        $sql .= " ORDER BY P.fecha_pago DESC";
+        $detalle = $db->query($sql, $params)->getResult();
+
+        // Campañas con pagos en el rango (para el filtro)
+        $cSql = "SELECT DISTINCT H.id, H.fecha_especifica, (M.nombres + ' ' + M.apellidos) AS medico
+                 FROM CM_MEDICOS_HORARIOS H
+                 INNER JOIN CM_CITAS CC ON CC.horario_id = H.id
+                 INNER JOIN CM_PAGOS P ON P.cita_id = CC.id AND P.estado IN (1,2)
+                 LEFT JOIN CM_MEDICOS M ON M.id = H.medico_id
+                 WHERE P.fecha_pago >= ? AND P.fecha_pago < DATEADD(DAY, 1, ?)";
+        $cP = [$sqlDesde, $sqlHasta];
+        if ($local) { $cSql .= " AND P.local_pago = ?"; $cP[] = $local; }
+        $campanias = $db->query($cSql . " ORDER BY H.fecha_especifica DESC", $cP)->getResult();
+
+        // Comprobantes emitidos en el rango
+        $compParams = [$sqlDesde, $sqlHasta];
+        $compSql = "SELECT CM.id, CM.serie, CM.correlativo, CM.monto, CM.fecha_emision,
+                           CM.tipo_documento, CM.estado_sunat, CM.local_id,
+                           H.id AS horario_id, H.fecha_especifica,
+                           (M.nombres + ' ' + M.apellidos) AS medico,
+                           C.CLI_NOMBRE,
+                           CASE CM.estado_sunat WHEN 0 THEN 'Pendiente' WHEN 1 THEN 'Enviado'
+                                WHEN 2 THEN 'Aceptado' WHEN 3 THEN 'Rechazado' WHEN 4 THEN 'Anulado' END AS sunat_nombre
+                    FROM CM_COMPROBANTES CM
+                    INNER JOIN CM_CITAS CC ON CC.id = CM.cita_id
+                    INNER JOIN CM_PACIENTES PC ON PC.id = CC.paciente_id
+                    " . $this->joinClientesDedup('PC') . "
+                    INNER JOIN CM_MEDICOS_HORARIOS H ON H.id = CC.horario_id
+                    LEFT JOIN CM_MEDICOS M ON M.id = H.medico_id
+                    WHERE CM.fecha_emision >= ? AND CM.fecha_emision < DATEADD(DAY, 1, ?)";
+        if ($local)      { $compSql .= " AND CM.local_id = ?";        $compParams[] = $local; }
+        if ($horario_id) { $compSql .= " AND H.id = ?";               $compParams[] = intval($horario_id); }
+        $compSql .= " ORDER BY CM.fecha_emision DESC";
+        $comprobantes = $db->query($compSql, $compParams)->getResult();
 
         $total_emitidos = 0;
-        foreach ($comprobantes as $c) $total_emitidos += $c->monto;
+        foreach ($comprobantes as $c) $total_emitidos += floatval($c->monto);
 
-        return view('cm_citas/reporte', [
-            'pagos' => $pagos,
+        // Agrupar por día o por campaña
+        $grupos = [];
+        $formas = [];
+        $gran_total = 0;
+        $gran_n = 0;
+        foreach ($detalle as $p) {
+            $monto = floatval($p->monto);
+            if ($tipo === 'campania') {
+                $fecha = $p->fecha_especifica ? date('d/m/Y', strtotime($p->fecha_especifica)) : 'Recurrente';
+                $label = $fecha . ' - Dr(a). ' . trim($p->medico ?: '-');
+                $clave = 'H' . $p->horario_id;
+            } else {
+                $label = date('d/m/Y', strtotime($p->fecha_pago));
+                $clave = date('Y-m-d', strtotime($p->fecha_pago));
+            }
+            if (!isset($grupos[$clave])) $grupos[$clave] = ['label' => $label, 'n' => 0, 'total' => 0];
+            $grupos[$clave]['n']++;
+            $grupos[$clave]['total'] += $monto;
+
+            $forma = strtoupper(trim($p->forma_pago ?: 'EFECTIVO'));
+            if (!isset($formas[$forma])) $formas[$forma] = ['n' => 0, 'total' => 0];
+            $formas[$forma]['n']++;
+            $formas[$forma]['total'] += $monto;
+
+            $gran_total += $monto;
+            $gran_n++;
+        }
+        uasort($formas, function ($a, $b) { return $b['total'] <=> $a['total']; });
+
+        $locales = ['01' => 'Centro', '02' => 'Juanjuicillo', '03' => 'Peñameza', '04' => 'Consultorio'];
+
+        return view('cm_citas/balance', [
+            'titulo'     => 'Balance de Cobros',
+            'tipo'       => $tipo,
+            'desde'      => $desde,
+            'hasta'      => $hasta,
+            'local'      => $local,
+            'horario_id' => $horario_id,
+            'locales'    => $locales,
+            'campanias'  => $campanias,
+            'grupos'     => $grupos,
+            'formas'     => $formas,
+            'detalle'    => $detalle,
             'comprobantes' => $comprobantes,
-            'total_pagos' => $total_pagos,
             'total_emitidos' => $total_emitidos,
-            'mes' => $mes,
-            'anio' => $anio,
-            'titulo' => 'Reporte de Consultorio',
-            'menu' => ['p' => 40, 'i' => 50]
+            'gran_total' => $gran_total,
+            'gran_n'     => $gran_n,
+            'menu'       => ['p' => 40, 'i' => 45],
         ]);
     }
 
-    public function emitir_comprobante()
+    private function generarComprobante($db, $cita_id, $tipo_doc, $local_id, $servicios_ids, $cliente_nombre, $cliente_tipo_doc, $cliente_num_doc)
     {
-        $db = \Config\Database::connect();
-        $cita_id = $this->request->getPost('cita_id');
-        $tipo_doc = $this->request->getPost('tipo_documento') ?: 'B'; // 'B' Boleta, 'F' Factura, 'G' Guia
-        $local_id = $this->request->getPost('local_id') ?: (session()->get('caja') ? str_pad(session()->get('caja'), 2, '0', STR_PAD_LEFT) : '01');
-        $servicios_ids = $this->request->getPost('servicios_ids') ?: []; // items a incluir
-        $cliente_nombre = trim($this->request->getPost('cliente_nombre') ?? '');
-        $cliente_tipo_doc = $this->request->getPost('cliente_tipo_doc') ?: '';
-        $cliente_num_doc = trim($this->request->getPost('cliente_num_doc') ?? '');
-        
-        if (!$cita_id) {
-            return $this->response->setJSON(['status' => 'error', 'msg' => 'Falta cita_id']);
-        }
-        
         $cita = $db->table('CM_CITAS')->where('id', $cita_id)->get()->getRow();
         if (!$cita) {
-            return $this->response->setJSON(['status' => 'error', 'msg' => 'Cita no encontrada']);
+            return ['status' => 'error', 'msg' => 'Cita no encontrada'];
         }
         if (!in_array($cita->estado, [1, 2, 4])) {
-            return $this->response->setJSON(['status' => 'error', 'msg' => 'Solo se puede emitir comprobante de una cita pagada, pendiente o atendida']);
+            return ['status' => 'error', 'msg' => 'Solo se puede emitir comprobante de una cita pagada, pendiente o atendida'];
         }
         
         // Factura requiere RUC + razon social
         if ($tipo_doc == 'F') {
             if (empty($cliente_num_doc) || strlen($cliente_num_doc) != 11) {
-                return $this->response->setJSON(['status' => 'error', 'msg' => 'Para Factura es obligatorio el RUC (11 dígitos)']);
+                return ['status' => 'error', 'msg' => 'Para Factura es obligatorio el RUC (11 dígitos)'];
             }
             if (empty($cliente_nombre)) {
-                return $this->response->setJSON(['status' => 'error', 'msg' => 'Para Factura es obligatoria la razón social']);
+                return ['status' => 'error', 'msg' => 'Para Factura es obligatoria la razón social'];
             }
             $cliente_tipo_doc = '6';
         } else {
@@ -900,7 +1002,7 @@ class CmCitas extends BaseController
         }
         
         if (empty($servicios)) {
-            return $this->response->setJSON(['status' => 'error', 'msg' => 'No hay servicios pendientes de facturar para esta cita']);
+            return ['status' => 'error', 'msg' => 'No hay servicios pendientes de facturar para esta cita'];
         }
         
         // Obtener config de serie para el local + tipo
@@ -911,10 +1013,10 @@ class CmCitas extends BaseController
         ", [intval($local_id), $tipo_doc_cfg])->getRow();
         
         if (!$serie_cfg) {
-            return $this->response->setJSON(['status' => 'error', 'msg' => 'No hay serie configurada para local ' . $local_id . ' y tipo ' . $tipo_doc . ' en CM_SERIE_DOCUMENTOS']);
+            return ['status' => 'error', 'msg' => 'No hay serie configurada para local ' . $local_id . ' y tipo ' . $tipo_doc . ' en CM_SERIE_DOCUMENTOS'];
         }
         if (empty(trim($serie_cfg->prefijo ?? ''))) {
-            return $this->response->setJSON(['status' => 'error', 'msg' => 'La serie del local ' . $local_id . ' tipo ' . $tipo_doc . ' no tiene prefijo configurado (ej. B001 / F001) en CM_SERIE_DOCUMENTOS']);
+            return ['status' => 'error', 'msg' => 'La serie del local ' . $local_id . ' tipo ' . $tipo_doc . ' no tiene prefijo configurado (ej. B001 / F001) en CM_SERIE_DOCUMENTOS'];
         }
         $serie = trim($serie_cfg->prefijo);
         
@@ -935,12 +1037,12 @@ class CmCitas extends BaseController
         if ($upd === false) {
             $db->transComplete();
             $err = $db->error();
-            return $this->response->setJSON(['status' => 'error', 'msg' => 'No se pudo reservar el correlativo. Detalle: ' . ($err['message'] ?? 'Error SQL')]);
+            return ['status' => 'error', 'msg' => 'No se pudo reservar el correlativo. Detalle: ' . ($err['message'] ?? 'Error SQL')];
         }
         $corrRow = $db->query("SELECT correlativo_actual FROM CM_SERIE_DOCUMENTOS WHERE id = ?", [$serie_cfg->id])->getRow();
         if (!$corrRow) {
             $db->transComplete();
-            return $this->response->setJSON(['status' => 'error', 'msg' => 'No se pudo leer el correlativo del comprobante']);
+            return ['status' => 'error', 'msg' => 'No se pudo leer el correlativo del comprobante'];
         }
         $correlativo = intval($corrRow->correlativo_actual);
         
@@ -994,21 +1096,52 @@ class CmCitas extends BaseController
         $db->transComplete();
         
         if ($db->transStatus() === false) {
-            return $this->response->setJSON(['status' => 'error', 'msg' => 'Error al emitir comprobante']);
+            return ['status' => 'error', 'msg' => 'Error al emitir comprobante'];
+        }
+        
+        return [
+            'status' => 'success',
+            'comprobante_id' => $comprobante_id,
+            'ref_comp' => $ref_comp,
+            'monto' => $monto,
+            'serie' => $serie,
+            'correlativo' => $correlativo,
+            'tipo_doc' => $tipo_doc
+        ];
+    }
+
+    public function emitir_comprobante()
+    {
+        $db = \Config\Database::connect();
+        $cita_id = $this->request->getPost('cita_id');
+        $tipo_doc = $this->request->getPost('tipo_documento') ?: 'B'; // 'B' Boleta, 'F' Factura, 'G' Guia
+        $local_id = $this->request->getPost('local_id') ?: (session()->get('caja') ? str_pad(session()->get('caja'), 2, '0', STR_PAD_LEFT) : '01');
+        $servicios_ids = $this->request->getPost('servicios_ids') ?: []; // items a incluir
+        $cliente_nombre = trim($this->request->getPost('cliente_nombre') ?? '');
+        $cliente_tipo_doc = $this->request->getPost('cliente_tipo_doc') ?: '';
+        $cliente_num_doc = trim($this->request->getPost('cliente_num_doc') ?? '');
+        
+        if (!$cita_id) {
+            return $this->response->setJSON(['status' => 'error', 'msg' => 'Falta cita_id']);
+        }
+        
+        $result = $this->generarComprobante($db, $cita_id, $tipo_doc, $local_id, $servicios_ids, $cliente_nombre, $cliente_tipo_doc, $cliente_num_doc);
+        if ($result['status'] === 'error') {
+            return $this->response->setJSON(['status' => 'error', 'msg' => $result['msg']]);
         }
         
         // Imprimir el comprobante en la ticketera (best effort, no interrumpe el guardado)
-        $this->imprimirComprobanteTermico($comprobante_id);
+        $this->imprimirComprobanteTermico($result['comprobante_id']);
         
         return $this->response->setJSON([
             'status' => 'success',
-            'msg' => 'Comprobante emitido: ' . $ref_comp . ' | S/ ' . number_format($monto, 2),
+            'msg' => 'Comprobante emitido: ' . $result['ref_comp'] . ' | S/ ' . number_format($result['monto'], 2),
             'comprobante' => [
-                'id' => $comprobante_id,
-                'tipo' => $tipo_doc,
-                'serie' => $serie,
-                'correlativo' => $correlativo,
-                'monto' => $monto
+                'id' => $result['comprobante_id'],
+                'tipo' => $result['tipo_doc'],
+                'serie' => $result['serie'],
+                'correlativo' => $result['correlativo'],
+                'monto' => $result['monto']
             ]
         ]);
     }
@@ -1021,7 +1154,7 @@ class CmCitas extends BaseController
             if (!$comp) return false;
             $detalles = $db->query("SELECT * FROM CM_COMPROBANTE_DETALLE WHERE comprobante_id = ? ORDER BY id", [$comprobante_id])->getResult();
 
-            $local = intval($comp->local_id);
+            $local = session()->get('caja') ? intval(session()->get('caja')) : intval($comp->local_id);
             if ($local == 0) $local = 1;
             $imp = config('Impresoras');
             $ruta = $imp->ticketeras[$local] ?? null;

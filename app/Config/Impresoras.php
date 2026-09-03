@@ -19,7 +19,7 @@ class Impresoras extends BaseConfig
         1 => 'smb://asesor:159357@ventas2/6-EPSON TM-T20IV Receipt',
         2 => 'smb://asesor:159357@server02/6-EPSON TM-T20II Receipt',
         3 => 'smb://asesor:159357@medinaimpresora/6-EPSON TM-T20II Receipt5',
-        4 => 'smb://asesor:159357@vitalia/6-EPSON TM-T20III Receipt',
+        4 => 'smb://asesor:159357@vitalia/EPSON TM-T20III Receipt',
     ];
 
     // Identidad / marca por local (logo y nombre comercial para impresión)

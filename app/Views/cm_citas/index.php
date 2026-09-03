@@ -14,10 +14,17 @@
                 <h1 class="m-0 text-dark"><i class="fas fa-calendar-alt text-primary mr-2"></i> <?= esc($titulo) ?></h1>
             </div>
             <div class="col-sm-6 text-right">
+                <label class="small text-muted mb-0 mr-1">Local:</label>
+                <select id="select_local" class="form-control form-control-sm d-inline-block mr-2" style="width: 140px;">
+                    <option value="1" <?= intval($local_pago)==1 ? 'selected' : '' ?>>Centro</option>
+                    <option value="2" <?= intval($local_pago)==2 ? 'selected' : '' ?>>Juanjuicillo</option>
+                    <option value="3" <?= intval($local_pago)==3 ? 'selected' : '' ?>>Peñameza</option>
+                    <option value="4" <?= intval($local_pago)==4 ? 'selected' : '' ?>>Consultorio</option>
+                </select>
                 <a href="<?= site_url('cmMedicos') ?>" class="btn btn-outline-primary btn-sm mr-1"><i class="fas fa-user-md mr-1"></i> Médicos</a>
                 <a href="<?= site_url('cmHorarios') ?>" class="btn btn-outline-primary btn-sm mr-1"><i class="fas fa-calendar-alt mr-1"></i> Horarios</a>
                 <a href="<?= site_url('cmPacientes') ?>" class="btn btn-outline-info btn-sm"><i class="fas fa-users mr-1"></i> Pacientes</a>
-                <a href="<?= site_url('cmCitas/reporte') ?>" class="btn btn-outline-danger btn-sm"><i class="fas fa-chart-bar mr-1"></i> Reporte</a>
+                <a href="<?= site_url('cmCitas/balance') ?>" class="btn btn-outline-success btn-sm"><i class="fas fa-chart-line mr-1"></i> Balance</a>
                 <a href="<?= site_url('cmCitas/listado') ?>" class="btn btn-outline-secondary btn-sm ml-1"><i class="fas fa-list mr-1"></i> Ver Todas</a>
             </div>
         </div>
@@ -41,10 +48,25 @@
                                 <span class="badge <?= $libres > 0 ? 'badge-success' : 'badge-danger' ?>"><?= $libres ?> cupos</span>
                             </div>
                             <div class="d-flex align-items-center mb-3">
-                                <div class="doctor-avatar mr-3"><i class="fas fa-user-md text-primary"></i></div>
+                                <div class="doctor-avatar mr-3">
+                                    <?php 
+                                    $photo_url = null;
+                                    if (!empty($c->cliente_id)) {
+                                        $file_path = FCPATH . 'dist/img/' . $c->cliente_id . '.jpg';
+                                        if (file_exists($file_path)) {
+                                            $photo_url = base_url('dist/img/' . $c->cliente_id . '.jpg');
+                                        }
+                                    }
+                                    ?>
+                                    <?php if ($photo_url): ?>
+                                        <img src="<?= $photo_url ?>" class="img-circle elevation-2" style="width: 100%; height: 100%; object-fit: cover;" alt="Dr. <?= esc($c->apellidos) ?>">
+                                    <?php else: ?>
+                                        <i class="fas fa-user-md text-primary"></i>
+                                    <?php endif; ?>
+                                </div>
                                 <div>
                                     <h5 class="mb-0 font-weight-bold">Dr(a). <?= esc($c->apellidos) ?></h5>
-                                    <p class="text-muted mb-0 small"><?= esc($c->especialidad ?: 'General') ?> â€¢ <?= esc($c->servicio_nombre ?: '') ?></p>
+                                    <p class="text-muted mb-0 small"><?= esc($c->especialidad ?: 'General') ?> • <?= esc($c->servicio_nombre ?: '') ?></p>
                                 </div>
                             </div>
                             <div class="row text-center border-top border-bottom py-2 mb-3 bg-light">
@@ -84,7 +106,7 @@
                             <i class="fas fa-user-plus mr-1"></i> Registrar Nuevo Paciente
                         </button>
                     </div>
-                    <div class="form-group border-top pt-3">
+                    <div class="form-group border-top pt-3 d-none">
                         <label>2. Tipo de Comprobante</label>
                         <div class="d-flex mt-2">
                             <div class="custom-control custom-radio mr-4">
@@ -187,6 +209,14 @@ function cargarInscritos(horario_id) {
 }
 
 $(document).ready(function() {
+    // Cambio de local
+    $('#select_local').change(function() {
+        let local = $(this).val();
+        $.post("<?= site_url('caja/set_caja') ?>", { caja: local, opci: 'caja' }, function() {
+            location.reload();
+        });
+    });
+
     $('#modalReservar').on('hidden.bs.modal', function() {
         $('#reserva_paciente_id').val(null).trigger('change');
         $('#servicios_extra').val(null).trigger('change');
@@ -369,29 +399,84 @@ $(document).ready(function() {
         }
     });
 
-    $(document).on('click', '.cobrar-pendiente', function() {
+        $(document).on('click', '.cobrar-pendiente', function() {
         let cita_id = $(this).data('cita');
         let extra = $("#inscritos_servicios_extra").val() || [];
         let btn = $(this);
+        let formaVal = 'EFECTIVO', nroOpVal = '';
         Swal.fire({
             title: '¿Cobrar la consulta?',
-            html: '<div class="text-left">Tipo de comprobante a generar el día de la cita:</div>' +
-                  '<select id="swal_tipo_comp2" class="form-control mt-2">' +
-                  '<option value="B">Boleta</option><option value="F">Factura</option><option value="G">Guía</option></select>',
+            html:
+                '<div class="text-left">Forma de Pago:</div>' +
+                '<select id="swal_forma2" class="form-control mt-1">' +
+                '<option value="EFECTIVO">EFECTIVO</option>' +
+                '<option value="YAPE">YAPE</option>' +
+                '<option value="PLIN">PLIN</option>' +
+                '<option value="TARJETA">TARJETA</option>' +
+                '<option value="TRANSFERENCIA">TRANSFERENCIA</option>' +
+                '</select>' +
+                '<div id="swal_nroop_box2" class="mt-2 d-none">' +
+                '<div class="text-left">N° Operación (obligatorio en YAPE):</div>' +
+                '<input type="text" id="swal_nroop2" class="form-control mt-1" maxlength="30" placeholder="Ej: 1234567890">' +
+                '</div>' +
+                '<hr class="my-2">' +
+                '<div class="text-left">Tipo de comprobante:</div>' +
+                '<select id="swal_tipo_comp2" class="form-control mt-1">' +
+                '<option value="B">Boleta</option><option value="F">Factura</option><option value="G">Guía</option></select>' +
+                '<div id="swal_fact_box2" class="d-none">' +
+                '<div class="text-left mt-2">RUC (11 dígitos):</div>' +
+                '<input type="text" id="swal_ruc2" class="form-control" maxlength="11" placeholder="20600000000">' +
+                '<div class="text-left mt-2">Razón Social:</div>' +
+                '<input type="text" id="swal_razon2" class="form-control" placeholder="Nombre o empresa">' +
+                '</div>',
             icon: 'question',
             showCancelButton: true,
             confirmButtonText: '<i class="fas fa-cash-register"></i> Cobrar',
-            cancelButtonText: 'Cancelar'
+            cancelButtonText: 'Cancelar',
+            didOpen: function() {
+                $('#swal_forma2').on('change', function() {
+                    formaVal = $(this).val();
+                    if (formaVal === 'YAPE') $('#swal_nroop_box2').removeClass('d-none');
+                    else { $('#swal_nroop_box2').addClass('d-none'); nroOpVal = ''; $('#swal_nroop2').val(''); }
+                });
+                $('#swal_tipo_comp2').on('change', function() {
+                    if ($(this).val() == 'F') $('#swal_fact_box2').removeClass('d-none');
+                    else $('#swal_fact_box2').addClass('d-none');
+                });
+            }
         }).then((r) => {
             if (!r.isConfirmed) return;
+            formaVal = $('#swal_forma2').val();
+            nroOpVal = ($('#swal_nroop2').val() || '').trim();
+            if (formaVal === 'YAPE' && !nroOpVal) {
+                notify('Para pagos con YAPE es obligatorio el N° de operación', 'warning');
+                return;
+            }
             let tipo = $('#swal_tipo_comp2').val();
+            let data = { cita_id:cita_id, servicios_extra:extra, tipo_comprobante:tipo, forma_pago:formaVal };
+            if (nroOpVal) data.nro_operacion = nroOpVal;
+            if (tipo == 'F') {
+                data.cliente_num_doc = $('#swal_ruc2').val();
+                data.cliente_nombre = $('#swal_razon2').val();
+            }
             btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
-            $.post("<?= site_url('CmCitas/cobrar_pendiente') ?>", {cita_id:cita_id, servicios_extra:extra, tipo_comprobante:tipo}, function(res) {
+            $.post("<?= site_url('CmCitas/cobrar_pendiente') ?>", data, function(res) {
                 if (res.status === 'success') {
-                    if (res.ticket && res.ticket.nro) {
+                    if (res.comprobante && res.comprobante.ref) {
+                        Swal.fire({
+                            icon: 'success', title: 'Pago y comprobante registrados',
+                            html: 'Ticket: <strong>'+res.ticket.nro+'</strong><br>Comprobante: <strong>'+res.comprobante.ref+'</strong><br>Monto: S/ '+parseFloat(res.ticket.monto).toFixed(2),
+                            showCancelButton: true, confirmButtonText: '<i class="fas fa-print"></i> Imprimir Comprobante', cancelButtonText: 'Cerrar'
+                        }).then((r) => {
+                            if (r.isConfirmed) $.post("<?= site_url('CmCitas/imprimir_comprobante') ?>", { comprobante_id: res.comprobante.id }, function(){});
+                            cargarInscritos($('.ver-inscritos').last().data('horario'));
+                        });
+                    } else if (res.ticket && res.ticket.nro) {
+                        let msg = 'Ticket: <strong>'+res.ticket.nro+'</strong><br>Monto: S/ '+parseFloat(res.ticket.monto).toFixed(2);
+                        if (res.comp_error) msg += '<br><small class="text-danger">Comprobante: '+res.comp_error+'</small>';
                         Swal.fire({
                             icon: 'success', title: 'Pago registrado',
-                            html: 'Ticket: <strong>'+res.ticket.nro+'</strong><br>Monto: S/ '+parseFloat(res.ticket.monto).toFixed(2),
+                            html: msg,
                             showCancelButton: true, confirmButtonText: '<i class="fas fa-print"></i> Imprimir Ticket', cancelButtonText: 'Cerrar'
                         }).then((r) => {
                             if (r.isConfirmed) imprimirTicketTermico(res.ticket.pago_id);
