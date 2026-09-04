@@ -46,7 +46,7 @@
                         <a href="<?= site_url('productos') ?>" class="nav-link">Productos</a>
                     </li>
                     <li class="nav-item d-none d-sm-inline-block">
-                        <a href="<?= site_url('consultorio') ?>" class="nav-link">Citas Médicas</a>
+                        <a href="<?= site_url('cmCitas') ?>" class="nav-link">Citas Médicas</a>
                     </li>
                     <li class="nav-item d-none d-sm-inline-block">
                         <a href="<?= site_url('caja/dia') ?>" class="nav-link">Caja</a>
@@ -383,7 +383,7 @@
                                 </ul>
                             </li>
                             <?php } ?>
-                            <?php if($session->get('user_id')=='ADMIN'){?>  
+                            <?php if(in_array($session->get('user_id'), ['ADMIN', 'OPER04'])){?>  
                             <li class="nav-item <?=$menu['p']==40?'menu-open':''?> has-treeview">
                                 <a href="#" class="nav-link <?=$menu['p']==40?'active':''?>">
                                     <i class="nav-icon fas fa-medkit"></i>
@@ -394,49 +394,9 @@
                                 </a>
                                 <ul class="nav nav-treeview">
                                     <li class="nav-item">
-                                        <a href="<?= site_url('consultorio') ?>" class="nav-link <?=$menu['i']==41?'active':''?>">
-                                            <i class="far fa-calendar-alt nav-icon"></i>
-                                            <p>Citas Médicas</p>
-                                        </a>
-                                    </li>                                                              
-                                </ul>
-                                <ul class="nav nav-treeview">
-                                    <li class="nav-item">
-                                        <a href="<?= site_url('consultorio/campania') ?>" class="nav-link <?=$menu['i']==42?'active':''?>">
-                                            <i class="	far fa-calendar-plus nav-icon"></i>
-                                            <p>Campañas Médicas</p>
-                                        </a>
-                                    </li>                                                              
-                                </ul>
-                                <ul class="nav nav-treeview">
-                                    <li class="nav-item">
-                                        <a href="<?= site_url('consultorio/confirmados') ?>" class="nav-link <?=$menu['i']==43?'active':''?>">
-                                            <i class="far fa-calendar-check nav-icon"></i>
-                                            <p>Confirmados</p>
-                                        </a>
-                                    </li>                                                              
-                                </ul>
-                                <ul class="nav nav-treeview">
-                                    <li class="nav-item">
-                                        <a href="<?= site_url('consultorio/historial') ?>" class="nav-link <?=$menu['i']==44?'active':''?>">
-                                            <i class="fas fa-history nav-icon"></i>
-                                            <p>Historial Atenciones</p>
-                                        </a>
-                                    </li>                                                              
-                                </ul>
-                                <ul class="nav nav-treeview">
-                                    <li class="nav-item">
-                                        <a href="<?= site_url('consultorio/pagos') ?>" class="nav-link <?=$menu['i']==45?'active':''?>">
-                                            <i class="fas fa-solid fa-money-bill"></i>
-                                            <p>Pagos por Servicios</p>
-                                        </a>
-                                    </li>                                                              
-                                </ul>
-                                <ul class="nav nav-treeview">
-                                    <li class="nav-item">
                                         <a href="<?= site_url('cmCitas') ?>" class="nav-link <?=$menu['i']==46?'active':''?>">
                                             <i class="fas fa-calendar-alt nav-icon"></i>
-                                            <p>Nuevo Dashboard</p>
+                                            <p>Citas Médicas</p>
                                         </a>
                                     </li>
                                 </ul>
@@ -469,6 +429,14 @@
                                         <a href="<?= site_url('cmCitas/listado') ?>" class="nav-link <?=$menu['i']==50?'active':''?>">
                                             <i class="fas fa-list nav-icon"></i>
                                             <p>Todas las Citas</p>
+                                        </a>
+                                    </li>
+                                </ul>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="<?= site_url('cmCitas/balance') ?>" class="nav-link <?=$menu['i']==45?'active':''?>">
+                                            <i class="fas fa-chart-line nav-icon"></i>
+                                            <p>Balance</p>
                                         </a>
                                     </li>
                                 </ul>

@@ -86,13 +86,27 @@ class CmHistoria extends BaseController
             return redirect()->back()->with('error', 'Historia no encontrada');
         }
         
-        $db->query("UPDATE CM_HISTORIA SET presion_arterial=?, temperatura=?, peso=?, talla=?, saturacion=?, frec_cardiaca=?, frec_respiratoria=?, updated_at=GETDATE() WHERE id=?",
-            [$this->request->getPost('presion_arterial'), $this->request->getPost('temperatura'),
-             $this->request->getPost('peso'), $this->request->getPost('talla'),
-             $this->request->getPost('saturacion'), $this->request->getPost('frec_cardiaca'),
-             $this->request->getPost('frec_respiratoria'), $historia_id]);
+        // Campos numéricos: vacío -> NULL (evita error varchar a numeric)
+        $num = function ($v) {
+            $v = trim((string)$v);
+            return ($v === '') ? null : $v;
+        };
+        $presion_arterial = trim((string)$this->request->getPost('presion_arterial'));
         
-        return redirect()->to('cmHistoria/atencion/' . $cita_id)->with('msg', 'Triaje guardado');
+        $db->query("UPDATE CM_HISTORIA SET presion_arterial=?, temperatura=?, peso=?, talla=?, saturacion=?, frec_cardiaca=?, frec_respiratoria=?, updated_at=GETDATE() WHERE id=?",
+            [$presion_arterial !== '' ? $presion_arterial : null,
+             $num($this->request->getPost('temperatura')),
+             $num($this->request->getPost('peso')),
+             $num($this->request->getPost('talla')),
+             $num($this->request->getPost('saturacion')),
+             $num($this->request->getPost('frec_cardiaca')),
+             $num($this->request->getPost('frec_respiratoria')),
+             $historia_id]);
+        
+        // El triaje lo realiza la asistente. Se vuelve a la vista de triaje con
+        // opciones (Imprimir Triaje / Volver al Listado). La historia clínica
+        // (atencion) la llena el médico desde su propio boton.
+        return redirect()->to('cmHistoria/triaje/' . $cita_id)->with('triaje_guardado', $cita_id);
     }
     
     public function atencion($cita_id = null)
