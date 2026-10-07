@@ -201,3 +201,20 @@ $routes->match(['get', 'post'], 'reportes/export_rentables_excel', 'Reportes::ex
 $routes->get('reportes/regventa', 'Reportes\Regventa::index');
 $routes->post('reportes/regventa/generar', 'Reportes\Regventa::generar');
 
+/*
+ * -------------------------
+ * RUTAS FORMATOS
+ * -------------------------
+ */
+$routes->get('formatos', 'Formatos::index');
+$routes->get('formatos/temperatura', 'Formatos::temperatura');
+$routes->get('formatos/limpieza', 'Formatos::limpieza');
+$routes->post('formatos/asistencia', 'Formatos::asistencia');
+
+/*
+ * -------------------------
+ * RUTAS ANULACION DE DOCUMENTOS (formgen 1111)
+ * -------------------------
+ */
+$routes->post('anulaciones/anularComprobante', 'Anulaciones::anularComprobante');
+

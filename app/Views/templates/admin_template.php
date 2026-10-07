@@ -569,7 +569,16 @@
                                     </li>                                 
                                 </ul>
                             </li>
-                            
+
+                            <?php if($session->get('user_id')){?>
+                            <li class="nav-item">
+                                <a href="<?= site_url('formatos') ?>" class="nav-link <?=$menu['p']==85?'active':''?>">
+                                    <i class="nav-icon fas fa-file-alt"></i>
+                                    <p>Formatos</p>
+                                </a>
+                            </li>
+                            <?php } ?>
+
                             <?php if($session->get('user_id')){?>  
                             <li class="nav-item <?=$menu['p']==80?'menu-open':''?> has-treeview">
                                 <a href="#" class="nav-link <?=$menu['p']==80?'active':''?>">

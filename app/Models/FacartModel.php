@@ -134,6 +134,7 @@ class FacartModel extends Model
         $sql .= 'FAR_FECHA = \'' . $fecha . '\' AND ';
         $sql .= 'FAR_NUMSER = ' . $serie . ' AND ';
         $sql .= 'FAR_NUMFAC = ' . $factura;
+        $sql .= ' AND NOT EXISTS (SELECT 1 FROM ALLOG A WHERE A.ALL_CODCIA = FACART.FAR_CODCIA AND A.ALL_NUMOPER = FACART.FAR_NUMOPER AND A.ALL_TIPMOV = FACART.FAR_TIPMOV AND A.ALL_FBG = FACART.FAR_FBG AND A.ALL_NUMSER = FACART.FAR_NUMSER AND A.ALL_NUMFAC = FACART.FAR_NUMFAC AND A.ALL_CODTRA = 1111)';
         $query = $this->db->query($sql);
         return $query->getResult();
     }
@@ -165,6 +166,8 @@ class FacartModel extends Model
         $sql .= "FACART.FAR_NUMFAC = $numfac AND ";
         $sql .= 'TAB_COPIAS."COP_CANT_NC" = 1 AND ';
         $sql .= 'TABLAS."TAB_TIPREG" = 122  ';
+        // Excluye las lineas espejo de anulacion (operaciones 1111)
+        $sql .= 'AND NOT EXISTS (SELECT 1 FROM "BDATOS"."dbo"."ALLOG" A WHERE A.ALL_CODCIA = FACART.FAR_CODCIA AND A.ALL_NUMOPER = FACART.FAR_NUMOPER AND A.ALL_TIPMOV = FACART.FAR_TIPMOV AND A.ALL_FBG = FACART.FAR_FBG AND A.ALL_NUMSER = FACART.FAR_NUMSER AND A.ALL_NUMFAC = FACART.FAR_NUMFAC AND A.ALL_CODTRA = 1111) ';
         $sql .= 'ORDER BY ';
         $sql .= 'TAB_COPIAS."COP_SEC" ASC, ';
         $sql .= 'FACART."FAR_NUMSER" ASC, ';
@@ -432,17 +435,21 @@ class FacartModel extends Model
         return $query->getResult();
     }
 
-      public function get_productos_control_inventario($tipo, $fecha, $horaInicio, $horaFin, $caja = 1)
+      public function get_productos_control_inventario($tipo, $fecha, $horaInicio, $horaFin, $caja = 1, $limite = null, $fechaFin = null)
     {
         $db = $this->db;
         if ($caja != 1) {
             $db = $this->dbjj;
         }
 
+        // Condición de fecha: rango o fecha única
+        $condicion_fecha = $fechaFin ? "BETWEEN '$fecha' AND '$fechaFin'" : "= '$fecha'";
+
         if ($tipo == '01') {
-            // Opción 01: De los 200 productos que mayor rotación en un año, que los haya vendido el grupo anterior.
+            // Opción 01: De los N productos que mayor rotación en un año, que los haya vendido en el periodo.
+            $top = $limite ?: 200;
             $sql = "SELECT * FROM (
-                SELECT TOP 200
+                SELECT TOP $top
                     A.ART_KEY AS Codigo_Articulo,
                     A.ART_NOMBRE AS Nombre_Articulo,
                     T.TAB_NOMLARGO AS Familia,
@@ -479,13 +486,14 @@ class FacartModel extends Model
                 FROM FACART
                 WHERE FAR_TIPMOV = 10
                   AND FAR_ESTADO <> 'E'
-                  AND FAR_FECHA = '$fecha'
+                  AND FAR_FECHA $condicion_fecha
                   AND ((CAST(CASE WHEN ISNUMERIC(LEFT(FAR_HORA, 2))=1 THEN LEFT(FAR_HORA, 2) ELSE '0' END AS INT) % 12) + (CASE WHEN FAR_HORA LIKE '%p.%' THEN 12 ELSE 0 END)) BETWEEN $horaInicio AND $horaFin
             )
             ORDER BY Familia ASC, Total_Vendido_Anual DESC";
         } else {
-            // Opción 02: Los 50 productos vendidos por el grupo anterior con mayor costo de venta.
-            $sql = "SELECT TOP 50
+            // Opción 02: Los N productos vendidos en el periodo con mayor costo de venta.
+            $top = $limite ?: 50;
+            $sql = "SELECT TOP $top
                 A.ART_KEY AS Codigo_Articulo,
                 A.ART_NOMBRE AS Nombre_Articulo,
                 T.TAB_NOMLARGO AS Familia,
@@ -513,7 +521,7 @@ class FacartModel extends Model
               AND F.FAR_ESTADO <> 'E'
               AND F.FAR_ESTADO2 <> 'L'
               AND A.ART_CODCIA = 25
-              AND F.FAR_FECHA = '$fecha'
+              AND F.FAR_FECHA $condicion_fecha
               AND ((CAST(CASE WHEN ISNUMERIC(LEFT(F.FAR_HORA, 2))=1 THEN LEFT(F.FAR_HORA, 2) ELSE '0' END AS INT) % 12) + (CASE WHEN FAR_HORA LIKE '%p.%' THEN 12 ELSE 0 END)) BETWEEN $horaInicio AND $horaFin
             GROUP BY A.ART_KEY, A.ART_NOMBRE, T.TAB_NOMLARGO, P.PRE_UNIDAD, P.PRE_EQUIV, ART.ARM_STOCK
             ORDER BY SUM((F.FAR_CANTIDAD / CASE WHEN F.FAR_EQUIV = 0 THEN 1 ELSE F.FAR_EQUIV END) * F.FAR_COSPRO) DESC";

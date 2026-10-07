@@ -547,27 +547,51 @@ class Productos extends BaseController
         // Fijar zona horaria de Lima para que date() devuelva la hora local correcta
         // independientemente de la configuración del servidor de producción (generalmente UTC)
         date_default_timezone_set('America/Lima');
-        
-        // Determinar el turno anterior
-        $hora_actual = date('H:i:s');
-        // Formato yyyymmdd: unambiguo en SQL Server 2008 R2 sin importar SET LANGUAGE / SET DATEFORMAT
-        $fecha_actual = date('Ymd');
-        
-        if ($hora_actual >= '15:00:00' && $hora_actual < '23:59:59') {
-            // Turno actual: Grupo 2 (3pm - 11pm)
-            // Grupo anterior: Grupo 1 (Hoy, 6am - 3pm)
-            $fecha_busqueda = $fecha_actual;
-            $hora_inicio = 6;   // 6am  (DATEPART HOUR, 24h)
-            $hora_fin    = 14;  // 2:59pm → hasta antes de las 15h
-            $turno_label = "GRUPO 1 (6AM - 3PM) - HOY " . date('d/m/Y');
+
+        // Parámetros opcionales: permiten sobreescribir el rango automático de turno
+        $param_fecha_inicio = $this->request->getVar('fecha_inicio'); // formato yyyy-mm-dd
+        $param_fecha_fin    = $this->request->getVar('fecha_fin');    // formato yyyy-mm-dd
+        $param_hora_inicio  = $this->request->getVar('hora_inicio');  // entero 0-23
+        $param_hora_fin     = $this->request->getVar('hora_fin');     // entero 0-23
+        $param_limite       = $this->request->getVar('limite');       // entero, ej: 200, 50, 500
+
+        if ($param_fecha_inicio && $param_fecha_fin) {
+            // Modo personalizado: rango de fechas proporcionado por el usuario
+            $fecha_busqueda_inicio = date('Ymd', strtotime($param_fecha_inicio));
+            $fecha_busqueda_fin    = date('Ymd', strtotime($param_fecha_fin));
+            $hora_inicio = ($param_hora_inicio !== null && $param_hora_inicio !== '') ? intval($param_hora_inicio) : 0;
+            $hora_fin    = ($param_hora_fin !== null && $param_hora_fin !== '')       ? intval($param_hora_fin)    : 23;
+            $turno_label = "PERSONALIZADO: " . date('d/m/Y', strtotime($param_fecha_inicio)) . " - " . date('d/m/Y', strtotime($param_fecha_fin));
+            if ($hora_inicio != 0 || $hora_fin != 23) {
+                $turno_label .= " ({$hora_inicio}h - {$hora_fin}h)";
+            }
+            $usar_rango_fechas = true;
         } else {
-            // Turno actual: Grupo 1 (6am - 3pm) o Madrugada
-            // Grupo anterior: Grupo 2 (Ayer, 3pm - 11pm)
-            $fecha_busqueda = date('Ymd', strtotime('-1 day'));
-            $hora_inicio = 15;  // 3pm  (DATEPART HOUR, 24h)
-            $hora_fin    = 23;  // 11pm
-            $turno_label = "GRUPO 2 (3PM - 11PM) - AYER " . date('d/m/Y', strtotime('-1 day'));
+            // Modo por defecto: determinar el turno anterior automáticamente
+            $hora_actual = date('H:i:s');
+            $fecha_actual = date('Ymd');
+            
+            if ($hora_actual >= '15:00:00' && $hora_actual < '23:59:59') {
+                // Turno actual: Grupo 2 (3pm - 11pm)
+                // Grupo anterior: Grupo 1 (Hoy, 6am - 3pm)
+                $fecha_busqueda_inicio = $fecha_actual;
+                $fecha_busqueda_fin    = $fecha_actual;
+                $hora_inicio = 6;   // 6am  (DATEPART HOUR, 24h)
+                $hora_fin    = 14;  // 2:59pm → hasta antes de las 15h
+                $turno_label = "GRUPO 1 (6AM - 3PM) - HOY " . date('d/m/Y');
+            } else {
+                // Turno actual: Grupo 1 (6am - 3pm) o Madrugada
+                // Grupo anterior: Grupo 2 (Ayer, 3pm - 11pm)
+                $fecha_busqueda_inicio = date('Ymd', strtotime('-1 day'));
+                $fecha_busqueda_fin    = date('Ymd', strtotime('-1 day'));
+                $hora_inicio = 15;  // 3pm  (DATEPART HOUR, 24h)
+                $hora_fin    = 23;  // 11pm
+                $turno_label = "GRUPO 2 (3PM - 11PM) - AYER " . date('d/m/Y', strtotime('-1 day'));
+            }
+            $usar_rango_fechas = false;
         }
+
+        $limite = $param_limite ? intval($param_limite) : null;
 
         $session = session();
         $caja = $session->get('caja') ?: 1;
@@ -576,7 +600,7 @@ class Productos extends BaseController
         $turno_label .= " (" . $local_label . ")";
 
         $FacartModel = new FacartModel();
-        $data['productos'] = $FacartModel->get_productos_control_inventario($tipo, $fecha_busqueda, $hora_inicio, $hora_fin, $caja);
+        $data['productos'] = $FacartModel->get_productos_control_inventario($tipo, $fecha_busqueda_inicio, $hora_inicio, $hora_fin, $caja, $limite, $usar_rango_fechas ? $fecha_busqueda_fin : null);
         $data['anio'] = $turno_label;
         $data['caja'] = $caja;
 
