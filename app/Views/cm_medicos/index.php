@@ -41,7 +41,25 @@
                         <?php foreach ($medicos as $m): ?>
                         <tr>
                             <td><?= $m['id'] ?></td>
-                            <td><strong><?= esc($m['apellidos']) ?></strong>, <?= esc($m['nombres']) ?></td>
+                             <td>
+                                <?php 
+                                $photo_url = null;
+                                if (!empty($m['cliente_id'])) {
+                                    $file_path = FCPATH . 'dist/img/' . $m['cliente_id'] . '.jpg';
+                                    if (file_exists($file_path)) {
+                                        $photo_url = base_url('dist/img/' . $m['cliente_id'] . '.jpg');
+                                    }
+                                }
+                                ?>
+                                <?php if ($photo_url): ?>
+                                    <img src="<?= $photo_url ?>" class="img-circle elevation-1 mr-2" style="width: 32px; height: 32px; object-fit: cover;" alt="Dr. <?= esc($m['apellidos']) ?>">
+                                <?php else: ?>
+                                    <div class="d-inline-flex align-items-center justify-content-center bg-light img-circle mr-2" style="width: 32px; height: 32px; border: 1px solid #dee2e6;">
+                                        <i class="fas fa-user-md text-muted" style="font-size: 14px;"></i>
+                                    </div>
+                                <?php endif; ?>
+                                <strong><?= esc($m['apellidos']) ?></strong>, <?= esc($m['nombres']) ?>
+                             </td>
                             <td><?= esc($m['dni'] ?? '-') ?></td>
                             <td><?= esc($m['cmp'] ?? '-') ?></td>
                             <td><span class="badge badge-info"><?= esc($m['especialidad'] ?? 'General') ?></span></td>

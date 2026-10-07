@@ -48,6 +48,7 @@
                                         <div class="dropdown-divider"></div>
                                         <a class="dropdown-item" href="<?= site_url('productos/createpdf_control_inventario?tipo=01') ?>" target="_blank"><i class='fas fa-clipboard-check text-success'></i> Control Ventas (Top 200 Rot.)</a>
                                         <a class="dropdown-item" href="<?= site_url('productos/createpdf_control_inventario?tipo=02') ?>" target="_blank"><i class='fas fa-clipboard-check text-success'></i> Control Ventas (Top 50 Costo)</a>
+                                        <a class="dropdown-item" href="#" data-toggle="modal" data-target="#modal-control-inventario"><i class='fas fa-sliders-h text-purple'></i> Control Ventas (Personalizado)</a>
                                     </div>
                                 </div>
                             </div>
@@ -271,6 +272,99 @@
         var url = "<?= site_url('productos/createpdf_ventas_hora') ?>?fecha_inicio=" + fecha_inicio + "&fecha_fin=" + fecha_fin;
         window.open(url, '_blank');
         $('#modal-ventas-hora').modal('hide');
+    });
+</script>
+
+<!-- Modal Control Ventas Personalizado -->
+<div class="modal fade" id="modal-control-inventario" tabindex="-1" role="dialog" aria-labelledby="modalControlInventarioLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-purple">
+                <h5 class="modal-title" id="modalControlInventarioLabel"><i class="fas fa-sliders-h"></i> Control Ventas - Personalizado</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="formControlInventario">
+                    <div class="form-group">
+                        <label for="ci_tipo">Tipo de Reporte</label>
+                        <select class="form-control" id="ci_tipo" name="ci_tipo">
+                            <option value="01">Top Rotación (más vendidos del año)</option>
+                            <option value="02" selected>Top Costo de Venta</option>
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="ci_fecha_inicio">Fecha Inicio</label>
+                                <input type="date" class="form-control" id="ci_fecha_inicio" name="ci_fecha_inicio" value="<?= date('Y-m-d', strtotime('-1 day')) ?>" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="ci_fecha_fin">Fecha Fin</label>
+                                <input type="date" class="form-control" id="ci_fecha_fin" name="ci_fecha_fin" value="<?= date('Y-m-d') ?>" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="ci_hora_inicio">Hora Inicio (0-23)</label>
+                                <input type="number" class="form-control" id="ci_hora_inicio" name="ci_hora_inicio" value="0" min="0" max="23">
+                                <small class="form-text text-muted">Déjalo en 0 para todo el día</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="ci_hora_fin">Hora Fin (0-23)</label>
+                                <input type="number" class="form-control" id="ci_hora_fin" name="ci_hora_fin" value="23" min="0" max="23">
+                                <small class="form-text text-muted">Déjalo en 23 para todo el día</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="ci_limite">Cantidad de Registros (Top N)</label>
+                        <input type="number" class="form-control" id="ci_limite" name="ci_limite" value="" min="1" placeholder="Por defecto: 200 (Rotación) / 50 (Costo)">
+                        <small class="form-text text-muted">Dejar vacío para usar el valor por defecto según el tipo</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-purple" id="btnGenerarControlInventario"><i class="fas fa-file-pdf"></i> Generar Reporte</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('btnGenerarControlInventario').addEventListener('click', function() {
+        var tipo = document.getElementById('ci_tipo').value;
+        var fecha_inicio = document.getElementById('ci_fecha_inicio').value;
+        var fecha_fin = document.getElementById('ci_fecha_fin').value;
+        var hora_inicio = document.getElementById('ci_hora_inicio').value;
+        var hora_fin = document.getElementById('ci_hora_fin').value;
+        var limite = document.getElementById('ci_limite').value;
+
+        if (!fecha_inicio || !fecha_fin) {
+            alert('Debe ingresar ambas fechas');
+            return;
+        }
+
+        var url = "<?= site_url('productos/createpdf_control_inventario') ?>?tipo=" + tipo
+            + "&fecha_inicio=" + fecha_inicio
+            + "&fecha_fin=" + fecha_fin
+            + "&hora_inicio=" + hora_inicio
+            + "&hora_fin=" + hora_fin;
+
+        if (limite) {
+            url += "&limite=" + limite;
+        }
+
+        window.open(url, '_blank');
+        $('#modal-control-inventario').modal('hide');
     });
 </script>
 

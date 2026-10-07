@@ -266,6 +266,7 @@ public function dia(){
                 case '1': $data['color']='success'; break;
                 case '2': $data['color']='danger'; break;
                 case '3': $data['color']='info'; break;
+                default: $data['color']=''; break;
             }
         }else{
             $caja = 0;

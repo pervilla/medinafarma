@@ -100,6 +100,9 @@
 <script src="../../plugins/datatables-buttons/js/buttons.print.min.js"></script>
 <script src="../../plugins/datatables-buttons/js/buttons.colVis.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pure.js/2.82/pure.min.js"></script>
+<!-- SweetAlert2 -->
+<link rel="stylesheet" href="../../plugins/sweetalert2/sweetalert2.min.css">
+<script src="../../plugins/sweetalert2/sweetalert2.min.js"></script>
 
 <script>
     $(document).ready(function() {
@@ -182,7 +185,11 @@
                         }
                         <?php if ($session->get('user_id') == 'ADMIN') : ?>
                         if (row.ALL_FLAG_EXT !== 'E' && row.ALL_CODTRA != 1111) {
-                            rpt = rpt + '<button type="button" class="btn btn-dark btn-sm btn-anular" data-numoper="' + row.ALL_NUMOPER + '"><i class="fas fa-ban"></i> Anular</button>';
+                            var tipoAnu = row.ALL_FBG == 'F' ? 'Factura' : (row.ALL_FBG == 'B' ? 'Boleta' : 'Guía');
+                            var prefAnu = row.ALL_FBG == 'F' ? 'FA' : (row.ALL_FBG == 'B' ? 'B0' : 'G0');
+                            var docAnu = tipoAnu + ' ' + prefAnu + String(row.ALL_NUMSER).trim() + '-' + row.ALL_NUMFAC;
+                            var totalAnu = parseFloat(row.ALL_IMPORTE_AMORT || 0).toFixed(2);
+                            rpt = rpt + '<button type="button" class="btn btn-dark btn-sm btn-anular" data-numoper="' + row.ALL_NUMOPER + '" data-fecha="' + row.ALL_FECHA_PRO + '" data-doc="' + docAnu + '" data-total="' + totalAnu + '" data-concepto="' + String(row.ALL_CONCEPTO || '').replace(/"/g, "").trim() + '" data-server="<?= $local ?>"><i class="fas fa-ban"></i> Anular</button>';
                         }
                         <?php endif; ?>
                         rpt = rpt + "</div>";
@@ -278,6 +285,53 @@
             }, 500);
 
 
+        });
+
+        ///// ANULAR COMPROBANTE /////
+        $('#operaciones tbody').on('click', '.btn-anular', function() {
+            var btn = $(this);
+            var numOper = btn.data('numoper');
+            var fecha = btn.data('fecha');
+            var server = btn.data('server');
+            var concepto = btn.data('concepto') || '';
+            var doc = btn.data('doc') || ('Operación ' + numOper);
+            var total = btn.data('total') || '0.00';
+
+            Swal.fire({
+                title: 'Anular documento',
+                html: '¿Está seguro de anular <b>' + doc + '</b><br>TOTAL: <b>S/. ' + total + '</b>?<br><small class="text-muted">Se revertirá stock, lotes y cartera.</small>',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                confirmButtonText: 'Sí, anular',
+                cancelButtonText: 'Cancelar'
+            }).then(function(result) {
+                if (!result.isConfirmed) {
+                    return;
+                }
+                Swal.fire({
+                    title: 'Anulando...',
+                    allowOutsideClick: false,
+                    didOpen: function() {
+                        Swal.showLoading();
+                    }
+                });
+                $.post("<?= site_url('anulaciones/anularComprobante') ?>", {
+                    numOper: numOper,
+                    fecha: fecha,
+                    server: server,
+                    concepto: concepto
+                }).done(function(resp) {
+                    if (resp && resp.status === 200) {
+                        Swal.fire('Anulado', resp.message, 'success');
+                        dtable.ajax.reload(null, false);
+                    } else {
+                        Swal.fire('No se pudo anular', (resp && resp.message) ? resp.message : 'Error desconocido', 'error');
+                    }
+                }).fail(function() {
+                    Swal.fire('Error', 'No se pudo conectar con el servidor.', 'error');
+                });
+            });
         });
 
     });

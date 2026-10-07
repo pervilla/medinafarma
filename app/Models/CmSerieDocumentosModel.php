@@ -17,6 +17,7 @@ class CmSerieDocumentosModel extends Model
         'tipo_documento',
         'prefijo',
         'serie_actual',
+        'correlativo_actual',
         'tipo_servicio',
         'estado'
     ];

@@ -114,6 +114,9 @@ class Operaciones extends BaseController
                 case '3':
                     $data['color'] = 'info';
                     break;
+                default:
+                    $data['color'] = 'success';
+                    break;
             }
         } else {
             $local = 1;

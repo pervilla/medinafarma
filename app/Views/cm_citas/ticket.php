@@ -32,6 +32,9 @@
         <div class="row"><span class="lbl">Médico:</span><span><?= esc($pago->medico ?: '-') ?></span></div>
         <div class="row"><span class="lbl">Campaña:</span><span><?= $pago->fecha_especifica ? date('d/m/Y', strtotime($pago->fecha_especifica)) : '-' ?></span></div>
         <div class="row"><span class="lbl">Forma Pago:</span><span><?= esc($pago->forma_pago) ?></span></div>
+        <?php if (!empty($pago->nro_operacion)): ?>
+        <div class="row"><span class="lbl">N° Operación:</span><span><?= esc($pago->nro_operacion) ?></span></div>
+        <?php endif; ?>
         <div class="row"><span class="lbl">Local:</span><span><?= esc($pago->local_pago) ?></span></div>
         <div class="line"></div>
         <div class="row"><span class="lbl">MONTO PAGADO:</span><span class="big">S/ <?= number_format($pago->monto, 2) ?></span></div>

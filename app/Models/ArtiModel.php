@@ -91,7 +91,8 @@ class ArtiModel extends Model {
         return $query->getResult();
     }
     public function get_arti_act($key){
-        $sql = "SELECT COUNT(ART_KEY) ART_KEY FROM DBO.ARTI WHERE ART_KEY > $key;";
+        $key = $key ?? 0;
+        $sql = "SELECT COUNT(ART_KEY) ART_KEY FROM DBO.ARTI WHERE ART_KEY > $key";
         $query =  $this->db->query($sql);
         $row   = $query->getRow();
         return $row->ART_KEY;
